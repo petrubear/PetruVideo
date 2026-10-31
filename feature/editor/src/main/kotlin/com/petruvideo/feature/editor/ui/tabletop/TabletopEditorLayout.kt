@@ -65,6 +65,12 @@ fun TabletopControlsHalf(
                 color = PetruColors.OnBackground,
                 modifier = Modifier.padding(end = 16.dp),
             )
+            IconAction(
+                PetruIcons.Undo,
+                "Undo",
+                { if (state.canUndo) onEvent(EditorEvent.Undo) },
+                dimmed = !state.canUndo,
+            )
             IconAction(PetruIcons.Previous, "Previous clip", { onEvent(EditorEvent.StepClip(-1)) })
             IconAction(
                 icon = if (state.playback.isPlaying) PetruIcons.Pause else PetruIcons.Play,
@@ -75,6 +81,12 @@ fun TabletopControlsHalf(
                 dimmed = state.isEmpty,
             )
             IconAction(PetruIcons.Next, "Next clip", { onEvent(EditorEvent.StepClip(1)) })
+            IconAction(
+                PetruIcons.Redo,
+                "Redo",
+                { if (state.canRedo) onEvent(EditorEvent.Redo) },
+                dimmed = !state.canRedo,
+            )
             IconAction(
                 PetruIcons.Split,
                 "Split at playhead",

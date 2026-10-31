@@ -12,8 +12,8 @@ Status: P = passed on the Fold, F = failed, - = not yet run.
 | 2 | Multi-import in order | - | |
 | 3 | Bad file and permissions | - | Permission grant by adb only; the prompt path and the system picker are untested. |
 | 4 | Timeline and playback | P (partly) | 1080p 30 fps clip plays at 30.0 fps, 0 dropped frames, longest gap 33.3 ms; Play to first frame 76 to 79 ms warm, 239 ms cold. Scrub, reorder, photo handles not run. |
-| 5 | Trim and split | - | Covered by instrumented tests on the emulator only. |
-| 6 | Detach and replace audio | - | Same. |
+| 5 | Trim and split | P (partly) | Select shows outline, length badge and clip tool bar; Split at the playhead gives two contiguous clips with sound; the split survived an app restart. Trim handles, duplicate, delete and undo/redo not run on the Fold. |
+| 6 | Detach and replace audio | P (partly) | Detach empties the clip's own waveform and adds a Detached clip on the audio lane; Detach disappears from the tool bar. Trim, move, mute, replace not run. The "Detached" label overlaps the waveform bars (cosmetic). |
 | 7 | Format from first clip | P (partly) | Portrait clip gave 720p 30 fps; 1080p clip gave 1080p 30 fps. Mixed-orientation fit not run. |
 | 8 | Missing media | - | |
 | 9 | Autosave and recovery | - | Process-death test passes on the emulator. |
@@ -29,6 +29,10 @@ Status: P = passed on the Fold, F = failed, - = not yet run.
 - Project media list showed 0 items for a project with a clip. Now follows the project's edit time.
 - Multi-pane layouts started at 840 dp, so the unfolded Fold got the phone layout. Now from 700 dp.
 - Project detail pane overflowed the shorter lower half in tabletop. Now height-aware.
+
+## Found on the Fold in the last run
+
+- Tabletop controls had no Undo or Redo; added both (FR-021).
 
 ## Open
 
