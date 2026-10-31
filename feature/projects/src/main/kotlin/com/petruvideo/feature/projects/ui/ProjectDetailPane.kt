@@ -55,27 +55,27 @@ fun ProjectDetailPane(
         return
     }
     val project = summary.project
-    Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        BoxWithConstraints {
-            val stacked = maxWidth < SIDE_BY_SIDE_MIN
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        // A short pane (the lower half in tabletop posture) keeps the thumbnail beside the facts so the media fits.
+        val short = maxHeight < SHORT_PANE
+        val stacked = !short && maxWidth < SIDE_BY_SIDE_MIN
+        val thumbWidth = if (short) SHORT_THUMB_WIDTH else THUMB_WIDTH
+        Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (stacked) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    PlaceholderThumbnail(
-                        seed = project.id,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
-                    )
-                    ProjectFacts(summary, onOpen)
-                }
+                PlaceholderThumbnail(
+                    seed = project.id,
+                    modifier = Modifier.fillMaxWidth().aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
+                )
+                ProjectFacts(summary, onOpen)
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     PlaceholderThumbnail(
                         seed = project.id,
-                        modifier = Modifier.width(THUMB_WIDTH).aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
+                        modifier = Modifier.width(thumbWidth).aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
                     )
                     ProjectFacts(summary, onOpen, Modifier.weight(1f))
                 }
             }
-        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ActionChip("Duplicate", onDuplicate)
             ActionChip("Export", onExport, dimmed = true)
@@ -92,6 +92,7 @@ fun ProjectDetailPane(
             modifier = Modifier.weight(1f),
         ) {
             items(media, key = { it.id }) { MediaTile(it) }
+        }
         }
     }
 }
@@ -165,6 +166,8 @@ private fun MediaTile(item: MediaItem) {
 private const val THUMB_RATIO = 1.5f
 private val THUMB_WIDTH = 260.dp
 private val SIDE_BY_SIDE_MIN = 560.dp
+private val SHORT_PANE = 560.dp
+private val SHORT_THUMB_WIDTH = 150.dp
 private const val TILE_RATIO = 1.6f
 private const val MEDIA_COLUMNS = 4
 private const val DIMMED = 0.4f
