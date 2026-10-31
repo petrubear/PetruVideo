@@ -5,19 +5,27 @@ import androidx.lifecycle.viewModelScope
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.ProjectStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
     private val repository: ProjectRepository,
@@ -38,7 +46,16 @@ class ProjectsViewModel @Inject constructor(
 
     val effects = effectChannel.receiveAsFlow()
 
-    val state: StateFlow<ProjectsState> = combine(repository.observeProjects(), ui, ::toState)
+    private val projects = repository.observeProjects()
+
+    /** Media of the project in the detail pane; reloaded when the selection or the projects change. */
+    private val detailMedia: Flow<List<MediaItem>> = combine(projects, ui) { all, ui ->
+        ui.selectedProjectId ?: all.firstOrNull()?.project?.id
+    }.distinctUntilChanged().flatMapLatest { id ->
+        flow { emit(id?.let { repository.loadProject(it)?.timeline?.media?.values?.toList() }.orEmpty()) }
+    }
+
+    val state: StateFlow<ProjectsState> = combine(projects, ui, detailMedia.onStart { emit(emptyList()) }, ::toState)
         .stateIn(viewModelScope, SharingStarted.Eagerly, ProjectsState())
 
     fun onEvent(event: ProjectsEvent) {
@@ -79,7 +96,7 @@ class ProjectsViewModel @Inject constructor(
         viewModelScope.launch { repository.deleteProject(id) }
     }
 
-    private fun toState(all: List<ProjectSummary>, ui: Ui): ProjectsState {
+    private fun toState(all: List<ProjectSummary>, ui: Ui, media: List<MediaItem>): ProjectsState {
         val byFilter = when (ui.filter) {
             ProjectFilter.All -> all
             ProjectFilter.Drafts -> all.filter { it.project.status == ProjectStatus.Draft }
@@ -100,6 +117,7 @@ class ProjectsViewModel @Inject constructor(
             query = ui.query,
             searchOpen = ui.searchOpen,
             selectedProjectId = ui.selectedProjectId,
+            selectedMedia = media,
             pendingDeleteId = ui.pendingDeleteId,
             noResults = all.isNotEmpty() && visible.isEmpty(),
             comingSoon = ui.comingSoon,

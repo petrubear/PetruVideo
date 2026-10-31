@@ -173,4 +173,22 @@ class ProjectsViewModelTest {
         vm.state.value.searchOpen shouldBe false
         vm.state.value.query shouldBe ""
     }
+
+    private fun clip(id: String) = com.petruvideo.core.model.MediaItem(
+        id, com.petruvideo.core.model.MediaKind.Video, "content://x/$id", "$id.mp4", 1_000, 10, 10, 30f, true,
+        com.petruvideo.core.model.Fingerprint(1, 1, 1_000, "video/mp4"),
+    )
+
+    @Test
+    fun `the detail pane loads the media of the selected project, or of the latest one by default`() {
+        val media = mapOf("a" to listOf(clip("m1")), "b" to listOf(clip("m2"), clip("m3")))
+        val repo = FakeProjectsRepository(sample, media)
+        val vm = viewModel(repo)
+        vm.state.value.selectedMedia.map { it.id } shouldContainExactly listOf("m1")
+
+        vm.onEvent(ProjectsEvent.SelectProject("b"))
+
+        vm.state.value.selectedMedia.map { it.id } shouldContainExactly listOf("m2", "m3")
+        vm.state.value.selectedProjectId shouldBe "b"
+    }
 }

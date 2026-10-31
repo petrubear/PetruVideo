@@ -4,13 +4,17 @@ import com.petruvideo.core.data.repo.LoadedProject
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.Timeline
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakeProjectsRepository(initial: List<ProjectSummary> = emptyList()) : ProjectRepository {
+class FakeProjectsRepository(
+    initial: List<ProjectSummary> = emptyList(),
+    private val media: Map<String, List<MediaItem>> = emptyMap(),
+) : ProjectRepository {
     val projects = MutableStateFlow(initial)
     val renamed = mutableListOf<Pair<String, String>>()
     val duplicated = mutableListOf<String>()
@@ -19,7 +23,11 @@ class FakeProjectsRepository(initial: List<ProjectSummary> = emptyList()) : Proj
 
     override fun observeProjects(filter: ProjectFilter, query: String): Flow<List<ProjectSummary>> = projects
 
-    override suspend fun loadProject(id: String): LoadedProject? = null
+    override suspend fun loadProject(id: String): LoadedProject? {
+        val items = media[id] ?: return null
+        val summary = projects.value.firstOrNull { it.project.id == id } ?: return null
+        return LoadedProject(summary.project, Timeline(id, media = items.associateBy { it.id }))
+    }
 
     override suspend fun createProject(): Project {
         created++

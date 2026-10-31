@@ -41,6 +41,7 @@ import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.Spacing
+import com.petruvideo.core.designsystem.adaptive.HingeBounds
 import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.projects.ProjectsEvent
@@ -62,22 +63,28 @@ fun ProjectsScreen(
     modifier: Modifier = Modifier,
     wideContent: Boolean = false,
     nowMs: Long = System.currentTimeMillis(),
+    twoPane: Boolean = false,
+    hinge: HingeBounds? = null,
 ) {
     var renamingId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Box(modifier.fillMaxSize().background(PetruColors.Background)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Header(state, onEvent)
-            ProjectsGrid(
-                state = state,
-                onEvent = onEvent,
-                nowMs = nowMs,
-                wideContent = wideContent,
-                onRename = { renamingId = it },
-                modifier = Modifier.weight(1f),
-            )
+        if (twoPane) {
+            ProjectsTwoPane(state, onEvent, nowMs, hinge)
+        } else {
+            Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                Header(state, onEvent)
+                ProjectsGrid(
+                    state = state,
+                    onEvent = onEvent,
+                    nowMs = nowMs,
+                    wideContent = wideContent,
+                    onRename = { renamingId = it },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            BottomNavigation(onEvent, Modifier.align(Alignment.BottomCenter))
         }
-        BottomNavigation(onEvent, Modifier.align(Alignment.BottomCenter))
         state.comingSoon?.let { ComingSoonMessage(it, onEvent, Modifier.align(Alignment.BottomCenter)) }
     }
 

@@ -7,7 +7,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import com.petruvideo.core.designsystem.PetruColors
+import com.petruvideo.core.designsystem.adaptive.AdaptiveScaffold
 import com.petruvideo.core.designsystem.adaptive.Arrangement
+import com.petruvideo.feature.importmedia.ui.AddMediaPanel
 import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.feature.importmedia.ui.AddMediaScreen
@@ -46,15 +52,21 @@ fun AddMediaRoute(
             }
         }
     }
-    AddMediaScreen(
-        state = state,
-        onEvent = viewModel::onEvent,
+    val screen: @Composable (Int) -> Unit = { columns ->
+        AddMediaScreen(state = state, onEvent = viewModel::onEvent, columns = columns)
+    }
+    AdaptiveScaffold(
+        arrangement = arrangement,
         modifier = modifier,
-        columns = columnsFor(arrangement),
+        compact = { screen(columnsFor(arrangement)) },
+        expanded = { AddMediaPanel { screen(EXPANDED_COLUMNS) } },
+        // Tabletop: the picker fills the half below the hinge and the area above stays free.
+        tabletopTop = { Box(Modifier.fillMaxSize().background(PetruColors.Background)) },
+        tabletopBottom = { screen(EXPANDED_COLUMNS) },
     )
 }
 
-private fun columnsFor(arrangement: Arrangement): Int = when (arrangement) {
+internal fun columnsFor(arrangement: Arrangement): Int = when (arrangement) {
     is Arrangement.Compact -> if (arrangement.wideContent) MEDIUM_COLUMNS else COMPACT_COLUMNS
     else -> EXPANDED_COLUMNS
 }

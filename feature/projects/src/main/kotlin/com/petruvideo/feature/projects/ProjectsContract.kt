@@ -1,5 +1,6 @@
 package com.petruvideo.feature.projects
 
+import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectSummary
 
@@ -15,6 +16,8 @@ data class ProjectsState(
     val searchOpen: Boolean = false,
     /** Selected project in the two-pane (expanded) layout. */
     val selectedProjectId: String? = null,
+    /** Media of the project shown in the detail pane (the selected one, else the latest). */
+    val selectedMedia: List<MediaItem> = emptyList(),
     val pendingDeleteId: String? = null,
     /** True when a query or filter hides every project that exists. */
     val noResults: Boolean = false,
