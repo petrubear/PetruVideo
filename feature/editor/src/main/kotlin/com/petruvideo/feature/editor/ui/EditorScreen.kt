@@ -19,7 +19,13 @@ import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
+import com.petruvideo.core.designsystem.adaptive.AdaptiveScaffold
+import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.model.Availability
+import com.petruvideo.feature.editor.editorShortcuts
+import com.petruvideo.feature.editor.ui.expanded.ExpandedEditorLayout
+import com.petruvideo.feature.editor.ui.tabletop.TabletopControlsHalf
+import com.petruvideo.feature.editor.ui.tabletop.TabletopPreviewHalf
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import kotlinx.coroutines.delay
@@ -38,8 +44,29 @@ fun EditorScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Box(modifier.fillMaxSize().background(PetruColors.Background).editorShortcuts(state, onEvent)) {
+        AdaptiveScaffold(
+            arrangement = LocalArrangement.current,
+            compact = { CompactEditor(state, player, onEvent, onBack) },
+            expanded = { hinge -> ExpandedEditorLayout(state, player, hinge, onEvent, onBack) },
+            tabletopTop = { TabletopPreviewHalf(state, player, onBack, onEvent) },
+            tabletopBottom = { TabletopControlsHalf(state, onEvent) },
+        )
+        Banner(state, onEvent, Modifier.align(Alignment.BottomCenter).padding(bottom = 168.dp))
+        if (state.fullscreen) FullscreenPreview(player, onClose = { onEvent(EditorEvent.SetFullscreen(false)) })
+    }
+}
+
+/** The phone layout, which medium widths use as is. */
+@Composable
+private fun CompactEditor(
+    state: EditorState,
+    player: Player?,
+    onEvent: (EditorEvent) -> Unit,
+    onBack: () -> Unit,
+) {
     val timeline = state.timeline
-    Box(modifier.fillMaxSize().background(PetruColors.Background)) {
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
             PreviewSurface(player, Modifier.fillMaxWidth().height(232.dp))
@@ -75,8 +102,6 @@ fun EditorScreen(
                 MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
             }
         }
-        Banner(state, onEvent, Modifier.align(Alignment.BottomCenter).padding(bottom = 168.dp))
-        if (state.fullscreen) FullscreenPreview(player, onClose = { onEvent(EditorEvent.SetFullscreen(false)) })
     }
 }
 

@@ -318,4 +318,27 @@ class EditorViewModelTest {
         e.state.timeline?.audioLane?.first()?.lengthMs shouldBe 1_000
         e.state.message shouldBe "Clip shortened to fit the new file"
     }
+
+    @Test
+    fun `stepping clips jumps to clip boundaries`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.StepClip(1))
+        e.state.playback.positionMs shouldBe 4_000
+        e.vm.onEvent(EditorEvent.StepClip(1))
+        e.state.playback.positionMs shouldBe 7_000
+        e.vm.onEvent(EditorEvent.StepClip(-1))
+        e.state.playback.positionMs shouldBe 4_000
+        e.vm.onEvent(EditorEvent.StepClip(-1))
+        e.state.playback.positionMs shouldBe 0
+    }
+
+    @Test
+    fun `adding project media at a time inserts it there`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.AddMediaAt("m3", atMs = 4_000))
+        e.state.timeline?.videoLane?.size shouldBe 4
+        e.state.timeline?.videoLane?.get(1)?.mediaItemId shouldBe "m3"
+        e.vm.onEvent(EditorEvent.AddMediaAt("d"))
+        e.state.timeline?.audioLane?.size shouldBe 2
+    }
 }

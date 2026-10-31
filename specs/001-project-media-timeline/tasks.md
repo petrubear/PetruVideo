@@ -229,26 +229,26 @@ Note: US5 delivers the expanded and tabletop layouts; the adaptive foundation (T
 ### Tests for User Story 5
 
 - [ ] T107 [P] [US5] Write failing `app/src/androidTest/kotlin/<pkg>/app/ConfigChangeRetentionTest.kt`: rotate, resize, enter split-screen, and fold/unfold via the foldable emulator test APIs while playing; assert same project, playhead, selection, and no activity recreation
-- [ ] T108 [P] [US5] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/HingeAvoidanceTest.kt`: no interactive bounds intersect a separating hinge or occlusion in the tabletop and expanded layouts
+- [X] T108 [P] [US5] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/HingeAvoidanceTest.kt`: no interactive bounds intersect a separating hinge or occlusion in the tabletop and expanded layouts
 - [ ] T109 [P] [US5] Write failing `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/KeyboardAndDragDropTest.kt`: Space, Left/Right, Delete, undo/redo chords; Media panel-to-timeline drag inserts at the drop position; mouse and stylus can select, drag trim handles, scrub, and reorder like touch; hover highlight and wheel scrolling of the timeline
 - [ ] T110 [P] [US5] Write failing `feature/projects/src/androidTest/kotlin/<pkg>/feature/projects/ProjectsTwoPaneTest.kt`: selecting a project shows details and media in the right pane without navigation
 
 ### Implementation for User Story 5
 
-- [ ] T111 [P] [US5] Create `ToolRail.kt` and `MediaPanel.kt` (media grid with Import button) in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/expanded/`
-- [ ] T112 [P] [US5] Create `InspectorPanel.kt` (clip name, length, trim details; Video/Audio/Speed tabs with inactive controls dimmed) in the same package
-- [ ] T113 [US5] Create `ExpandedEditorLayout.kt` composing rail, Media panel, preview with transport, inspector, and a full-width timeline with labeled lanes (depends on T111, T112)
-- [ ] T114 [P] [US5] Create `TabletopEditorLayout.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/tabletop/` (preview above the hinge; previous clip, play, next clip, split; timeline; tool bar below)
-- [ ] T115 [US5] Make `EditorRoute.kt` choose compact, expanded, or tabletop from `AdaptiveScaffold` and keep a single `EditorViewModel` across arrangements (depends on T113, T114)
-- [ ] T116 [US5] Implement `HingeAvoidance.kt` in `core/designsystem/src/main/kotlin/<pkg>/core/designsystem/adaptive/` to pass T108 and apply it in the expanded and tabletop layouts
+- [X] T111 [P] [US5] Create `ToolRail.kt` and `MediaPanel.kt` (media grid with Import button) in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/expanded/`
+- [X] T112 [P] [US5] Create `InspectorPanel.kt` (clip name, length, trim details; Video/Audio/Speed tabs with inactive controls dimmed) in the same package
+- [X] T113 [US5] Create `ExpandedEditorLayout.kt` composing rail, Media panel, preview with transport, inspector, and a full-width timeline with labeled lanes (depends on T111, T112)
+- [X] T114 [P] [US5] Create `TabletopEditorLayout.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/tabletop/` (preview above the hinge; previous clip, play, next clip, split; timeline; tool bar below)
+- [X] T115 [US5] Make `EditorRoute.kt` choose compact, expanded, or tabletop from `AdaptiveScaffold` and keep a single `EditorViewModel` across arrangements (depends on T113, T114)
+- [X] T116 [US5] Implement `HingeAvoidance.kt` in `core/designsystem/src/main/kotlin/<pkg>/core/designsystem/adaptive/` to pass T108 and apply it in the expanded and tabletop layouts
 - [ ] T117 [P] [US5] Create `ProjectDetailPane.kt` (thumbnail, clip count, length, format, Open editor, Duplicate, Export dimmed, Delete, project media grid) in `feature/projects/src/main/kotlin/<pkg>/feature/projects/ui/`
 - [ ] T118 [US5] Create `ProjectsTwoPane.kt` and wire it into `ProjectsScreen.kt` for expanded arrangements to pass T110 (depends on T117)
-- [ ] T119 [P] [US5] Implement Media panel-to-timeline drag and drop in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/expanded/DragDrop.kt` and drop handling in `TimelineView.kt`
+- [X] T119 [P] [US5] Implement Media panel-to-timeline drag and drop in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/expanded/DragDrop.kt` and drop handling in `TimelineView.kt`
 - [ ] T120 [P] [US5] Create `AddMediaPanel.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/ui/`: large centered panel over the editor on expanded width, the half below the hinge in tabletop, 6 grid columns on expanded and 5 on medium width (3 on compact) (FR-027a)
 - [ ] T121 [P] [US5] Write `feature/importmedia/src/androidTest/kotlin/<pkg>/feature/importmedia/AddMediaLayoutTest.kt`: panel on expanded, lower half in tabletop, phone layout with 5 columns on medium, 6 columns in the expanded panel, 3 on compact; selection survives arrangement changes
 - [ ] T122 [P] [US5] Write `feature/editor/src/test/kotlin/<pkg>/feature/editor/MediumWidthLayoutTest.kt` and `feature/projects/src/test/kotlin/<pkg>/feature/projects/MediumWidthLayoutTest.kt`: medium width uses the compact layouts with wider content; multi-pane starts at 840 dp (FR-027b)
 - [ ] T123 [US5] Apply the Projects tabletop rule in `ProjectsScreen.kt` (two-pane on one side of the hinge, compact layout if that area is too narrow) (FR-027b)
-- [ ] T124 [P] [US5] Implement `KeyboardShortcuts.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` (active only when a hardware keyboard is present) to pass T109
+- [X] T124 [P] [US5] Implement `KeyboardShortcuts.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` (active only when a hardware keyboard is present) to pass T109
 - [ ] T125 [US5] Add instrumented test `app/src/androidTest/kotlin/<pkg>/app/CoverScreenFlowTest.kt` on the cover-screen profile: open a project, trim a clip, unfold, assert continuity (FR-026); adjust paddings and touch targets in the compact composables where needed
 - [ ] T126 [US5] Measure layout change time after fold, unfold, and rotation inside `ConfigChangeRetentionTest.kt` (must be under 1 second, SC-009) and confirm `MainActivity` handles configuration changes (see T006)
 - [ ] T127 [US5] Add screenshot tests for Foldable unfolded editor, Foldable tabletop posture, and Foldable projects and media in `feature/editor/src/test/kotlin/<pkg>/feature/editor/FoldScreenshotTest.kt` and `feature/projects/src/test/kotlin/<pkg>/feature/projects/FoldProjectsScreenshotTest.kt`

@@ -13,8 +13,12 @@ import com.petruvideo.core.media.preview.PreviewState
 import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.AddVideoClips
+import com.petruvideo.core.model.engine.AddVideoItem
 import com.petruvideo.core.model.engine.Command
 import com.petruvideo.core.model.engine.CommandResult
 import com.petruvideo.core.model.engine.DetachAudio
@@ -138,6 +142,8 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.TrimClip -> run(trimCommand(event))
             is EditorEvent.MoveAudio -> run(MoveAudioClip(event.clipId, event.newStartMs))
             is EditorEvent.UseTool -> useTool(event.tool)
+            is EditorEvent.AddMediaAt -> addMediaAt(event.mediaItemId, event.atMs)
+            is EditorEvent.StepClip -> stepClip(event.direction)
             is EditorEvent.ReplaceAudio -> run(ReplaceAudio(event.clipId, event.replacement))
             EditorEvent.AddClip -> { pause(); effectChannel.trySend(EditorEffect.OpenAddMedia) }
             is EditorEvent.RequestRelink -> effectChannel.trySend(EditorEffect.PickRelinkFile(event.mediaItemId))
@@ -186,6 +192,31 @@ class EditorViewModel @Inject constructor(
             Notice.Snapped in result.notices -> say("Audio moved to the next free spot")
             Notice.LengthChanged in result.notices -> say("Clip shortened to fit the new file")
         }
+    }
+
+    private fun addMediaAt(mediaItemId: String, atMs: Long?) {
+        val timeline = session.timeline.value ?: return
+        val media = timeline.media[mediaItemId] ?: return
+        val at = atMs ?: engine.state.value.positionMs
+        run(
+            if (media.kind == MediaKind.Audio) {
+                AddAudioClips(listOf(media), at)
+            } else {
+                AddVideoClips(listOf(AddVideoItem(media)), at)
+            },
+        )
+    }
+
+    private fun stepClip(direction: Int) {
+        val timeline = session.timeline.value ?: return
+        val starts = timeline.videoLane.map { timeline.videoStartOf(it.id) ?: 0L } + timeline.videoLengthMs
+        val now = engine.state.value.positionMs
+        val target = if (direction > 0) {
+            starts.firstOrNull { it > now }
+        } else {
+            starts.lastOrNull { it < now - BOUNDARY_SLACK_MS }
+        }
+        seek(target ?: if (direction > 0) timeline.totalDurationMs else 0L)
     }
 
     private fun trimCommand(event: EditorEvent.TrimClip): Command =
@@ -291,6 +322,7 @@ class EditorViewModel @Inject constructor(
     private companion object {
         const val DEFAULT_FPS = 30
         const val HASH_MIX = 31
+        const val BOUNDARY_SLACK_MS = 300L
     }
 }
 

@@ -18,7 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import com.petruvideo.feature.editor.ui.expanded.mediaDropTarget
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +53,7 @@ fun TimelineView(
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     onAddClip: () -> Unit,
+    onDropMedia: (mediaItemId: String, atMs: Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
     geometry: TimelineGeometry = remember { TimelineGeometry() },
 ) {
@@ -63,7 +70,22 @@ fun TimelineView(
         }
     }
 
-    BoxWithConstraints(modifier.fillMaxSize().background(PetruColors.SurfaceLow)) {
+    var viewportLeftPx by remember { mutableFloatStateOf(0f) }
+    var viewportWidthPx by remember { mutableFloatStateOf(0f) }
+    BoxWithConstraints(
+        modifier
+            .fillMaxSize()
+            .background(PetruColors.SurfaceLow)
+            .onGloballyPositioned {
+                viewportLeftPx = it.positionInWindow().x
+                viewportWidthPx = it.size.width.toFloat()
+            }
+            .mediaDropTarget { id, windowX ->
+                val contentPx = scroll.value + (windowX - viewportLeftPx)
+                val halfPx = viewportWidthPx / 2f
+                onDropMedia(id, geometry.pxToTime((contentPx - halfPx) / density).coerceIn(0L, total))
+            },
+    ) {
         val half = maxWidth / 2
         val contentWidth = geometry.contentWidthPx(total, maxWidth.value).dp
         Box(Modifier.horizontalScroll(scroll)) {

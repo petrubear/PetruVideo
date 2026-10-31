@@ -77,6 +77,10 @@ sealed interface EditorEvent {
     data class MoveAudio(val clipId: String, val newStartMs: Long) : EditorEvent
     /** A tool from the clip tool bar, applied to the current selection. */
     data class UseTool(val tool: ClipTool) : EditorEvent
+    /** Adds a media item already in the project at [atMs], or at the playhead when null (Media panel tap or drop). */
+    data class AddMediaAt(val mediaItemId: String, val atMs: Long? = null) : EditorEvent
+    /** Jumps the playhead to the previous (-1) or next (+1) video clip boundary. */
+    data class StepClip(val direction: Int) : EditorEvent
     data class ReplaceAudio(val clipId: String, val replacement: MediaItem) : EditorEvent
     /** The timeline's add clip button: opens Add media. */
     data object AddClip : EditorEvent
