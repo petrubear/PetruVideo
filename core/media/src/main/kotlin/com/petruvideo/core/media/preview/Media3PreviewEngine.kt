@@ -68,6 +68,8 @@ class Media3PreviewEngine @Inject constructor(
         }
     }
 
+    private var playbackStats: PlaybackStats? = null
+
     private fun isDebuggable() =
         context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
 
@@ -78,6 +80,7 @@ class Media3PreviewEngine @Inject constructor(
             .also {
                 it.addListener(listener)
                 if (isDebuggable()) PlaybackStats().let { stats ->
+                    playbackStats = stats
                     it.setVideoFrameMetadataListener(stats)
                     it.addAnalyticsListener(stats)
                 }
@@ -99,7 +102,10 @@ class Media3PreviewEngine @Inject constructor(
 
     // With nothing to play (an empty project) the player has no composition and rejects play and seek.
     override fun play() {
-        if (hasComposition) compositionPlayer?.play()
+        if (hasComposition) {
+            playbackStats?.playRequested()
+            compositionPlayer?.play()
+        }
     }
 
     override fun pause() {

@@ -24,6 +24,12 @@ internal class PlaybackStats : VideoFrameMetadataListener, AnalyticsListener {
     private var frames = 0
     private var dropped = 0
     private var maxGapMs = 0.0
+    private var playRequestedAtMs = 0L
+
+    /** Call when the user presses Play; the next rendered frame logs how long it took to appear. */
+    fun playRequested() {
+        playRequestedAtMs = android.os.SystemClock.elapsedRealtime()
+    }
 
     override fun onVideoFrameAboutToBeRendered(
         presentationTimeUs: Long,
@@ -31,6 +37,11 @@ internal class PlaybackStats : VideoFrameMetadataListener, AnalyticsListener {
         format: Format,
         mediaFormat: android.media.MediaFormat?,
     ) {
+        if (playRequestedAtMs != 0L) {
+            val waited = android.os.SystemClock.elapsedRealtime() - playRequestedAtMs
+            Log.i(TAG, "play to first frame: $waited ms")
+            playRequestedAtMs = 0L
+        }
         if (windowStartNs == 0L) windowStartNs = releaseTimeNs
         if (lastFrameNs != 0L) maxGapMs = maxOf(maxGapMs, (releaseTimeNs - lastFrameNs) / NS_PER_MS)
         lastFrameNs = releaseTimeNs
