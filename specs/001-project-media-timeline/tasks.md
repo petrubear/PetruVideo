@@ -150,8 +150,8 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 ### Tests for User Story 3
 
-- [ ] T063 [P] [US3] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/MoveAndRelinkCommandsTest.kt`: `MoveVideoClip` reorders and attached audio follows, `RelinkMedia` keeps trim and clamps to the new length
-- [ ] T064 [P] [US3] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/TimelineGeometryTest.kt`: time-to-pixel mapping, ruler ticks, playhead-centered scrolling, clip hit-testing
+- [X] T063 [P] [US3] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/MoveAndRelinkCommandsTest.kt`: `MoveVideoClip` reorders and attached audio follows, `RelinkMedia` keeps trim and clamps to the new length
+- [X] T064 [P] [US3] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/TimelineGeometryTest.kt`: time-to-pixel mapping, ruler ticks, playhead-centered scrolling, clip hit-testing
 - [ ] T065 [P] [US3] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/EditorViewModelTest.kt`: seek, play/pause, selection, undo/redo availability, inactive tool tap shows "coming soon", missing clip handling, thumbnail refresh when the first clip changes
 - [ ] T066 [P] [US3] Write failing `core/media/src/androidTest/kotlin/<pkg>/core/media/waveform/WaveformPeaksTest.kt`: peaks computed once, cached by fingerprint, no waveform for silent video
 - [ ] T067 [P] [US3] Write failing `core/media/src/androidTest/kotlin/<pkg>/core/media/preview/PreviewEngineTest.kt`: continuous playback across clip boundaries, seek accuracy, A/V sync tolerance, clips of a different size or frame rate fitted inside the frame without cropping or stretching, missing clips skipped with a placeholder, overlapping audio mixed
@@ -159,7 +159,7 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 ### Implementation for User Story 3
 
 - [ ] T068 [US3] Run Spike 1 (two-lane preview with scrub and boundary continuity on a reference mid-range device; 30 fps and A/V sync within 40 ms) and record the decision and the reference device model and class in `specs/001-project-media-timeline/research.md` section 1
-- [ ] T069 [US3] Implement `MoveVideoClip` and `RelinkMedia` commands in `core/model/src/main/kotlin/<pkg>/core/model/engine/` to pass T063
+- [X] T069 [US3] Implement `MoveVideoClip` and `RelinkMedia` commands in `core/model/src/main/kotlin/<pkg>/core/model/engine/` to pass T063
 - [ ] T070 [US3] Define the `PreviewEngine` interface in `core/media/src/main/kotlin/<pkg>/core/media/preview/PreviewEngine.kt` (load timeline, play, pause, seek, position flow, release)
 - [ ] T071 [US3] Implement `Media3PreviewEngine.kt` in the same package per the Spike 1 decision to pass T067 (depends on T068, T070); done only when a 30 fps / A/V sync measurement on the reference device is recorded in research.md section 1 (constitution Principle III); fits mismatched clips inside the frame and skips missing clips
 - [ ] T072 [P] [US3] Implement `ThumbnailStripGenerator.kt` in `core/media/src/main/kotlin/<pkg>/core/media/thumbs/` (fixed time steps, disk cache keyed by fingerprint, bounded dispatcher, cancellable)
