@@ -11,7 +11,7 @@ All times are integer milliseconds. The engine types live in `core:model` with n
 | createdAt, modifiedAt | timestamp | `modifiedAt` updated on every saved edit |
 | status | enum `Draft`, `Exported` | `Exported` is set by the later export feature |
 | format | `ProjectFormat?` | Null until the first clip is added |
-| thumbnailRef | text? | Cache key of the first video frame |
+| thumbnailRef | text? | Cache key of the first frame of the first clip on the timeline |
 | schemaVersion | int | For migrations |
 
 **ProjectFormat**: `width`, `height` (px), `fps` (24, 30, or 60). Set once from the first clip (research 4); never recalculated, even if that clip is later removed.
@@ -34,7 +34,7 @@ All times are integer milliseconds. The engine types live in `core:model` with n
 | fingerprint | `{sizeBytes, lastModified, durationMs, mimeType}` | For missing/relink detection |
 | availability | enum `Available`, `Missing` | Recomputed when a project opens |
 
-**Rules**: importing the same file twice creates two MediaItems (same uri, different ids). Removing a MediaItem that clips use is not allowed; delete the clips first.
+**Rules**: importing the same file twice creates two MediaItems (same uri, different ids). MediaItems are created only when an item is added to the timeline (there is no separate library); a MediaItem that no clip references any more is removed on the next save. The editor's Media panel and the project detail list the MediaItems currently referenced by clips.
 
 ## Timeline
 
@@ -56,7 +56,7 @@ All times are integer milliseconds. The engine types live in `core:model` with n
 | sourceStartMs, sourceEndMs | long | The trim; for photos, start is 0 and end is the chosen duration |
 | attachedAudio | boolean | True while the video's sound is part of this clip; false after Detach or if the source has no sound |
 
-**Validation**: `0 <= sourceStartMs`, `sourceEndMs <= media duration` (videos), and `sourceEndMs - sourceStartMs >= 100`. Photo duration between 500 and 60000.
+**Validation**: `0 <= sourceStartMs`, `sourceEndMs <= media duration` (videos), and `sourceEndMs - sourceStartMs >= 100`. Photo duration between 500 and 60000, changed by dragging the trim handles (which can lengthen as well as shorten photo clips).
 
 ## AudioClip
 
@@ -69,7 +69,7 @@ All times are integer milliseconds. The engine types live in `core:model` with n
 | muted | boolean | |
 | origin | enum `Detached`, `Added` | Informational; drives the "Detached" label |
 
-**Validation**: same minimum length as video clips; clips on the audio lane do not overlap (a move or add that would overlap is rejected or snapped to the nearest free position; see engine contract).
+**Validation**: same minimum length as video clips; audio clips never overlap each other: an add or move that would overlap snaps to the next free position and returns a `Snapped` notice. An audio clip may overlap a video clip's attached sound; both play together.
 
 ## Selection (editor state, not persisted)
 

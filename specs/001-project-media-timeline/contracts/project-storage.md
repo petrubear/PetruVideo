@@ -11,7 +11,7 @@ Room database `petruvideo.db`. Original media is never copied, moved, or modifie
 | `video_clip` | `id` PK, `projectId` FK (cascade), `mediaItemId` FK, `orderIndex`, `sourceStartMs`, `sourceEndMs`, `attachedAudio` | Unique (`projectId`, `orderIndex`) |
 | `audio_clip` | `id` PK, `projectId` FK (cascade), `mediaItemId` FK, `timelineStartMs`, `sourceStartMs`, `sourceEndMs`, `muted`, `origin` | Index on (`projectId`, `timelineStartMs`) |
 
-Availability is not stored; it is recomputed when a project opens.
+Availability is not stored; it is recomputed when a project opens. `media_item` rows are written only when items are added to the timeline, and rows no clip references are deleted on the next save.
 
 ## Operations
 

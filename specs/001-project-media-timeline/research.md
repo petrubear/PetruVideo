@@ -48,15 +48,15 @@ All Technical Context unknowns are resolved here. Library versions are deliberat
 
 ## 8. Adaptive layout and fold posture
 
-- **Decision**: A single `AdaptiveEditorScaffold` chooses the layout from window size class and `FoldingFeature` state: compact -> phone layout; expanded and flat -> multi-pane (rail, library, preview, inspector, timeline); half-opened with horizontal fold -> tabletop (preview above the hinge, controls below); separating hinge -> content split so no interactive element crosses it. Layout choice is a pure function of an `ArrangementInput` so it is unit-testable. The activity handles resize and fold configuration changes itself so the player and view models survive.
+- **Decision**: A single `AdaptiveEditorScaffold` chooses the layout from window size class and `FoldingFeature` state: compact and medium (600 to 839 dp) -> phone layout, with wider content (more grid columns) on medium; expanded (840 dp and up) and flat -> multi-pane (rail, library, preview, inspector, timeline); half-opened with horizontal fold -> tabletop (preview above the hinge, controls below); separating hinge -> content split so no interactive element crosses it. Layout choice is a pure function of an `ArrangementInput` so it is unit-testable. The activity handles resize and fold configuration changes itself so the player and view models survive.
 - **Rationale**: Satisfies Principle VIII and FR-023 to FR-027 without per-device branches. A pure function makes SC-009 and SC-010 testable without hardware.
 - **Alternatives considered**: Separate activities per posture (state loss, restarts); device-model checks (fragile).
 
 ## 9. Design conformance
 
-- **Decision**: Implement the designer's tokens (colors, typography, spacing, radii, track colors) in `core:designsystem` and a screenshot test per designed artboard and layout. Reference images are exported from the designer's canvas into the repo's test resources; differences beyond a tolerance fail the build, and approved deviations are recorded in the design notes.
-- **Rationale**: Gives SC-008 an objective check instead of eyeballing.
-- **Alternatives considered**: Manual design review only (misses regressions).
+- **Decision**: Implement the designer's tokens (colors, typography, spacing, radii, track colors) in `core:designsystem` and a screenshot test per designed screen and layout. Golden images are generated from the Compose UI and approved by the designer; the designer's canvas exports live in `design/reference/` for side-by-side review only and are never pixel-compared (their footage is placeholder gradients and their text rendering differs). Approved deviations are recorded in `design/reference/README.md`.
+- **Rationale**: Gives SC-008 an objective regression check without comparing against mock images that can never match pixel for pixel.
+- **Alternatives considered**: Pixel comparison against the mock images (constant false failures); manual design review only (misses regressions).
 - **Open**: Choose the screenshot-testing tool at scaffolding (Paparazzi or the Compose preview screenshot testing library) based on current Gradle/AGP compatibility.
 
 ## 10. Large-screen input
@@ -66,10 +66,26 @@ All Technical Context unknowns are resolved here. Library versions are deliberat
 
 ## 11. Dependency injection and navigation
 
-- **Decision**: Hilt for DI; Navigation Compose with a three-destination graph (Projects, Add media, Editor). Add media opens as a full-screen destination on compact and as a pane/dialog on expanded.
+- **Decision**: Hilt for DI; Navigation Compose with a three-destination graph (Projects, Add media, Editor). Add media opens as a full-screen destination on compact and medium, as a large centered panel over the editor on expanded, and fills the half below the hinge in tabletop posture.
 - **Rationale**: Standard, testable, and compatible with the module split.
 
 ## 12. Minimum clip length and photo duration
 
-- **Decision**: Minimum clip length 100 ms; photo default 5 s, adjustable 0.5 s to 60 s.
-- **Rationale**: Prevents zero-length clips (FR-019) and gives photos a sensible range; both are constants in `core:model` and easy to change.
+- **Decision**: Minimum clip length 100 ms; photo default 5 s, adjustable 0.5 s to 60 s by dragging the trim handles, which can lengthen as well as shorten photo clips (no separate duration command).
+- **Rationale**: Prevents zero-length clips (FR-019) and gives photos a sensible range without a new control; constants live in `core:model` and are easy to change.
+
+## 13. Audio placement and overlap
+
+- **Decision**: Audio clips never overlap each other; a placement or move that would overlap snaps to the next free position and returns a `Snapped` notice. Audio clips may overlap a video's attached sound, and the preview mixes both.
+- **Rationale**: Allows music over original sound while keeping one audio lane; extra lanes belong to the later audio feature.
+
+## 14. Reference devices
+
+- **Decision**: The mid-range reference device (phone from the last three years, about 6 GB of RAM, mid-tier chipset) and the foldable test device or emulator profile are chosen and recorded as part of Spike 1 (tasks T068).
+- **Primary device**: the owner's physical Samsung Fold is the primary foldable target; its exact model, OS and One UI version, and cover and inner window sizes are recorded during Spike 1 and used to validate the arrangement rules (including half-open posture, split-screen, and pop-up windows).
+- **Rationale**: SC-003, SC-004, and SC-009 need a named device class to be checkable.
+
+## 15. Memory and thermal pressure
+
+- **Decision**: A `ResourcePressureMonitor` listens to memory trim callbacks and thermal status and tells the preview engine and thumbnail generators to step down quality (preview resolution and frame rate, thumbnail size), restoring when pressure clears. Edits are never affected because they live in the session and autosave.
+- **Rationale**: Meets Principle VII for this feature without blocking the user; export-specific handling belongs to the later export feature.

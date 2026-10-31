@@ -42,3 +42,5 @@
 - All items pass. Updated from the first spec to follow the designer's screens and the v1.1.0 constitution.
 - Defaults recorded in Assumptions: inactive tools for later features are shown but disabled; the media-access vs. no-broad-access import path.
 - Clarify session 2026-10-30: 5 questions resolved (project format, missing media, inactive tools, attached audio with Detach, no linking needed). Design updated: Detach added to the clip tool bar and a "Detached audio selected" screen added.
+- Clarify session 2 (from analysis): Add media on expanded/tabletop, library removed, add placement at playhead, audio overlap rules, photo duration via trim handles. Open design items: Add media expanded panel and tabletop placement, "Add to library" button removal, progress bar meaning.
+- Clarify session 3 (all analysis items): pointer/stylus parity, memory and thermal pressure, add placement wording, scenario cleanup, column counts, single add button, plan structure, task renumbering (T001 to T137), Samsung Fold as primary device. Design canvas updated: expanded Add media panel, tabletop placement, tray and header changes, progress bar caption.

@@ -4,24 +4,23 @@ Pure Kotlin, JVM-only. Every operation is a command applied to an immutable `Tim
 
 ## Command result
 
-`Applied(newTimeline, label)` or `Rejected(reason)`. Rejections never change state. Reasons: `OutOfRange`, `BelowMinimumLength`, `Overlap`, `NoAttachedAudio`, `NotFound`, `MissingMedia`.
+`Applied(newTimeline, label, notices)` or `Rejected(reason)`. Rejections never change state. Reasons: `OutOfRange`, `BelowMinimumLength`, `NoAttachedAudio`, `NotFound`, `MissingMedia`. Notices attached to an applied result: `Snapped` (an audio clip moved to the next free position), `LengthChanged` (a replacement audio was shorter or was trimmed to fit).
 
 ## Commands
 
 | Command | Inputs | Preconditions | Effect |
 |---------|--------|---------------|--------|
-| `AddVideoClips` | list of (mediaItem, optional trim), insertAtMs | Media available | Inserts into the video lane at the playhead boundary or end; sets project format if unset; sets `attachedAudio` from `hasAudio` |
-| `AddAudioClips` | list of audio mediaItems, startMs | Media is audio | Places clips on the audio lane in order from `startMs`; rejects overlaps |
-| `TrimStart` / `TrimEnd` | clipId, newSourceMs | Result length >= 100 ms and within source bounds | Updates the trim; for video clips later clips shift automatically |
+| `AddVideoClips` | list of (mediaItem, optional trim), playheadMs | Media available | Inserts in selection order after the clip under the playhead (at the playhead if it sits on a clip boundary, at the start if the lane is empty); sets project format if unset; sets `attachedAudio` from `hasAudio` |
+| `AddAudioClips` | list of audio mediaItems, playheadMs | Media is audio | Places clips on the audio lane starting at the playhead and following each other in selection order; a clip that would overlap another audio clip snaps to the next free position with a `Snapped` notice; overlapping a video's attached sound is allowed |
+| `TrimStart` / `TrimEnd` | clipId, newSourceMs | Result length >= 100 ms and within source bounds; for photo clips the result is between 500 and 60000 ms (photos have no source bound) | Updates the trim, including lengthening photo clips; for video clips later clips shift automatically |
 | `Split` | clipId, atMs | `atMs` strictly inside the clip with both halves >= 100 ms | Replaces the clip with two contiguous clips; attached audio preserved |
 | `Duplicate` | clipId | Clip exists | Inserts a copy right after (video) or at the next free position (audio) |
 | `Delete` | clipId | Clip exists | Removes the clip; a video clip's attached audio goes with it; detached audio stays |
 | `MoveVideoClip` | clipId, newIndex | Valid index | Reorders; attached audio follows; detached audio does not move |
-| `MoveAudioClip` | clipId, newStartMs | No overlap | Repositions on the audio lane |
+| `MoveAudioClip` | clipId, newStartMs | Valid position | Repositions on the audio lane; an overlap with another audio clip snaps to the next free position with a `Snapped` notice |
 | `DetachAudio` | videoClipId | `attachedAudio` is true | Creates a `Detached` audio clip with the same source range and start; clears `attachedAudio` |
 | `ReplaceAudio` | audioClipId, newMediaItem | Media is audio | Keeps `timelineStartMs` and length; trims the new source to fit; if shorter, the clip shortens and the result carries a `LengthChanged` notice |
 | `SetMuted` | audioClipId, muted | Clip exists | Toggles mute |
-| `SetPhotoDuration` | videoClipId, durationMs | Clip is a photo; 500 to 60000 | Updates duration |
 | `RelinkMedia` | mediaItemId, newMediaItem | Compatible kind | Rebinds clips that use the item, clamping trims to the new source length |
 
 ## History

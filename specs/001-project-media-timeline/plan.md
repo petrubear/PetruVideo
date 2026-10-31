@@ -18,11 +18,11 @@ Build the foundation of PetruVideo: a project list, multi-select media import, a
 
 **Testing**: JUnit + Turbine + Kotest assertions on the JVM for the editing engine and view models; Compose UI tests and instrumented tests for flows; screenshot tests for design conformance on each screen and layout; manual device matrix for fold/unfold and tabletop.
 
-**Target Platform**: Android, minSdk 26, targetSdk tracks latest stable; phones, tablets, and foldables (inner display flat and tabletop, cover screen).
+**Target Platform**: Android, minSdk 26, targetSdk tracks latest stable; phones, tablets, and foldables (inner display flat and tabletop, cover screen). The owner's physical Samsung Fold is the primary foldable target and must work flawlessly; its model, OS version, and window sizes are recorded in Spike 1.
 
 **Project Type**: mobile-app (single Android application, multi-module Gradle build)
 
-**Performance Goals**: 30 fps preview of 1080p footage on a mid-range device; UI interactions under 100 ms; 20-file import with all thumbnails visible in under 15 seconds; layout adaptation after fold/unfold under 1 second.
+**Performance Goals**: 30 fps preview of 1080p footage on a mid-range reference device (phone from the last three years, about 6 GB RAM, mid-tier chipset; model recorded in Spike 1); UI interactions under 100 ms; 20-file import with all thumbnails visible in under 15 seconds; layout adaptation after fold/unfold under 1 second.
 
 **Constraints**: offline-capable; no work lost beyond ~5 seconds after process death; originals byte-identical after editing; heavy work off the main thread and cancellable; no activity restart on fold, rotation, or resize.
 
@@ -41,7 +41,7 @@ Build the foundation of PetruVideo: a project list, multi-select media import, a
 | V. Test-First on Core Logic | Editing engine in a JVM-only module, built test-first; screenshot + UI tests for flows | PASS |
 | VI. Clean Architecture and Modularity | Modules: `core:model` (engine), `core:data`, `core:media`, `core:designsystem`, `feature:*`; UDF with immutable UI state; Hilt DI; engine has no Android imports | PASS |
 | VII. Privacy, Safety, Resources | Media stays on-device; just-in-time permissions with Photo Picker alternative; no cloud; missing-media and low-storage handling | PASS |
-| VIII. Adaptive and Foldable-First UI | Window size classes + WindowManager posture as UI state; state in view models/saved state; layouts for compact, expanded, tabletop; cover screen uses compact | PASS |
+| VIII. Adaptive and Foldable-First UI | Window size classes + WindowManager posture as UI state; state in view models/saved state; layouts for compact, medium (compact layouts, wider content), expanded, tabletop for every screen including Add media and Projects; cover screen uses compact | PASS |
 
 No violations. Complexity Tracking is empty.
 
@@ -79,6 +79,10 @@ feature/
 └── editor/                       # Editor screen: preview, transport, timeline, clip tool bars, inspector, tabletop layout
 gradle/libs.versions.toml         # Version catalog
 build-logic/                      # Convention plugins (Android library, Compose, Hilt, test config)
+benchmark/                        # Macrobenchmarks: startup, scrolling, 1080p playback frame rate, 20-file import timing
+design/reference/                 # Designer canvas exports, for side-by-side review only (golden screenshots live with the tests)
+docs/                             # Architecture notes (modules, state flow, arrangements)
+licenses/                         # Licenses for fonts, test media, and bundled assets
 
 core/model/src/test/              # Engine unit tests (JVM)
 core/data/src/androidTest/        # Room and migration tests

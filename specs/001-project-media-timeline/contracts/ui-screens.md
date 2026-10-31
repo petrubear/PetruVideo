@@ -8,9 +8,10 @@ Design artboards: Projects, Multi-import, Timeline and trim, Detached audio sele
 
 | Arrangement | When | Layout |
 |-------------|------|--------|
-| Compact | Compact width, or the cover screen | Single pane, designed phone layout |
-| Expanded | Medium/expanded width, flat | Multi-pane as designed (editor: rail, library, preview, inspector, timeline; projects: list + detail) |
-| Tabletop | Half-opened with horizontal fold | Editor only: preview on one side of the hinge, transport, timeline, and tool bar on the other |
+| Compact | Compact width (under 600 dp), or the cover screen | Single pane, designed phone layout |
+| Compact, wide content | Medium width (600 to 839 dp) | Same layouts as compact with more grid columns and a content max width |
+| Expanded | Expanded width (840 dp and up), flat | Multi-pane as designed (editor: rail, Media panel, preview, inspector, timeline; projects: list + detail). Add media is a large centered panel over the editor |
+| Tabletop | Half-opened with horizontal fold | Editor: preview on one side of the hinge, transport, timeline, and tool bar on the other; Add media fills the half below the hinge. Projects: two-pane on one side of the hinge, or the compact layout if that area is too narrow |
 
 No interactive element may overlap a separating hinge or fold occlusion. Changing arrangement preserves screen state.
 
@@ -24,13 +25,13 @@ No interactive element may overlap a separating hinge or fold occlusion. Changin
 ## AddMediaScreen
 
 - **State**: `tab: Videos | Photos | Audio`, `albums`, `selectedAlbum`, `items` (thumbnail, duration, isSelected, selectionIndex), `selection` (ordered), `totalDurationMs`, `permission: Granted | Partial | Denied | NotAsked`, `importProgress`.
-- **Events**: `SwitchTab`, `SwitchAlbum`, `ToggleItem(id)`, `AddToLibrary`, `AddToTimelineInOrder`, `Close`, `RequestAccess`, `OpenSystemPicker`, `CancelImport`.
+- **Events**: `SwitchTab`, `SwitchAlbum`, `ToggleItem(id)`, `AddToTimelineInOrder` (the only add action; there is no library), `Close`, `RequestAccess`, `OpenSystemPicker`, `CancelImport`.
 - **Rules**: selection persists across tab and album changes; deselecting renumbers; per-file errors are reported without stopping the batch.
 
 ## EditorScreen
 
-- **State**: `project` (name, format label, save status), `timeline`, `selection`, `playback` (isPlaying, positionMs, durationMs), `canUndo`, `canRedo`, `arrangement`, `libraryItems`, `missingMedia: Set`, `toolbar` (active tab Edit; others dimmed), `clipTools` (derived from selection), `inspector` (expanded only).
-- **Events**: `Play`, `Pause`, `SeekTo(ms)`, `StepFrame(dir)`, `Select(clip)`, `Trim(clip, edge, ms)`, `Split`, `Duplicate`, `Delete`, `DetachAudio`, `ReplaceAudio(media)`, `Mute(clip, muted)`, `MoveClip(...)`, `AddClips(...)`, `SetPhotoDuration`, `Undo`, `Redo`, `Fullscreen`, `Relink(media)`, `RemoveMissing(clip)`, `TapInactiveTool(tool)`, drag-and-drop from library.
+- **State**: `project` (name, format label, save status), `timeline`, `selection`, `playback` (isPlaying, positionMs, durationMs), `canUndo`, `canRedo`, `arrangement`, `projectMedia` (media referenced by clips, for the Media panel), `missingMedia: Set`, `toolbar` (active tab Edit; others dimmed), `clipTools` (derived from selection), `inspector` (expanded only).
+- **Events**: `Play`, `Pause`, `SeekTo(ms)`, `StepFrame(dir)`, `Select(clip)`, `Trim(clip, edge, ms)`, `Split`, `Duplicate`, `Delete`, `DetachAudio`, `ReplaceAudio(media)`, `Mute(clip, muted)`, `MoveClip(...)`, `AddClips(...)`, `Undo`, `Redo`, `Fullscreen`, `Relink(media)`, `RemoveMissing(clip)`, `TapInactiveTool(tool)`, drag-and-drop from the Media panel. Photo duration changes through `Trim` on a photo clip.
 - **Clip tools by selection**:
   - Video clip: Split, Speed (dimmed), Volume (dimmed), Detach (only when `attachedAudio`), Duplicate, Delete.
   - Audio clip: Split, Mute, Replace, Duplicate, Delete.
