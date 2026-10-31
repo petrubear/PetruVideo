@@ -9,6 +9,8 @@ import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.ProjectStatus
+import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.VideoClip
 
 fun ProjectEntity.toModel() = Project(
@@ -68,20 +70,30 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
     fpMimeType = fingerprint.mimeType,
 )
 
-fun VideoClipEntity.toModel() =
-    VideoClip(id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent)
+fun VideoClipEntity.toModel() = VideoClip(
+    id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
+    reverb = reverb.toModel(),
+)
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
+        muted, reverb.toColumns(),
     )
 
 fun AudioClipEntity.toModel() = AudioClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin),
-    speedMilli, volumePercent,
+    speedMilli, volumePercent, reverb.toModel(),
 )
 
 fun AudioClip.toEntity(projectId: String) = AudioClipEntity(
     id, projectId, mediaItemId, timelineStartMs, sourceStartMs, sourceEndMs, muted, origin.name,
-    speedMilli, volumePercent,
+    speedMilli, volumePercent, reverb.toColumns(),
 )
+
+fun ReverbColumns.toModel(): Reverb {
+    val known = ReverbPreset.entries.firstOrNull { it.name == preset } ?: ReverbPreset.Custom
+    return Reverb(enabled, known, room, decayMs, damping, preDelayMs, mix)
+}
+
+fun Reverb.toColumns() = ReverbColumns(enabled, preset.name, roomSize, decayMs, damping, preDelayMs, mix)

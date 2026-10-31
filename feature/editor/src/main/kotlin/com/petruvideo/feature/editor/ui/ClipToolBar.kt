@@ -27,6 +27,7 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.Duplicate -> PetruIcons.Duplicate
     ClipTool.Delete -> PetruIcons.Delete
     ClipTool.Mute -> if (muted) PetruIcons.Volume else PetruIcons.Mute
+    ClipTool.Reverb -> PetruIcons.Reverb
     ClipTool.Replace -> PetruIcons.Replace
 }
 

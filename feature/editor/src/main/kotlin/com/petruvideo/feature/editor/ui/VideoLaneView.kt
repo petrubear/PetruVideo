@@ -114,7 +114,11 @@ fun VideoLaneView(
                     clip.speedMilli,
                     clip.volumePercent.takeIf { clip.attachedAudio },
                     Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp),
+                    reverbOn = clip.attachedAudio && clip.reverb.enabled,
                 )
+                if (clip.muted && clip.attachedAudio && clip.id != selectedClipId) {
+                    MutedBadge(Modifier.align(Alignment.BottomEnd).padding(4.dp))
+                }
                 if (clip.id == selectedClipId) {
                     TrimHandles(
                         geometry = geometry,

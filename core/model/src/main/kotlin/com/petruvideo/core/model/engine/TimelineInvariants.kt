@@ -7,6 +7,7 @@ import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.VOLUME_MAX_PERCENT
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
 
 /**
@@ -17,7 +18,11 @@ object TimelineInvariants {
     fun violations(timeline: Timeline): List<String> = buildList {
         for (clip in timeline.videoLane) {
             val media = timeline.media[clip.mediaItemId]
-            addAll(clipViolations("video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media))
+            addAll(
+                clipViolations(
+                    "video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb,
+                ),
+            )
             if (media?.kind == MediaKind.Photo && clip.speedMilli != SPEED_UNIT) {
                 add("photo clip ${clip.id} has a speed")
             }
@@ -27,7 +32,11 @@ object TimelineInvariants {
         }
         for (clip in timeline.audioLane) {
             val media = timeline.media[clip.mediaItemId]
-            addAll(clipViolations("audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media))
+            addAll(
+                clipViolations(
+                    "audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb,
+                ),
+            )
             if (media != null && outsideSource(media, clip.sourceStartMs, clip.sourceEndMs)) {
                 add("audio clip ${clip.id} trim is outside its source")
             }
@@ -45,7 +54,9 @@ object TimelineInvariants {
         speedMilli: Int,
         volumePercent: Int,
         media: MediaItem?,
+        reverb: Reverb,
     ) = buildList {
+        if (!reverb.inRange) add("$kind clip $id reverb is out of range")
         if (lengthMs < MIN_CLIP_MS) add("$kind clip $id is shorter than $MIN_CLIP_MS ms")
         if (media == null) add("$kind clip $id refers to unknown media")
         if (speedMilli !in SPEED_MIN_MILLI..SPEED_MAX_MILLI) add("$kind clip $id speed is out of range")

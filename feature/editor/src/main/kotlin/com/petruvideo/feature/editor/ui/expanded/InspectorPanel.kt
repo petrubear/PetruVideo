@@ -15,11 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
+import com.petruvideo.core.designsystem.components.PetruChip
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.SheetState
+import com.petruvideo.feature.editor.ui.ReverbControls
+import com.petruvideo.feature.editor.ui.ReverbSwitch
 import com.petruvideo.feature.editor.ui.SpeedVolumeControls
 
 /** What the inspector shows about the selected clip. */
@@ -34,6 +38,8 @@ fun InspectorPanel(
     clip: InspectorClip?,
     settings: List<SheetState>,
     unavailable: Map<ClipTool, String>,
+    reverb: Reverb?,
+    muted: Boolean,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -63,6 +69,21 @@ fun InspectorPanel(
             settings.forEach { sheet ->
                 Text(sheet.tool.label, style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 SpeedVolumeControls(sheet, onEvent)
+            }
+            if (ClipTool.Mute !in unavailable) {
+                Text("Sound", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                PetruChip(
+                    if (muted) "Unmute" else "Mute",
+                    selected = muted,
+                    onClick = { onEvent(EditorEvent.UseTool(ClipTool.Mute)) },
+                )
+            }
+            if (reverb != null) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Reverb", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                    ReverbSwitch(reverb, onEvent)
+                }
+                ReverbControls(reverb, onEvent, showAll = true)
             }
             unavailable.forEach { (tool, reason) ->
                 Text("${tool.label}: $reason", style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)

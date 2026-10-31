@@ -13,6 +13,16 @@ import org.junit.Test
 
 import kotlin.random.Random
 
+private fun randomReverb(random: Random) = com.petruvideo.core.model.Reverb(
+    true,
+    com.petruvideo.core.model.ReverbPreset.Custom,
+    random.nextInt(-20, 130),
+    random.nextInt(0, 12_000),
+    random.nextInt(0, 120),
+    random.nextInt(-5, 300),
+    random.nextInt(0, 120),
+)
+
 class UndoRedoAllCommandsTest {
     private fun commands(t: Timeline, random: Random): List<Command> = buildList {
         val v = t.videoLane.randomOrNull(random)
@@ -26,6 +36,10 @@ class UndoRedoAllCommandsTest {
             add(DetachAudio(v.id))
             add(SetSpeed(v.id, random.nextInt(100, 5000)))
             add(SetVolume(v.id, random.nextInt(0, 250)))
+            add(SetVideoMuted(v.id, random.nextBoolean()))
+            add(SetReverbEnabled(v.id, random.nextBoolean()))
+            add(ApplyReverbPreset(v.id, com.petruvideo.core.model.ReverbPreset.entries.random(random)))
+            add(SetReverbSettings(v.id, randomReverb(random)))
             add(MoveVideoClip(v.id, 0))
         }
         if (a != null) {
@@ -37,6 +51,7 @@ class UndoRedoAllCommandsTest {
             add(SetMuted(a.id, !a.muted))
             add(SetSpeed(a.id, random.nextInt(100, 5000)))
             add(SetVolume(a.id, random.nextInt(0, 250)))
+            add(SetReverbEnabled(a.id, random.nextBoolean()))
             add(ReplaceAudio(a.id, testAudio("repl", 1_500)))
         }
         add(AddAudioClips(listOf(testAudio("new", 3_000)), 0))

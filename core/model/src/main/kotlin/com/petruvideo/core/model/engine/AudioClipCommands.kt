@@ -33,8 +33,12 @@ class DetachAudio(private val videoClipId: String, private val newClipId: () -> 
             origin = AudioOrigin.Detached,
             speedMilli = clip.speedMilli,
             volumePercent = clip.volumePercent,
+            muted = clip.muted,
+            reverb = clip.reverb,
         )
-        val video = timeline.videoLane.toMutableList().also { it[index] = clip.copy(attachedAudio = false) }
+        val video = timeline.videoLane.toMutableList().also {
+            it[index] = clip.copy(attachedAudio = false, muted = false)
+        }
         return CommandResult.Applied(
             timeline = timeline.copy(
                 videoLane = video,

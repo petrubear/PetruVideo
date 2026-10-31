@@ -114,12 +114,16 @@ class EditorViewModelTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
         e.state.clipTools shouldContainExactly listOf(
-            ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Detach, ClipTool.Duplicate, ClipTool.Delete,
+            ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+            ClipTool.Duplicate, ClipTool.Delete,
         )
 
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
         e.state.clipTools shouldContainExactly
-            listOf(ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Duplicate, ClipTool.Delete)
+            listOf(
+                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb,
+                ClipTool.Duplicate, ClipTool.Delete,
+            )
     }
 
     @Test
@@ -128,7 +132,7 @@ class EditorViewModelTest {
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Audio("a1")))
         e.state.clipTools shouldContainExactly
             listOf(
-                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Replace,
+                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Replace,
                 ClipTool.Duplicate, ClipTool.Delete,
             )
 
@@ -334,7 +338,7 @@ class EditorViewModelTest {
     fun `volume is dimmed for a clip without sound and says why`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
-        e.state.disabledTools.keys shouldBe setOf(ClipTool.Volume)
+        e.state.disabledTools.keys shouldBe setOf(ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb)
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
         e.state.sheet shouldBe null
         e.state.message shouldBe "This clip has no sound"

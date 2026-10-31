@@ -41,6 +41,7 @@ class EditorScreenshotTest {
         selection: ClipSelection? = null,
         edited: Boolean = false,
         sheet: SheetState? = null,
+        reverbPanel: ReverbPanelState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -66,6 +67,7 @@ class EditorScreenshotTest {
             projectMedia = timeline.media.values.toList(),
             missingMedia = missing,
             sheet = sheet,
+            reverbPanel = reverbPanel,
             clipTools = when (selection) {
                 null -> emptyList()
                 is ClipSelection.Audio -> listOf(
@@ -73,6 +75,7 @@ class EditorScreenshotTest {
                     ClipTool.Speed,
                     ClipTool.Volume,
                     ClipTool.Mute,
+                    ClipTool.Reverb,
                     ClipTool.Replace,
                     ClipTool.Duplicate,
                     ClipTool.Delete,
@@ -81,6 +84,8 @@ class EditorScreenshotTest {
                     ClipTool.Split,
                     ClipTool.Speed,
                     ClipTool.Volume,
+                    ClipTool.Mute,
+                    ClipTool.Reverb,
                     ClipTool.Detach,
                     ClipTool.Duplicate,
                     ClipTool.Delete,
@@ -162,6 +167,48 @@ class EditorScreenshotTest {
                 PetruTheme {
                     EditorScreen(
                         state(selection = ClipSelection.Video("c1"), edited = true, sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun reverbPanelWithHallOn() {
+        val reverb = com.petruvideo.core.model.ReverbPresets.settings(com.petruvideo.core.model.ReverbPreset.Hall, true)
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(
+                            selection = ClipSelection.Video("c1"),
+                            reverbPanel = ReverbPanelState("c1", "m1.mp4", reverb),
+                        ),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun reverbPanelCustomOff() {
+        val reverb = com.petruvideo.core.model.Reverb(
+            false, com.petruvideo.core.model.ReverbPreset.Custom, 40, 2_400, 65, 45, 55,
+        )
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(
+                            selection = ClipSelection.Audio("a1"),
+                            reverbPanel = ReverbPanelState("a1", "d.mp3", reverb),
+                        ),
                         player = null,
                         onEvent = {},
                         onBack = {},

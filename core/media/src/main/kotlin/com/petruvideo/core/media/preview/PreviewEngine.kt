@@ -4,6 +4,7 @@ import androidx.media3.common.Player
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
 import kotlinx.coroutines.flow.StateFlow
 
@@ -35,6 +36,9 @@ interface PreviewEngine {
     fun pause()
 
     fun seekTo(positionMs: Long)
+
+    /** Changes the reverb of one clip right away, without a rebuild or an edit; room size waits for the next load. */
+    fun setClipReverbLive(clipId: String, reverb: Reverb)
 
     /** Changes the volume of one clip in the loaded composition right away, without a rebuild or an edit. */
     fun setClipVolumeLive(clipId: String, percent: Int)

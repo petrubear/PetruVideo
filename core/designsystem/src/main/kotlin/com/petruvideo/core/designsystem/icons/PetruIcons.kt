@@ -39,6 +39,7 @@ object PetruIcons {
 val Next = strokeIcon("next", "M17 5v14", "M5 5l10 7L5 19z", filled = true)
 val Split = strokeIcon("split", "M12 3v18", "M7 8l-3 4l3 4M17 8l3 4l-3 4")
     val Speed = strokeIcon("speed", "M4 16a8 8 0 1 1 16 0", "M12 16l4-5")
+    val Reverb = strokeIcon("reverb", "M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0", "M5 12a7 7 0 1 0 14 0a7 7 0 1 0 -14 0")
     val Volume = strokeIcon("volume", "M4 9v6h4l5 4V5L8 9z", "M16.5 9a4 4 0 0 1 0 6")
     val Mute = strokeIcon("mute", "M4 9v6h4l5 4V5L8 9z", "M17 9l5 6M22 9l-5 6")
     val Detach = strokeIcon("detach", "M9 18V6l10-2v12", "M9 18a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z", "M19 16a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z", "M4 21l16-18")

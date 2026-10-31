@@ -69,7 +69,8 @@ private fun CompactEditor(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
-            PreviewSurface(player, Modifier.fillMaxWidth().height(if (state.sheet != null) 132.dp else 232.dp))
+            val panelOpen = state.sheet != null || state.reverbPanel != null
+            PreviewSurface(player, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,
                 canUndo = state.canUndo,
@@ -98,6 +99,7 @@ private fun CompactEditor(
             }
             if (state.selection != null && state.clipTools.isNotEmpty()) {
                 SpeedVolumeSheet(state.sheet, onEvent)
+                ReverbPanel(state.reverbPanel, onEvent)
                 ClipToolBar(
                         state.clipTools,
                         state.selectedAudioMuted,

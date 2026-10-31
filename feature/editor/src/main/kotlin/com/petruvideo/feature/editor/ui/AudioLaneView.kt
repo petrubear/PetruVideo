@@ -120,6 +120,7 @@ fun AudioClipsRow(
                     clip.speedMilli,
                     clip.volumePercent,
                     Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 2.dp),
+                    reverbOn = clip.reverb.enabled,
                 )
                 if (clip.muted && clip.id != selectedClipId) MutedBadge(Modifier.align(Alignment.CenterEnd))
                 if (clip.id == selectedClipId) {

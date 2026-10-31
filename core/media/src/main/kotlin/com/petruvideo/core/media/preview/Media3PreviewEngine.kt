@@ -8,6 +8,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.SpeedParameters
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.SpeedProvider
 import androidx.media3.common.Player
 import androidx.annotation.OptIn
@@ -22,6 +23,7 @@ import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -47,6 +49,7 @@ class Media3PreviewEngine @Inject constructor(
     private var hasComposition = false
     private var polling = false
     private var gains = mutableMapOf<String, GainAudioProcessor>()
+    private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
 
     override val state: StateFlow<PreviewState> = _state
     override val player: Player? get() = compositionPlayer
@@ -120,6 +123,10 @@ class Media3PreviewEngine @Inject constructor(
         publish()
     }
 
+    override fun setClipReverbLive(clipId: String, reverb: Reverb) {
+        reverbs[clipId]?.update(reverb)
+    }
+
     override fun setClipVolumeLive(clipId: String, percent: Int) {
         gains[clipId]?.setPercent(percent)
     }
@@ -146,6 +153,7 @@ class Media3PreviewEngine @Inject constructor(
 
     private fun compositionFor(timeline: Timeline, quality: PreviewQuality): Composition? {
         gains = mutableMapOf()
+        reverbs = mutableMapOf()
         val sequences = listOfNotNull(videoSequence(timeline, quality), audioSequence(timeline))
         return if (sequences.isEmpty()) null else Composition.Builder(sequences).build()
     }
@@ -170,11 +178,13 @@ class Media3PreviewEngine @Inject constructor(
                 else -> builder.addItem(
                     EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
                         .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
-                        .setRemoveAudio(!clip.attachedAudio)
+                        .setRemoveAudio(!clip.attachedAudio || clip.muted)
                         .setSpeed(speedOf(clip.speedMilli))
                         .setEffects(
                             Effects(
-                                listOfNotNull(gainFor(clip.id, clip.volumePercent, clip.attachedAudio)),
+                                soundEffects(
+                                    clip.id, clip.reverb, clip.volumePercent, clip.attachedAudio && !clip.muted,
+                                ),
                                 frame.videoEffects,
                             ),
                         )
@@ -201,7 +211,7 @@ class Media3PreviewEngine @Inject constructor(
                         .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
                         .setRemoveVideo(true)
                         .setSpeed(speedOf(clip.speedMilli))
-                        .setEffects(Effects(listOfNotNull(gainFor(clip.id, clip.volumePercent, true)), emptyList()))
+                        .setEffects(Effects(soundEffects(clip.id, clip.reverb, clip.volumePercent, true), emptyList()))
                         .build(),
                 )
             }
@@ -210,8 +220,13 @@ class Media3PreviewEngine @Inject constructor(
         return builder.build()
     }
 
-    private fun gainFor(clipId: String, percent: Int, hasAudio: Boolean): GainAudioProcessor? =
-        if (hasAudio) GainAudioProcessor(percent).also { gains[clipId] = it } else null
+    /** Reverb first, then volume, so volume 0% silences the tail too. */
+    private fun soundEffects(clipId: String, reverb: Reverb, percent: Int, hasAudio: Boolean): List<AudioProcessor> {
+        if (!hasAudio) return emptyList()
+        val gain = GainAudioProcessor(percent).also { gains[clipId] = it }
+        val room = ReverbAudioProcessor(reverb).also { it.update(reverb, applyRoomSize = true); reverbs[clipId] = it }
+        return listOf(room, gain)
+    }
 
     /** A constant speed for the whole item with the pitch kept (research 1; experimental Media3 API). */
     private fun speedOf(speedMilli: Int): SpeedParameters {

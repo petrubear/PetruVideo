@@ -192,4 +192,24 @@ class PreviewEngineTest {
         waitFor { engine.state.value.ended }
         engine.state.value.error shouldBe null
     }
+
+    @Test
+    fun reverbOnVideoAndAudioPlaysThroughLiveChangesSeekAndMute() {
+        val a = item("video_with_audio.mp4")
+        val music = item("audio.mp3")
+        val hall = com.petruvideo.core.model.ReverbPresets.settings(com.petruvideo.core.model.ReverbPreset.Hall, true)
+        val audio = AudioClip("m1", music.id, 0, 2_000, timelineStartMs = 0, origin = AudioOrigin.Added, reverb = hall)
+        val base = timeline(listOf(a to 2_000L, a.copy(id = "a2") to 1_500L), audio = listOf(audio), extra = listOf(music))
+        val withReverb = base.copy(
+            videoLane = base.videoLane.mapIndexed { i, c -> if (i == 0) c.copy(reverb = hall) else c.copy(muted = true) },
+        )
+        onMain { engine.load(withReverb, PreviewQuality.Full) }
+        onMain { engine.play() }
+        onMain { engine.setClipReverbLive("c0", hall.copy(mix = 90, decayMs = 6_000, damping = 10)) }
+        onMain { engine.setClipReverbLive("m1", hall.copy(enabled = false)) }
+        waitFor { engine.state.value.positionMs > 500 }
+        onMain { engine.seekTo(100) }
+        waitFor { engine.state.value.ended }
+        engine.state.value.error shouldBe null
+    }
 }

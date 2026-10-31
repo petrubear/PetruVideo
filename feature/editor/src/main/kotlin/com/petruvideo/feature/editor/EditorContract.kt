@@ -2,6 +2,8 @@ package com.petruvideo.feature.editor
 
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.Timeline
 
 /** The selected clip, if any. */
@@ -31,6 +33,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Duplicate("Duplicate", true),
     Delete("Delete", true),
     Mute("Mute", true),
+    Reverb("Reverb", true),
     Replace("Replace", true),
 }
 
@@ -46,6 +49,9 @@ data class SheetState(
     /** Trimmed source length of the clip, so the Speed readout can show the resulting timeline length. */
     val sourceLengthMs: Long,
 )
+
+/** The open reverb panel for one clip. */
+data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
 data class PlaybackState(
     val isPlaying: Boolean = false,
@@ -71,7 +77,11 @@ data class EditorState(
     val disabledTools: Map<ClipTool, String> = emptyMap(),
     /** The open Speed or Volume control, if any. */
     val sheet: SheetState? = null,
-    /** Whether the selected audio clip is muted (the Mute tool shows Unmute). */
+    /** The open reverb panel, if any. */
+    val reverbPanel: ReverbPanelState? = null,
+    /** Reverb of the selected clip when it has sound (the inspector shows it). */
+    val selectedReverb: Reverb? = null,
+    /** Whether the selected clip (audio, or video with sound) is muted; the Mute tool then shows Unmute. */
     val selectedAudioMuted: Boolean = false,
     val fullscreen: Boolean = false,
     /** Name of the inactive tool that was tapped, shown as "coming soon". */
@@ -115,6 +125,14 @@ sealed interface EditorEvent {
     data class SheetCommit(val tool: ClipTool, val value: Int) : EditorEvent
     data class SheetReset(val tool: ClipTool) : EditorEvent
     data object SheetDismiss : EditorEvent
+    data class ReverbToggle(val on: Boolean) : EditorEvent
+    data class ReverbPick(val preset: ReverbPreset) : EditorEvent
+    /** A reverb setting while dragging: heard live, not yet an edit. */
+    data class ReverbPreview(val reverb: Reverb) : EditorEvent
+    /** A reverb setting on release: one edit, one undo step. */
+    data class ReverbCommit(val reverb: Reverb) : EditorEvent
+    data object ReverbReset : EditorEvent
+    data object ReverbDismiss : EditorEvent
 }
 
 sealed interface EditorEffect {

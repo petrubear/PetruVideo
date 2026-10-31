@@ -63,6 +63,8 @@ data class VideoClip(
     val attachedAudio: Boolean,
     val speedMilli: Int = SPEED_UNIT,
     val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
+    val muted: Boolean = false,
+    val reverb: Reverb = Reverb(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
@@ -78,6 +80,7 @@ data class AudioClip(
     val origin: AudioOrigin,
     val speedMilli: Int = SPEED_UNIT,
     val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
+    val reverb: Reverb = Reverb(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)

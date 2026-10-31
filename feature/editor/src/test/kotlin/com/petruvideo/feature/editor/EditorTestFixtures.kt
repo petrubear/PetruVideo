@@ -65,6 +65,10 @@ class FakePreviewEngine : PreviewEngine {
         _state.value = _state.value.copy(isPlaying = false)
     }
 
+    override fun setClipReverbLive(clipId: String, reverb: com.petruvideo.core.model.Reverb) {
+        calls += "reverb $clipId ${reverb.mix} ${reverb.enabled}"
+    }
+
     override fun setClipVolumeLive(clipId: String, percent: Int) {
         calls += "volume $clipId $percent"
     }

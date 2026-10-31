@@ -28,6 +28,7 @@ import com.petruvideo.feature.editor.ui.ClipToolBar
 import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.MainToolBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
+import com.petruvideo.feature.editor.ui.ReverbPanel
 import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ui.TimelineView
 import com.petruvideo.feature.editor.ui.clock
@@ -114,6 +115,7 @@ fun TabletopControlsHalf(
         }
         if (state.selection != null && state.clipTools.isNotEmpty()) {
             SpeedVolumeSheet(state.sheet, onEvent)
+            ReverbPanel(state.reverbPanel, onEvent)
             ClipToolBar(
                     state.clipTools,
                     state.selectedAudioMuted,

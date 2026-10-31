@@ -1,6 +1,7 @@
 package com.petruvideo.core.data.db
 
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -79,6 +80,8 @@ data class VideoClipEntity(
     val attachedAudio: Boolean,
     @ColumnInfo(defaultValue = "1000") val speedMilli: Int = 1000,
     @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
+    @ColumnInfo(defaultValue = "0") val muted: Boolean = false,
+    @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
 )
 
 @Entity(
@@ -113,4 +116,16 @@ data class AudioClipEntity(
     val origin: String,
     @ColumnInfo(defaultValue = "1000") val speedMilli: Int = 1000,
     @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
+    @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
+)
+
+/** A clip's reverb stored as columns `reverb_enabled`, `reverb_preset`, and so on. */
+data class ReverbColumns(
+    @ColumnInfo(defaultValue = "0") val enabled: Boolean = false,
+    @ColumnInfo(defaultValue = "'MediumRoom'") val preset: String = "MediumRoom",
+    @ColumnInfo(defaultValue = "50") val room: Int = 50,
+    @ColumnInfo(defaultValue = "1500") val decayMs: Int = 1500,
+    @ColumnInfo(defaultValue = "50") val damping: Int = 50,
+    @ColumnInfo(defaultValue = "20") val preDelayMs: Int = 20,
+    @ColumnInfo(defaultValue = "30") val mix: Int = 30,
 )

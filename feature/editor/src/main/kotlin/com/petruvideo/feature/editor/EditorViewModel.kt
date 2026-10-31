@@ -15,10 +15,17 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
+import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.ReverbPreset
+import com.petruvideo.core.model.ReverbPresets
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.ApplyReverbPreset
+import com.petruvideo.core.model.engine.SetReverbEnabled
+import com.petruvideo.core.model.engine.SetReverbSettings
+import com.petruvideo.core.model.engine.SetVideoMuted
 import com.petruvideo.core.model.engine.AddVideoClips
 import com.petruvideo.core.model.engine.AddVideoItem
 import com.petruvideo.core.model.engine.Command
@@ -76,6 +83,8 @@ class EditorViewModel @Inject constructor(
         val message: String? = null,
         /** The open Speed or Volume sheet: which tool and which clip. */
         val sheet: OpenSheet? = null,
+        /** Clip id of the open reverb panel. */
+        val reverbClipId: String? = null,
     )
 
     private data class OpenSheet(val tool: ClipTool, val clipId: String)
@@ -167,6 +176,12 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.SheetReset ->
                 commitValue(event.tool, if (event.tool == ClipTool.Speed) SPEED_UNIT else VOLUME_DEFAULT_PERCENT)
             EditorEvent.SheetDismiss -> closeSheet()
+            is EditorEvent.ReverbToggle -> selectedClipId()?.let { run(SetReverbEnabled(it, event.on)) }
+            is EditorEvent.ReverbPick -> selectedClipId()?.let { run(ApplyReverbPreset(it, event.preset)) }
+            is EditorEvent.ReverbPreview -> selectedClipId()?.let { engine.setClipReverbLive(it, event.reverb) }
+            is EditorEvent.ReverbCommit -> commitReverb(event.reverb)
+            EditorEvent.ReverbReset -> resetReverb()
+            EditorEvent.ReverbDismiss -> closeReverb()
         }
     }
 
@@ -196,6 +211,7 @@ class EditorViewModel @Inject constructor(
         val timeline = session.timeline.value
         if (selection != null && (timeline == null || !exists(timeline, selection))) return
         closeSheet()
+        closeReverb()
         local.update { it.copy(selection = selection) }
     }
 
@@ -215,6 +231,34 @@ class EditorViewModel @Inject constructor(
             return
         }
         if (Notice.SpeedLimited in result.notices) say(speedLimitMessage(result.timeline, id))
+    }
+
+    private fun soundClipReverb(timeline: Timeline, id: String): Reverb? =
+        timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.reverb
+            ?: timeline.audioLane.firstOrNull { it.id == id }?.reverb
+
+    private fun commitReverb(reverb: Reverb) {
+        val id = selectedClipId() ?: return
+        if (session.apply(SetReverbSettings(id, reverb)) !is CommandResult.Applied) restoreLiveReverb(id)
+    }
+
+    private fun resetReverb() {
+        val id = selectedClipId() ?: return
+        val current = session.timeline.value?.let { soundClipReverb(it, id) } ?: return
+        val preset = current.preset.takeIf { it != ReverbPreset.Custom } ?: ReverbPresets.DEFAULT
+        run(ApplyReverbPreset(id, preset))
+    }
+
+    private fun closeReverb() {
+        val id = local.value.reverbClipId ?: return
+        local.update { it.copy(reverbClipId = null) }
+        restoreLiveReverb(id)
+    }
+
+    /** A reverb drag that did not become an edit must not leave its live settings behind. */
+    private fun restoreLiveReverb(clipId: String) {
+        val timeline = session.timeline.value ?: return
+        soundClipReverb(timeline, clipId)?.let { engine.setClipReverbLive(clipId, it) }
     }
 
     private fun closeSheet() {
@@ -289,9 +333,25 @@ class EditorViewModel @Inject constructor(
             ClipTool.Detach -> run(DetachAudio(id))
             ClipTool.Duplicate -> run(Duplicate(id))
             ClipTool.Delete -> run(Delete(id))
-            ClipTool.Mute -> timeline.audioLane.firstOrNull { it.id == id }?.let { run(SetMuted(id, !it.muted)) }
+            ClipTool.Mute -> toggleMute(timeline, id)
+            ClipTool.Reverb -> openReverb(timeline, selection)
             ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
         }
+    }
+
+    private fun toggleMute(timeline: Timeline, id: String) {
+        val audio = timeline.audioLane.firstOrNull { it.id == id }
+        val video = timeline.videoLane.firstOrNull { it.id == id }
+        when {
+            audio != null -> run(SetMuted(id, !audio.muted))
+            video?.attachedAudio == true -> run(SetVideoMuted(id, !video.muted))
+            else -> say("This clip has no sound")
+        }
+    }
+
+    private fun openReverb(timeline: Timeline, selection: ClipSelection) {
+        val reason = disabledToolsFor(timeline, selection)[ClipTool.Reverb]
+        if (reason != null) say(reason) else local.update { it.copy(reverbClipId = selection.clipId, sheet = null) }
     }
 
     private fun openSheet(tool: ClipTool, timeline: Timeline, selection: ClipSelection) {
@@ -300,6 +360,7 @@ class EditorViewModel @Inject constructor(
             say(reason)
             return
         }
+        closeReverb()
         local.update { it.copy(sheet = OpenSheet(tool, selection.clipId)) }
     }
 
@@ -361,21 +422,40 @@ class EditorViewModel @Inject constructor(
                 emptyMap()
             },
             sheet = if (timeline != null && selection != null) sheetFor(timeline, selection, local.sheet) else null,
-            selectedAudioMuted = (selection as? ClipSelection.Audio)
-                ?.let { sel -> timeline?.audioLane?.firstOrNull { it.id == sel.clipId }?.muted } == true,
+            selectedAudioMuted = selection != null && timeline != null && isMuted(timeline, selection.clipId),
+            reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
+            selectedReverb = selection?.let { sel -> timeline?.let { soundClipReverb(it, sel.clipId) } },
             fullscreen = local.fullscreen,
             comingSoon = local.comingSoon,
             message = local.message,
         )
     }
 
+    private fun isMuted(timeline: Timeline, id: String) =
+        timeline.audioLane.firstOrNull { it.id == id }?.muted
+            ?: timeline.videoLane.firstOrNull { it.id == id }?.muted ?: false
+
+    private fun reverbPanelFor(timeline: Timeline?, selection: ClipSelection?, open: String?): ReverbPanelState? {
+        if (timeline == null || selection == null || open != selection.clipId) return null
+        val reverb = soundClipReverb(timeline, open) ?: return null
+        val mediaId = timeline.videoLane.firstOrNull { it.id == open }?.mediaItemId
+            ?: timeline.audioLane.firstOrNull { it.id == open }?.mediaItemId
+        return ReverbPanelState(open, timeline.media[mediaId]?.displayName.orEmpty(), reverb)
+    }
+
     private fun disabledToolsFor(timeline: Timeline, selection: ClipSelection): Map<ClipTool, String> {
         val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
             ?: return emptyMap()
+        val noSound = "This clip has no sound"
         return when {
-            timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo ->
-                mapOf(ClipTool.Speed to "Photos have no speed", ClipTool.Volume to "Photos have no sound")
-            !clip.attachedAudio -> mapOf(ClipTool.Volume to "This clip has no sound")
+            timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
+                ClipTool.Speed to "Photos have no speed",
+                ClipTool.Volume to "Photos have no sound",
+                ClipTool.Mute to "Photos have no sound",
+                ClipTool.Reverb to "Photos have no sound",
+            )
+            !clip.attachedAudio ->
+                mapOf(ClipTool.Volume to noSound, ClipTool.Mute to noSound, ClipTool.Reverb to noSound)
             else -> emptyMap()
         }
     }
@@ -411,6 +491,7 @@ class EditorViewModel @Inject constructor(
                 ClipTool.Speed,
                 ClipTool.Volume,
                 ClipTool.Mute,
+                ClipTool.Reverb,
                 ClipTool.Replace,
                 ClipTool.Duplicate,
                 ClipTool.Delete,
@@ -421,6 +502,8 @@ class EditorViewModel @Inject constructor(
                 ClipTool.Split,
                 ClipTool.Speed,
                 ClipTool.Volume,
+                ClipTool.Mute,
+                ClipTool.Reverb,
                 ClipTool.Detach.takeIf { attached },
                 ClipTool.Duplicate,
                 ClipTool.Delete,

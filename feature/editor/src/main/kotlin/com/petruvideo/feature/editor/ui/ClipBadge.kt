@@ -20,10 +20,16 @@ internal fun speedBadgeText(speedMilli: Int): String =
 
 /** Small badge at a clip's top-left for a speed other than 1x and/or a volume other than 100%; nothing otherwise. */
 @Composable
-fun ClipBadge(speedMilli: Int, volumePercent: Int?, modifier: Modifier = Modifier) {
+fun ClipBadge(
+    speedMilli: Int,
+    volumePercent: Int?,
+    modifier: Modifier = Modifier,
+    reverbOn: Boolean = false,
+) {
     val parts = listOfNotNull(
         speedBadgeText(speedMilli).takeIf { speedMilli != SPEED_UNIT },
         "$volumePercent%".takeIf { volumePercent != null && volumePercent != VOLUME_DEFAULT_PERCENT },
+        "Rv".takeIf { reverbOn },
     )
     if (parts.isEmpty()) return
     val text = parts.joinToString(" ")
@@ -34,6 +40,6 @@ fun ClipBadge(speedMilli: Int, volumePercent: Int?, modifier: Modifier = Modifie
         modifier = modifier
             .background(PetruColors.Background.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
             .padding(horizontal = 4.dp, vertical = 1.dp)
-            .semantics { contentDescription = "Speed and volume: $text" },
+            .semantics { contentDescription = "Clip settings: $text" },
     )
 }
