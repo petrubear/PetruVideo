@@ -1,11 +1,13 @@
 package com.petruvideo.feature.editor.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -152,7 +154,10 @@ fun SpeedVolumeControls(
         }
         val commit = { value: Int -> onEvent(EditorEvent.SheetCommit(tool, value)) }
         if (speed) SpeedSlider(shown, preview, commit) else VolumeSlider(shown, preview, commit)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (speed) {
                 QUICK_SPEEDS.forEach { milli ->
                     PetruChip(

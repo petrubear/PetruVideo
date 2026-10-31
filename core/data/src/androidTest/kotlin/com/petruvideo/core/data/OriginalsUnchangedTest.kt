@@ -10,7 +10,13 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.ApplyReverbPreset
+import com.petruvideo.core.model.engine.SetReverbSettings
+import com.petruvideo.core.model.engine.SetSpeed
+import com.petruvideo.core.model.engine.SetVideoMuted
+import com.petruvideo.core.model.engine.SetVolume
 import com.petruvideo.core.model.engine.AddVideoClips
 import com.petruvideo.core.model.engine.AddVideoItem
 import com.petruvideo.core.model.engine.Delete
@@ -99,6 +105,42 @@ class OriginalsUnchangedTest {
         session.flush()
         session.close()
 
+        checksums() shouldBe before
+    }
+
+    /** SC-008, SC-005 of features 002 and 003: speed, volume, mute, and reverb leave the sources alone and reload. */
+    @Test
+    fun speedVolumeMuteAndReverbSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip.mp4", MediaKind.Video, 10_000)
+        val music = source("music.mp3", MediaKind.Audio, 20_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(AddAudioClips(listOf(music), playheadMs = 0))
+        val clip = session.timeline.value!!.videoLane.first().id
+        val audio = session.timeline.value!!.audioLane.first().id
+        session.apply(SetSpeed(clip, 2_000))
+        session.apply(SetVolume(clip, 40))
+        session.apply(ApplyReverbPreset(clip, ReverbPreset.Hall))
+        session.apply(SetVideoMuted(clip, true))
+        session.apply(SetSpeed(audio, 500))
+        session.apply(SetVolume(audio, 150))
+        val custom = session.timeline.value!!.audioLane.first().reverb.copy(enabled = true, mix = 77, damping = 11)
+        session.apply(SetReverbSettings(audio, custom))
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.videoLane shouldBe saved.videoLane
+        loaded.audioLane shouldBe saved.audioLane
+        loaded.videoLane.first().speedMilli shouldBe 2_000
+        loaded.videoLane.first().muted shouldBe true
+        loaded.audioLane.first().reverb.preset shouldBe ReverbPreset.Custom
         checksums() shouldBe before
     }
 }

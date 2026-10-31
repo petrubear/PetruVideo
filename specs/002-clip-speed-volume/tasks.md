@@ -104,7 +104,7 @@
 - [X] T034 [US3] Extend `SetSpeed` for the audio lane (no-overlap clamp) in `M/engine/SpeedVolumeCommands.kt`; make `ReplaceAudio` in `M/engine/AudioClipCommands.kt` keep both settings
 - [X] T035 [US3] Show Speed and Volume in the audio branch of `E/ui/ClipToolBar.kt` (scrolls sideways on compact) and use derived lengths in `E/ui/AudioLaneView.kt`
 - [X] T036 [P] [US3] Preview: audio items honor speed and gain in `Media3PreviewEngine.kt`; test mute-versus-volume independence
-- [ ] T037 [P] [US3] Compose test and golden for the audio tool bar on the 360 dp cover width (all buttons reachable)
+- [X] T037 [P] [US3] Compose test and golden for the audio tool bar on the 360 dp cover width (all buttons reachable)
 - [ ] T038 [US3] Fold check: scenario for audio speed, overlap limit message, and volume; record in `checklists/validation.md`
 
 ---
@@ -118,19 +118,19 @@
 - [X] T039 [P] [US4] `E/ui/ClipBadge.kt` ("2x", "40%", both can show) and place it at the top-left of clips in `E/ui/VideoLaneView.kt` and `E/ui/AudioLaneView.kt`; accessible description
 - [X] T040 [P] [US4] Speed and Volume sections in `E/ui/expanded/InspectorPanel.kt` (from 840 dp) sharing the slider and quick choices; at 700 to 839 dp the sheet sits inside the timeline column
 - [X] T041 [P] [US4] Tabletop: the sheet fills the lower half in `E/ui/tabletop/TabletopEditorLayout.kt`, nothing interactive crosses the hinge
-- [ ] T042 [US4] Arrangement tests (state and events per arrangement, open sheet survives fold, unfold, and rotate) in `feature/editor/src/test/` and an androidTest for the open sheet across a configuration change
-- [ ] T043 [P] [US4] Paparazzi goldens for badges, the inspector sections, and the tabletop sheet
+- [X] T042 [US4] Arrangement tests (state and events per arrangement, open sheet survives fold, unfold, and rotate) in `feature/editor/src/test/` and an androidTest for the open sheet across a configuration change
+- [X] T043 [P] [US4] Paparazzi goldens for badges, the inspector sections, and the tabletop sheet
 - [ ] T044 [US4] Fold check: badge, inspector, tabletop, fold during an open sheet, split-screen; record in `checklists/validation.md`
 
 ---
 
 ## Phase 7: Polish and cross-cutting
 
-- [ ] T045 [P] Accessibility: run the accessibility checks (`AccessibilityTest` pattern from 001) on the sheet and inspector with large font; labels, 48 dp targets, screen reader values (FR-021)
-- [ ] T046 [P] Source files byte-identical after edits (SC-008) and save and reopen after force-stop keeps speed and volume (SC-005): androidTest in `core/data` and a manual check
-- [ ] T047 Missing media: verify Speed and Volume stay available on a missing clip (edge case) with a test, and fix `canSetSpeed`/`canSetVolume` if they depend on media availability in `feature/editor/src/test/`
-- [ ] T048 [P] Update `specs/002-clip-speed-volume/quickstart.md` with the final commands and results
-- [ ] T049 Run everything: `:core:model:test`, `testDebugUnitTest`, `verifyPaparazziDebug`, `detekt`, lint, and the connected suites on the Fold; fix failures
+- [X] T045 [P] Accessibility: run the accessibility checks (`AccessibilityTest` pattern from 001) on the sheet and inspector with large font; labels, 48 dp targets, screen reader values (FR-021)
+- [X] T046 [P] Source files byte-identical after edits (SC-008) and save and reopen after force-stop keeps speed and volume (SC-005): androidTest in `core/data` and a manual check
+- [X] T047 Missing media: verify Speed and Volume stay available on a missing clip (edge case) with a test, and fix `canSetSpeed`/`canSetVolume` if they depend on media availability in `feature/editor/src/test/`
+- [X] T048 [P] Update `specs/002-clip-speed-volume/quickstart.md` with the final commands and results
+- [X] T049 Run everything: `:core:model:test`, `testDebugUnitTest`, `verifyPaparazziDebug`, `detekt`, lint, and the connected suites on the Fold; fix failures
 - [ ] T050 Mid-range phone check of 30 fps at 4x (SC-003) and designer review of the controls (SC-007); both need outside input, record the result or the open item in `checklists/validation.md`
 
 ---

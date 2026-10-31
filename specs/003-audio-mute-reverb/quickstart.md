@@ -33,3 +33,10 @@ View model, goldens, Room v2 to v3 migration, emulator playback with reverb (see
 9. **Layouts**: Badge on the timeline; inspector sections when unfolded; panel below the hinge in tabletop; fold and rotate with the panel open.
 10. **Autosave (SC-005)**: Change settings, force-stop, reopen: same values.
 11. **Undo (SC-004)**: Undo and redo every change above.
+
+## Results so far (2026-10-31, Pixel 7 Pro emulator API 34)
+
+- `gradle --offline testDebugUnitTest verifyPaparazziDebug detekt lintDebug connectedDebugAndroidTest` passes.
+- Covered: commands and presets (JVM), reverb DSP (decay, mix 0 equals input, clipping, stereo, reset, pre-delay, smooth changes), Room v2 to v3 migration, reverb playback with live changes, seek and mute (`PreviewEngineTest`), the panel (`ReverbPanelTest`), arrangement changes with the panel open, accessibility including 2x font scale, reverb and mute reloading with sources byte-identical, pressure pausing reverb with a message, reverb and mute available on missing media.
+- Known layout limit: in tabletop the reverb panel body scrolls (about 120 dp) and the timeline shrinks to a strip while it is open.
+- Still to do on the Samsung Fold and a mid-range phone: listening checks (scenarios 1 to 7), CPU and fps with five reverb clips (scenario 8), layouts on the device (scenario 9), and the designer review.

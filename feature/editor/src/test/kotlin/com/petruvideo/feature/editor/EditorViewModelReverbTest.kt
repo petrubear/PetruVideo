@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -19,18 +20,24 @@ class EditorViewModelReverbTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private class Env(val vm: EditorViewModel, val engine: FakePreviewEngine, val session: ProjectSession)
+    private class Env(
+        val vm: EditorViewModel,
+        val engine: FakePreviewEngine,
+        val session: ProjectSession,
+        val pressure: ResourcePressureMonitor,
+    )
 
-    private fun TestScope.env(): Env {
+    private fun TestScope.env() = envMissing(emptySet())
+
+    private fun TestScope.envMissing(missing: Set<String>): Env {
         Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
         val repo = FakeRepository(mapOf("p" to sampleLoaded()))
         val session = ProjectSession(repo, backgroundScope)
         val engine = FakePreviewEngine()
-        val vm = EditorViewModel(
-            session, engine, FakeAvailability(emptySet()), FakeThumbnails(), ResourcePressureMonitor(),
-        )
+        val pressure = ResourcePressureMonitor()
+        val vm = EditorViewModel(session, engine, FakeAvailability(missing), FakeThumbnails(), pressure)
         vm.open("p")
-        return Env(vm, engine, session)
+        return Env(vm, engine, session, pressure)
     }
 
     private val Env.state get() = vm.state.value
@@ -121,5 +128,34 @@ class EditorViewModelReverbTest {
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
         e.state.selectedAudioMuted shouldBe false
         e.session.timeline.value!!.videoLane[0].volumePercent shouldBe 100
+    }
+
+    @Test
+    fun `pressure with reverb on pauses reverb in the preview and says so`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.vm.onEvent(EditorEvent.ReverbToggle(true))
+        e.pressure.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        advanceUntilIdle()
+        e.state.message shouldBe "Preview quality lowered and reverb paused to keep playing"
+        e.engine.loads.last().second.reverb shouldBe false
+        e.reverbOf("c1").enabled shouldBe true
+    }
+
+    @Test
+    fun `reverb mute speed and volume stay available on a clip whose media is missing`() = runTest {
+        val e = envMissing(setOf("m1"))
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.state.disabledTools shouldBe emptyMap()
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Speed))
+        e.state.sheet?.tool shouldBe ClipTool.Speed
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
+        e.state.sheet?.tool shouldBe ClipTool.Volume
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Reverb))
+        e.state.reverbPanel?.clipId shouldBe "c1"
+        e.vm.onEvent(EditorEvent.ReverbToggle(true))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
+        e.reverbOf("c1").enabled shouldBe true
+        e.session.timeline.value!!.videoLane[0].muted shouldBe true
     }
 }

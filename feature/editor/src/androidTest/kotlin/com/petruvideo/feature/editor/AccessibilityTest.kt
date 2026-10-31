@@ -1,6 +1,8 @@
 package com.petruvideo.feature.editor
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runAndroidComposeUiTest
 import androidx.compose.ui.test.accessibility.enableAccessibilityChecks
@@ -17,6 +19,9 @@ import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.feature.editor.ui.EditorScreen
+import androidx.compose.ui.unit.Density
+import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.ReverbPreset
 import org.junit.Test
 
 /** Runs the Android accessibility checks (touch target size, labels, contrast) over the editor. */
@@ -33,7 +38,13 @@ class AccessibilityTest {
         audioLane = listOf(AudioClip("a1", "c", 0, 2_000, 1_000, origin = AudioOrigin.Detached)),
     )
 
-    private fun check(selection: ClipSelection?, tools: List<ClipTool>) {
+    private fun check(
+        selection: ClipSelection?,
+        tools: List<ClipTool>,
+        sheet: SheetState? = null,
+        reverbPanel: ReverbPanelState? = null,
+        fontScale: Float = 1f,
+    ) {
         val state = EditorState(
             header = EditorHeader("Trip", "1080p · 30 fps", SaveStatus.Saved),
             timeline = timeline,
@@ -41,10 +52,18 @@ class AccessibilityTest {
             playback = PlaybackState(durationMs = timeline.totalDurationMs),
             canUndo = true,
             clipTools = tools,
+            sheet = sheet,
+            reverbPanel = reverbPanel,
+            selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
             enableAccessibilityChecks()
-            setContent { PetruTheme { EditorScreen(state, null, {}, {}) } }
+            setContent {
+                val density = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                    PetruTheme { EditorScreen(state, null, {}, {}) }
+                }
+            }
             onRoot().tryPerformAccessibilityChecks()
         }
     }
@@ -62,5 +81,40 @@ class AccessibilityTest {
     fun editorWithDetachedAudioSelected() = check(
         ClipSelection.Audio("a1"),
         listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete),
+    )
+
+    private val videoTools = listOf(
+        ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+        ClipTool.Duplicate, ClipTool.Delete,
+    )
+
+    @Test
+    fun speedSheet() = check(
+        ClipSelection.Video("c1"), videoTools,
+        sheet = SheetState(ClipTool.Speed, "c1", "a.mp4", 1500, 4_000),
+    )
+
+    @Test
+    fun volumeSheetWithBoost() = check(
+        ClipSelection.Audio("a1"), videoTools,
+        sheet = SheetState(ClipTool.Volume, "a1", "c.mp3", 150, 2_000),
+    )
+
+    @Test
+    fun reverbPanel() = check(
+        ClipSelection.Video("c1"), videoTools,
+        reverbPanel = ReverbPanelState("c1", "a.mp4", Reverb(true, ReverbPreset.Custom, 40, 2_400, 65, 45, 55)),
+    )
+
+    @Test
+    fun speedSheetWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools,
+        sheet = SheetState(ClipTool.Speed, "c1", "a.mp4", 1500, 4_000), fontScale = 2f,
+    )
+
+    @Test
+    fun reverbPanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools,
+        reverbPanel = ReverbPanelState("c1", "a.mp4", Reverb()), fontScale = 2f,
     )
 }

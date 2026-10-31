@@ -38,3 +38,10 @@ View model, goldens (sheet, badges, inspector, tabletop), Compose flows and acce
 ## Done when
 
 All automated checks pass, scenarios 1 to 12 pass on the Fold (5 also on a mid-range phone), and the designer has reviewed the sheet, badges, and inspector.
+
+## Results so far (2026-10-31, Pixel 7 Pro emulator API 34)
+
+- `gradle --offline testDebugUnitTest verifyPaparazziDebug detekt lintDebug connectedDebugAndroidTest` passes.
+- Covered on the emulator: Room v1 to v2 migration, speed 2x and 0.5x and live gain in `PreviewEngineTest`, the sheet (`SpeedVolumeSheetTest`), arrangement changes with the sheet open (`ArrangementPanelsTest`), accessibility checks including a 2x font scale (`AccessibilityTest`), the 360 dp tool bar (`CoverWidthToolBarTest`), speed and volume surviving save and reload with sources byte-identical (`OriginalsUnchangedTest`).
+- Fixes found by the checks: tool buttons and chips now keep a 48 dp minimum width, the transport row wraps its time readout at large font sizes, and the speed quick choices scroll sideways.
+- Still to do on the Samsung Fold: spike S1 (pitch, A/V sync within 40 ms, 30 fps at 0.25x, 2x, 4x), the manual scenarios, and on a mid-range phone the 4x check.

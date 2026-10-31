@@ -45,10 +45,16 @@ enum class PressureLevel {
 }
 
 /** Preview and thumbnail quality steps applied under pressure (FR-031). */
-data class PreviewQuality(val previewScale: Float, val previewFps: Int, val thumbnailPx: Int) {
+data class PreviewQuality(
+    val previewScale: Float,
+    val previewFps: Int,
+    val thumbnailPx: Int,
+    /** Whether the reverb effect is applied in the preview; it is paused under pressure (it costs CPU). */
+    val reverb: Boolean = true,
+) {
     companion object {
         val Full = PreviewQuality(previewScale = 1f, previewFps = 30, thumbnailPx = 256)
-        val Reduced = PreviewQuality(previewScale = 0.5f, previewFps = 24, thumbnailPx = 128)
+        val Reduced = PreviewQuality(previewScale = 0.5f, previewFps = 24, thumbnailPx = 128, reverb = false)
     }
 }
 

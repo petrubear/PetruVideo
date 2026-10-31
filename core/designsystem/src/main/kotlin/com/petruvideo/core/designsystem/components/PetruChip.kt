@@ -44,7 +44,7 @@ fun PetruChip(
     // The visible chip is 32 to 36 dp; the clickable box is padded up to the 48 dp touch target.
     Box(
         modifier = modifier
-            .defaultMinSize(minHeight = Spacing.MinTouchTarget)
+            .defaultMinSize(minWidth = Spacing.MinTouchTarget, minHeight = Spacing.MinTouchTarget)
             .clip(PetruShapes.Chip)
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics { this.selected = selected },

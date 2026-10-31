@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -76,6 +77,7 @@ internal fun ToolButton(
     Column(
         Modifier
             .height(60.dp)
+            .defaultMinSize(minWidth = 48.dp)
             .clip(PetruShapes.Button)
             .alpha(if (active) 1f else 0.4f)
             .clickable(role = Role.Button, onClick = onClick)

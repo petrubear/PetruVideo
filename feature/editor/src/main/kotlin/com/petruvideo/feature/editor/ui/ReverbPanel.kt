@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
+import com.petruvideo.core.designsystem.adaptive.Arrangement as WindowArrangement
+import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.PetruChip
 import com.petruvideo.core.designsystem.components.PillButton
@@ -50,6 +52,7 @@ import kotlin.math.roundToInt
 private const val DECAY_STEP_MS = 50
 private val DECAY_RATIO = REVERB_DECAY_MAX_MS.toFloat() / REVERB_DECAY_MIN_MS
 private val MAX_PANEL_BODY = 280.dp
+private val MAX_PANEL_BODY_TABLETOP = 120.dp
 
 internal fun decayToPosition(decayMs: Int): Float =
     (ln(decayMs.toFloat() / REVERB_DECAY_MIN_MS) / ln(DECAY_RATIO)).coerceIn(0f, 1f)
@@ -79,7 +82,9 @@ fun ReverbPanel(panel: ReverbPanelState?, onEvent: (EditorEvent) -> Unit, modifi
                 ReverbSwitch(panel.reverb, onEvent, Modifier.padding(horizontal = 12.dp))
                 PillButton("Done", onClick = { onEvent(EditorEvent.ReverbDismiss) })
             }
-            Column(Modifier.heightIn(max = MAX_PANEL_BODY).verticalScroll(rememberScrollState())) {
+            val tabletop = LocalArrangement.current is WindowArrangement.Tabletop
+            val maxBody = if (tabletop) MAX_PANEL_BODY_TABLETOP else MAX_PANEL_BODY
+            Column(Modifier.heightIn(max = maxBody).verticalScroll(rememberScrollState())) {
                 ReverbControls(panel.reverb, onEvent, showAll = more, onMore = { more = !more })
             }
         }

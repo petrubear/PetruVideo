@@ -387,9 +387,20 @@ class EditorViewModel @Inject constructor(
 
     private fun onPressureNotice(notice: PressureNotice) {
         when (notice) {
-            PressureNotice.QualityReduced -> say("Preview quality lowered to keep playing")
+            PressureNotice.QualityReduced -> say(qualityReducedMessage())
             PressureNotice.PlaybackPaused -> { pause(); say("Playback paused to cool down") }
             PressureNotice.QualityRestored -> say("Preview quality restored")
+        }
+    }
+
+    private fun qualityReducedMessage(): String {
+        val timeline = session.timeline.value
+        val reverbOn = timeline?.videoLane?.any { it.attachedAudio && it.reverb.enabled } == true ||
+            timeline?.audioLane?.any { it.reverb.enabled } == true
+        return if (reverbOn) {
+            "Preview quality lowered and reverb paused to keep playing"
+        } else {
+            "Preview quality lowered to keep playing"
         }
     }
 

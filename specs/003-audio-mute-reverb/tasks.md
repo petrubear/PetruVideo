@@ -111,8 +111,8 @@
 - [X] T036 [P] [US4] Reverb badge "Rv" in `E/ui/ClipBadge.kt` (alongside speed and volume) and use it in `E/ui/VideoLaneView.kt` and `E/ui/AudioLaneView.kt`
 - [X] T037 [P] [US4] Volume, Mute, and Reverb sections (all five settings) in `E/ui/expanded/InspectorPanel.kt`; use the bottom panel below 840 dp in `E/ui/expanded/ExpandedEditorLayout.kt`
 - [X] T038 [P] [US4] Tool bar order Volume, Mute, Reverb for video and audio clips in `E/EditorViewModel.kt` (`clipToolsFor`) and the tabletop panel placement in `E/ui/tabletop/TabletopEditorLayout.kt`
-- [ ] T039 [US4] Tests: open panel survives configuration change (view model and an androidTest), arrangement checks for the panel in each layout
-- [ ] T040 [P] [US4] Goldens for badges, the inspector sections, and the tabletop panel
+- [X] T039 [US4] Tests: open panel survives configuration change (view model and an androidTest), arrangement checks for the panel in each layout
+- [X] T040 [P] [US4] Goldens for badges, the inspector sections, and the tabletop panel
 - [ ] T041 [US4] Fold check: badge, inspector, tabletop, fold and rotate with the panel open, split-screen; record in `checklists/validation.md`
 
 ---
@@ -120,12 +120,12 @@
 ## Phase 7: Polish and cross-cutting
 
 - [X] T042 [P] Reverb on split, duplicate, replace, detach, and sped clips: tests in the engine suites and an emulator playback test (seek into a reverb clip, split mid-tail) in `core/media/src/androidTest/.../PreviewEngineTest.kt`
-- [ ] T043 [P] Pressure monitor bypasses reverb under heavy pressure with a notice (`core/media/.../pressure/` and `E/EditorViewModel.kt`), with a test
-- [ ] T044 [P] Accessibility with large font on the panel and inspector (pattern of `AccessibilityTest`) and screen reader values (FR-019)
-- [ ] T045 [P] Sources byte-identical (SC-008) and save, force-stop, reopen keeps mute and reverb (SC-005): androidTest in `core/data`
-- [ ] T046 Missing media keeps reverb and mute editable (edge case), test in `feature/editor/src/test/`
+- [X] T043 [P] Pressure monitor bypasses reverb under heavy pressure with a notice (`core/media/.../pressure/` and `E/EditorViewModel.kt`), with a test
+- [X] T044 [P] Accessibility with large font on the panel and inspector (pattern of `AccessibilityTest`) and screen reader values (FR-019)
+- [X] T045 [P] Sources byte-identical (SC-008) and save, force-stop, reopen keeps mute and reverb (SC-005): androidTest in `core/data`
+- [X] T046 Missing media keeps reverb and mute editable (edge case), test in `feature/editor/src/test/`
 - [ ] T047 Five reverb clips: 30 fps and no dropouts on the Fold, CPU on a mid-range phone (SC-003, risk R1); record the result or open item
-- [ ] T048 Update `specs/003-audio-mute-reverb/quickstart.md` with the final commands and results
+- [X] T048 Update `specs/003-audio-mute-reverb/quickstart.md` with the final commands and results
 - [X] T049 Run everything: `:core:model:test`, `testDebugUnitTest`, `verifyPaparazziDebug`, `detekt`, `lintDebug`, `connectedDebugAndroidTest`; fix failures
 - [ ] T050 Designer review of the reverb panel and inspector (SC-007); record deviations or the open item
 

@@ -50,6 +50,7 @@ class Media3PreviewEngine @Inject constructor(
     private var polling = false
     private var gains = mutableMapOf<String, GainAudioProcessor>()
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
+    private var reverbAllowed = true
 
     override val state: StateFlow<PreviewState> = _state
     override val player: Player? get() = compositionPlayer
@@ -124,7 +125,7 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     override fun setClipReverbLive(clipId: String, reverb: Reverb) {
-        reverbs[clipId]?.update(reverb)
+        reverbs[clipId]?.update(reverb.copy(enabled = reverb.enabled && reverbAllowed))
     }
 
     override fun setClipVolumeLive(clipId: String, percent: Int) {
@@ -154,6 +155,7 @@ class Media3PreviewEngine @Inject constructor(
     private fun compositionFor(timeline: Timeline, quality: PreviewQuality): Composition? {
         gains = mutableMapOf()
         reverbs = mutableMapOf()
+        reverbAllowed = quality.reverb
         val sequences = listOfNotNull(videoSequence(timeline, quality), audioSequence(timeline))
         return if (sequences.isEmpty()) null else Composition.Builder(sequences).build()
     }
@@ -224,7 +226,11 @@ class Media3PreviewEngine @Inject constructor(
     private fun soundEffects(clipId: String, reverb: Reverb, percent: Int, hasAudio: Boolean): List<AudioProcessor> {
         if (!hasAudio) return emptyList()
         val gain = GainAudioProcessor(percent).also { gains[clipId] = it }
-        val room = ReverbAudioProcessor(reverb).also { it.update(reverb, applyRoomSize = true); reverbs[clipId] = it }
+        val effective = reverb.copy(enabled = reverb.enabled && reverbAllowed)
+        val room = ReverbAudioProcessor(effective).also {
+            it.update(effective, applyRoomSize = true)
+            reverbs[clipId] = it
+        }
         return listOf(room, gain)
     }
 

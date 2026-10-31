@@ -79,4 +79,58 @@ class FoldScreenshotTest {
 
     @Test
     fun tabletopEditor() = show(Arrangement.Tabletop(HingeBounds(0, 780, 2_080, 800)), state(selection = null))
+
+    /** c1 is 2x at 40% with reverb on, c3 is muted; shown with the inspector and badges. */
+    private fun editedState(
+        selection: ClipSelection? = ClipSelection.Video("c1"),
+        sheet: SheetState? = null,
+        panel: ReverbPanelState? = null,
+    ): EditorState {
+        val hall = com.petruvideo.core.model.ReverbPresets.settings(com.petruvideo.core.model.ReverbPreset.Hall, true)
+        val base = sampleLoaded().timeline.copy(playheadMs = 1_000)
+        val timeline = base.copy(
+            videoLane = base.videoLane.map {
+                when (it.id) {
+                    "c1" -> it.copy(speedMilli = 2000, volumePercent = 40, reverb = hall)
+                    "c3" -> it.copy(muted = true)
+                    else -> it
+                }
+            },
+            audioLane = base.audioLane.map { it.copy(reverb = hall, speedMilli = 500) },
+        )
+        return EditorState(
+            header = EditorHeader("Coast road, day 3", "1080p · 30 fps", SaveStatus.Saved),
+            timeline = timeline,
+            selection = selection,
+            playback = PlaybackState(positionMs = 1_000, durationMs = timeline.totalDurationMs),
+            canUndo = true,
+            projectMedia = timeline.media.values.toList(),
+            clipTools = listOf(
+                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+                ClipTool.Duplicate, ClipTool.Delete,
+            ),
+            selectedReverb = hall,
+            sheet = sheet,
+            reverbPanel = panel,
+        )
+    }
+
+    @Test
+    fun unfoldedInspectorWithSpeedVolumeMuteAndReverbAndBadges() =
+        show(Arrangement.Expanded(hinge = null), editedState())
+
+    @Test
+    fun tabletopWithTheVolumeSheet() = show(
+        Arrangement.Tabletop(HingeBounds(0, 780, 2_080, 800)),
+        editedState(sheet = SheetState(ClipTool.Volume, "c1", "m1.mp4", 40, 4_000)),
+    )
+
+    @Test
+    fun tabletopWithTheReverbPanel() {
+        val hall = com.petruvideo.core.model.ReverbPresets.settings(com.petruvideo.core.model.ReverbPreset.Hall, true)
+        show(
+            Arrangement.Tabletop(HingeBounds(0, 780, 2_080, 800)),
+            editedState(panel = ReverbPanelState("c1", "m1.mp4", hall)),
+        )
+    }
 }
