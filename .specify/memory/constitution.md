@@ -1,9 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: (template, unversioned) -> 1.0.0
-- Modified principles: none renamed (initial ratification, all placeholders filled)
-- Added sections: Core Principles I-VII, Platform & Technical Constraints,
-  Development Workflow & Quality Gates, Governance
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles: none renamed; VII unchanged
+- Added sections: Principle VIII (Adaptive and Foldable-First UI)
+- Expanded: Platform & Technical Constraints (window size classes, Jetpack WindowManager,
+  foldable test targets), Development Workflow & Quality Gates (foldable verification gate)
 - Removed sections: none
 - Templates reviewed:
   - .specify/templates/plan-template.md: OK (generic "Constitution Check" gate; no edit needed)
@@ -87,6 +88,27 @@ long exports MUST run in a foreground service. Accessibility basics (content des
 touch targets of at least 48dp, scalable text) MUST be met.
 Rationale: video files are personal and heavy; the app must not betray trust or kill the device.
 
+### VIII. Adaptive and Foldable-First UI (NON-NEGOTIABLE)
+
+Foldable support is a release requirement, not an enhancement. Every screen MUST be built
+adaptively from the start using window size classes (compact, medium, expanded) and MUST NOT
+assume a fixed phone-sized window. Fold state and posture (flat, half-opened/tabletop, book,
+separating hinge or fold occlusion) MUST be read through Jetpack WindowManager and exposed to
+the UI layer as state. Required behaviors:
+- Unfolding, folding, rotating, resizing, and entering split-screen or multi-window MUST NOT
+  restart the activity, lose the playhead position, selection, or unsaved edits, or interrupt
+  playback or an in-progress export.
+- Expanded layouts MUST use multi-pane editing (library, preview, inspector, and timeline
+  visible together); the compact layout MUST remain fully functional on its own.
+- In tabletop posture the preview MUST sit on one side of the hinge and controls on the
+  other; interactive content MUST NOT be hidden under the hinge or a fold occlusion.
+- Cover (outer) screens MUST be usable at compact width for project browsing and quick
+  trims, and MUST hand off to the inner screen without data loss.
+- Drag and drop of media and clips between panes, mouse and keyboard input, and stylus input
+  MUST work on large screens.
+Rationale: foldables are a primary target device class; layouts and state that survive posture
+changes cannot be retrofitted cheaply.
+
 ## Platform & Technical Constraints
 
 - Minimum SDK 26 (Android 8.0); target SDK MUST track the latest stable Android release
@@ -98,6 +120,11 @@ Rationale: video files are personal and heavy; the app must not betray trust or 
 - Third-party libraries and bundled assets (fonts, music, stickers, effects) MUST have licenses
   compatible with commercial distribution, recorded in the repository.
 - The editor MUST work fully offline; network features are optional enhancements.
+- UI MUST be built with Compose adaptive layouts (window size classes, Jetpack WindowManager
+  for fold and posture); UI state MUST survive configuration changes via state holders and
+  saved state, with the activity declared to handle resize and fold changes.
+- Foldable verification targets: at least one inner-display foldable (flat and tabletop
+  postures) and one cover-screen profile, in addition to phone and tablet profiles.
 
 ## Development Workflow & Quality Gates
 
@@ -108,6 +135,9 @@ Rationale: video files are personal and heavy; the app must not betray trust or 
   pass, and relevant instrumented tests pass.
 - Changes touching playback, rendering, or export MUST include a recorded performance check
   against the Principle III budgets.
+- Every feature with UI MUST specify and verify its behavior at compact, medium, and expanded
+  widths and in tabletop posture, including state retention across fold and unfold, before it
+  is considered done (Principle VIII).
 - Releases MUST be smoke-tested on at least one low-end, one mid-range, and one high-end
   device (or emulator profile) before shipping.
 
@@ -123,4 +153,4 @@ PATCH for clarifications and wording fixes. All plans and reviews MUST verify co
 these principles; unjustified violations block merge. Runtime development guidance lives in
 the Spec Kit skills under `.claude/skills/`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
+**Version**: 1.1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
