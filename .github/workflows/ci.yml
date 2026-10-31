@@ -16,5 +16,7 @@ jobs:
         run: ./gradlew :core:model:test
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
+      - name: Screenshot goldens
+        run: ./gradlew verifyScreenshots
       - name: Static analysis and lint
         run: ./gradlew detekt lint

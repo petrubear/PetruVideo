@@ -1,6 +1,7 @@
 plugins {
     id("petru.android.library")
     id("petru.android.compose")
+    id("petru.android.screenshots")
 }
 
 android {

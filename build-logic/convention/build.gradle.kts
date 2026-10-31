@@ -5,8 +5,8 @@ plugins {
 group = "com.petruvideo.buildlogic"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 dependencies {
@@ -16,6 +16,7 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
+    compileOnly(libs.paparazzi.gradlePlugin)
 }
 
 gradlePlugin {
@@ -35,6 +36,10 @@ gradlePlugin {
         register("androidHilt") {
             id = "petru.android.hilt"
             implementationClass = "HiltConventionPlugin"
+        }
+        register("screenshots") {
+            id = "petru.android.screenshots"
+            implementationClass = "ScreenshotTestConventionPlugin"
         }
         register("jvmLibrary") {
             id = "petru.jvm.library"

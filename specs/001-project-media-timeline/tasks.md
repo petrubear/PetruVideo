@@ -75,7 +75,7 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 - [X] T030 [P] Write failing instrumented test `core/media/src/androidTest/kotlin/<pkg>/core/media/probe/MediaProbeTest.kt`: duration, display size with rotation, frame rate, `hasAudio`, fingerprint, unreadable file error
 - [X] T031 Implement `MediaProbe` in `core/media/src/main/kotlin/<pkg>/core/media/probe/MediaProbe.kt` to pass T030
 - [X] T032 [P] Add small redistributable test media in `core/media/src/androidTest/assets/` (video with sound, video without sound, portrait video, rotated video, photo, audio file, corrupted file) with a `LICENSES.md`
-- [ ] T033 [P] Set up screenshot testing: choose the tool (Paparazzi or Compose preview screenshot testing), configure a `verifyScreenshots` task in the convention plugins that compares against golden images generated from the Compose UI and approved by the designer (never pixel-compared with the designer's mock images), and export the designer's artboards to `design/reference/` for side-by-side review only, with `design/reference/README.md` mapping files to artboard names
+- [X] T033 [P] Set up screenshot testing: choose the tool (Paparazzi or Compose preview screenshot testing), configure a `verifyScreenshots` task in the convention plugins that compares against golden images generated from the Compose UI and approved by the designer (never pixel-compared with the designer's mock images), and export the designer's artboards to `design/reference/` for side-by-side review only, with `design/reference/README.md` mapping files to artboard names
 
 **Checkpoint**: Foundation ready - user story work can begin
 
