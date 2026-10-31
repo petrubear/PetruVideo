@@ -116,16 +116,16 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 ### Tests for User Story 2
 
-- [ ] T045 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AddClipsTest.kt`: video and photos inserted in selection order after the clip under the playhead (at the playhead on a boundary, at the start when empty), `attachedAudio` from `hasAudio`, audio-only files starting at the playhead in selection order, audio clips snapping to the next free spot with a `Snapped` notice when they would overlap another audio clip but allowed to overlap attached sound, missing media rejection, project format set exactly once
-- [ ] T046 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/FormatDerivationTest.kt`: aspect ratio from rotated size, 1080 cap on the short side without upscaling, frame rate rounding to 24/30/60, default 30, photo-only start
+- [X] T045 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AddClipsTest.kt`: video and photos inserted in selection order after the clip under the playhead (at the playhead on a boundary, at the start when empty), `attachedAudio` from `hasAudio`, audio-only files starting at the playhead in selection order, audio clips snapping to the next free spot with a `Snapped` notice when they would overlap another audio clip but allowed to overlap attached sound, missing media rejection, project format set exactly once
+- [X] T046 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/FormatDerivationTest.kt`: aspect ratio from rotated size, 1080 cap on the short side without upscaling, frame rate rounding to 24/30/60, default 30, photo-only start
 - [ ] T047 [P] [US2] Write failing `feature/importmedia/src/test/kotlin/<pkg>/feature/importmedia/AddMediaViewModelTest.kt`: selection numbering and renumbering, persistence across tab and album changes, totals, partial failure reporting
 - [ ] T048 [P] [US2] Write failing `core/data/src/androidTest/kotlin/<pkg>/core/data/importing/ImportMediaUseCaseTest.kt`: per-file error does not stop the batch, progress, cancellation, same file twice creates two items, originals unchanged
 - [ ] T049 [US2] Run Spike 2 (picker URI persistence across process death and restart on min and target OS) and record the result in `specs/001-project-media-timeline/research.md` section 6
 
 ### Implementation for User Story 2
 
-- [ ] T050 [US2] Implement `FormatDerivation.kt` in `core/model/src/main/kotlin/<pkg>/core/model/engine/` to pass T046
-- [ ] T051 [US2] Implement `AddVideoClips` and `AddAudioClips` commands in `core/model/src/main/kotlin/<pkg>/core/model/engine/AddClips.kt` to pass T045 (depends on T050); results carry `Snapped` notices
+- [X] T050 [US2] Implement `FormatDerivation.kt` in `core/model/src/main/kotlin/<pkg>/core/model/engine/` to pass T046
+- [X] T051 [US2] Implement `AddVideoClips` and `AddAudioClips` commands in `core/model/src/main/kotlin/<pkg>/core/model/engine/AddClips.kt` to pass T045 (depends on T050); results carry `Snapped` notices
 - [ ] T052 [US2] Implement `MediaLibrarySource.kt` in `core/media/src/main/kotlin/<pkg>/core/media/library/` (albums, Videos/Photos/Audio queries, paging, partial "selected items" access)
 - [ ] T053 [P] [US2] Implement `PermissionCoordinator.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/` (just-in-time request, partial access, denied rationale)
 - [ ] T054 [P] [US2] Implement `SystemPickerLauncher.kt` in the same package as the no-broad-access path, following the Spike 2 outcome for persistable access

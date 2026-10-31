@@ -2,6 +2,11 @@ build:
   maxIssues: 0
 
 style:
+  ReturnCount:
+    max: 6
+    excludeGuardClauses: true
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 2
   MagicNumber:
     active: false
   MaxLineLength:
