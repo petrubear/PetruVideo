@@ -263,11 +263,11 @@ Note: US5 delivers the expanded and tabletop layouts; the adaptive foundation (T
 
 - [ ] T128 [P] Accessibility pass: content descriptions, 48dp targets, TalkBack order, large-font layouts on every screen and arrangement; fix findings in the affected composables
 - [ ] T129 [P] Create `benchmark/` module with startup and scrolling macrobenchmarks (including a project with 100+ clips), a 1080p playback frame-rate check for SC-003, and a 20-file import timing check for SC-004
-- [ ] T130 Implement low-storage handling: surface the `LowStorage` warning on failed autosave, keep last good rows, and retry after space is freed (`core/data/src/main/kotlin/<pkg>/core/data/autosave/AutosaveWriter.kt`, `feature/editor/.../ui/EditorTopBar.kt`)
-- [ ] T131 [P] Add `app/src/test/kotlin/<pkg>/app/ManifestPermissionsTest.kt` asserting the merged manifest declares no network permission (FR-028, offline)
-- [ ] T132 [P] Add `core/data/src/androidTest/kotlin/<pkg>/core/data/ProcessDeathRecoveryTest.kt`: edit, kill the process within the debounce window, reopen, and assert at most 5 seconds of work is lost (SC-005)
-- [ ] T133 [P] Record third-party and bundled asset licenses (fonts, test media, libraries) in `licenses/README.md`
-- [ ] T134 [P] Add `docs/architecture.md` summarizing modules, state flow, and how arrangements map to layouts
+- [X] T130 Implement low-storage handling: surface the `LowStorage` warning on failed autosave, keep last good rows, and retry after space is freed (`core/data/src/main/kotlin/<pkg>/core/data/autosave/AutosaveWriter.kt`, `feature/editor/.../ui/EditorTopBar.kt`)
+- [X] T131 [P] Add `app/src/test/kotlin/<pkg>/app/ManifestPermissionsTest.kt` asserting the merged manifest declares no network permission (FR-028, offline)
+- [X] T132 [P] Add `core/data/src/androidTest/kotlin/<pkg>/core/data/ProcessDeathRecoveryTest.kt`: edit, kill the process within the debounce window, reopen, and assert at most 5 seconds of work is lost (SC-005)
+- [X] T133 [P] Record third-party and bundled asset licenses (fonts, test media, libraries) in `licenses/README.md`
+- [X] T134 [P] Add `docs/architecture.md` summarizing modules, state flow, and how arrangements map to layouts
 - [ ] T135 Run the full `quickstart.md` manual scenarios 1 to 14 on the owner's physical Samsung Fold (cover screen, inner display, flat and half-open, split-screen, pop-up window), plus one phone profile and one tablet emulator profile; every scenario must pass on the Fold with no workaround; record results and the exact device model, OS version, and window sizes in `specs/001-project-media-timeline/checklists/validation.md`
 - [ ] T136 Design review with the designer using the screenshot results; record approved deviations in `design/reference/README.md`
 - [ ] T137 Run `./gradlew :core:model:test testDebugUnitTest connectedDebugAndroidTest verifyScreenshots lint` and fix remaining failures

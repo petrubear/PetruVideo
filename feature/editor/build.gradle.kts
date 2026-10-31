@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
+    androidTestImplementation(libs.compose.ui.test.accessibility)
 }
