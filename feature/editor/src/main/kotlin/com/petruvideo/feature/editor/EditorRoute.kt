@@ -23,6 +23,7 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 fun EditorRoute(
     projectId: String,
     onBack: () -> Unit,
+    onAddMedia: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditorViewModel = hiltViewModel(),
 ) {
@@ -33,6 +34,7 @@ fun EditorRoute(
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconAction(PetruIcons.Back, "Back", onBack)
             Text(project?.name.orEmpty(), style = PetruType.Title, color = PetruColors.OnBackground)
+            IconAction(PetruIcons.Add, "Add media", onAddMedia)
         }
     }
 }

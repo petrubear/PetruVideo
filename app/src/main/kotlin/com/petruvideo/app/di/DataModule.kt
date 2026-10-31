@@ -3,9 +3,12 @@ package com.petruvideo.app.di
 import android.content.Context
 import androidx.room.Room
 import com.petruvideo.core.data.db.PetruDatabase
+import com.petruvideo.core.data.importing.ImportMediaUseCase
+import com.petruvideo.core.data.importing.MediaImporter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.RoomProjectRepository
 import com.petruvideo.core.data.session.ProjectSession
+import com.petruvideo.core.media.probe.MediaProber
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,6 +40,9 @@ object DataModule {
     @Provides
     @Singleton
     fun projectRepository(db: PetruDatabase): ProjectRepository = RoomProjectRepository(db)
+
+    @Provides
+    fun mediaImporter(prober: MediaProber): MediaImporter = ImportMediaUseCase(prober)
 
     /** Process-scoped, so the open project survives fold, unfold, rotation, and resize. */
     @Provides

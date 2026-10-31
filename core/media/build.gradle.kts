@@ -1,5 +1,6 @@
 plugins {
     id("petru.android.library")
+    id("petru.android.compose")
     id("petru.android.hilt")
 }
 
@@ -15,7 +16,8 @@ dependencies {
     api(project(":core:model"))
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.transformer)
-    implementation(libs.coil.compose)
+    api(libs.coil.compose)
+    implementation(libs.coil.video)
     implementation(libs.kotlinx.coroutines.android)
 
     androidTestImplementation(libs.androidx.test.ext.junit)

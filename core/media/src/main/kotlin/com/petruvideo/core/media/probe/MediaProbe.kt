@@ -18,17 +18,21 @@ import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.error.AppError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/** Reads a media file's metadata; implemented by [MediaProbe] and replaced by a fake in tests. */
+fun interface MediaProber {
+    suspend fun probe(uri: Uri, id: String): Result<MediaItem>
+}
+
 class MediaProbeException(val error: AppError, cause: Throwable? = null) : Exception(error.toString(), cause)
 
 /** Reads metadata and a fingerprint from a content or file URI without modifying the file. */
-class MediaProbe @Inject constructor(@ApplicationContext private val context: Context) {
+class MediaProbe @Inject constructor(@ApplicationContext private val context: Context) : MediaProber {
 
-    suspend fun probe(uri: Uri, id: String = UUID.randomUUID().toString()): Result<MediaItem> =
+    override suspend fun probe(uri: Uri, id: String): Result<MediaItem> =
         withContext(Dispatchers.IO) {
             val name = displayName(uri)
             try {

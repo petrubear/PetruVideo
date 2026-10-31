@@ -118,25 +118,25 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 - [X] T045 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AddClipsTest.kt`: video and photos inserted in selection order after the clip under the playhead (at the playhead on a boundary, at the start when empty), `attachedAudio` from `hasAudio`, audio-only files starting at the playhead in selection order, audio clips snapping to the next free spot with a `Snapped` notice when they would overlap another audio clip but allowed to overlap attached sound, missing media rejection, project format set exactly once
 - [X] T046 [P] [US2] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/FormatDerivationTest.kt`: aspect ratio from rotated size, 1080 cap on the short side without upscaling, frame rate rounding to 24/30/60, default 30, photo-only start
-- [ ] T047 [P] [US2] Write failing `feature/importmedia/src/test/kotlin/<pkg>/feature/importmedia/AddMediaViewModelTest.kt`: selection numbering and renumbering, persistence across tab and album changes, totals, partial failure reporting
-- [ ] T048 [P] [US2] Write failing `core/data/src/androidTest/kotlin/<pkg>/core/data/importing/ImportMediaUseCaseTest.kt`: per-file error does not stop the batch, progress, cancellation, same file twice creates two items, originals unchanged
-- [ ] T049 [US2] Run Spike 2 (picker URI persistence across process death and restart on min and target OS) and record the result in `specs/001-project-media-timeline/research.md` section 6
+- [X] T047 [P] [US2] Write failing `feature/importmedia/src/test/kotlin/<pkg>/feature/importmedia/AddMediaViewModelTest.kt`: selection numbering and renumbering, persistence across tab and album changes, totals, partial failure reporting
+- [X] T048 [P] [US2] Write failing `core/data/src/androidTest/kotlin/<pkg>/core/data/importing/ImportMediaUseCaseTest.kt`: per-file error does not stop the batch, progress, cancellation, same file twice creates two items, originals unchanged
+- [X] T049 [US2] Run Spike 2 (picker URI persistence across process death and restart on min and target OS) and record the result in `specs/001-project-media-timeline/research.md` section 6
 
 ### Implementation for User Story 2
 
 - [X] T050 [US2] Implement `FormatDerivation.kt` in `core/model/src/main/kotlin/<pkg>/core/model/engine/` to pass T046
 - [X] T051 [US2] Implement `AddVideoClips` and `AddAudioClips` commands in `core/model/src/main/kotlin/<pkg>/core/model/engine/AddClips.kt` to pass T045 (depends on T050); results carry `Snapped` notices
-- [ ] T052 [US2] Implement `MediaLibrarySource.kt` in `core/media/src/main/kotlin/<pkg>/core/media/library/` (albums, Videos/Photos/Audio queries, paging, partial "selected items" access)
-- [ ] T053 [P] [US2] Implement `PermissionCoordinator.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/` (just-in-time request, partial access, denied rationale)
-- [ ] T054 [P] [US2] Implement `SystemPickerLauncher.kt` in the same package as the no-broad-access path, following the Spike 2 outcome for persistable access
-- [ ] T055 [US2] Implement `ImportMediaUseCase.kt` in `core/data/src/main/kotlin/<pkg>/core/data/importing/` (probe, fingerprint, per-file `UnsupportedFile` errors, progress, cancellation); media items are recorded only when items are added to the timeline, and items no longer referenced by any clip are removed on save, to pass T048
-- [ ] T056 [US2] Create `AddMediaContract.kt` and `AddMediaViewModel.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/` to pass T047
-- [ ] T057 [P] [US2] Implement `GridThumbnailLoader.kt` in `core/media/src/main/kotlin/<pkg>/core/media/thumbs/` (video frame and photo thumbnails via Coil, bounded and cancellable)
-- [ ] T058 [P] [US2] Create `SelectionGrid.kt` (three columns, duration labels, numbered badges) and `AlbumChipRow.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/ui/`
-- [ ] T059 [P] [US2] Create `SelectionTray.kt` (selected thumbnails, count, total duration, single "Add to timeline in order" action) in the same package
-- [ ] T060 [US2] Create `AddMediaScreen.kt` in the same package assembling the header (close button and title only), segmented Videos/Photos/Audio, albums, grid, and tray (depends on T058, T059)
-- [ ] T061 [US2] Wire the AddMedia route in `PetruNavHost.kt` and connect "Add to timeline in order" to `ProjectSession` (`AddVideoClips`/`AddAudioClips`), including the editor stub's add-clip entry; show an import progress state with a Cancel button for imports longer than one second (FR-011)
-- [ ] T062 [US2] Add screenshot test `feature/importmedia/src/test/kotlin/<pkg>/feature/importmedia/AddMediaScreenshotTest.kt` recording the golden image (tray with the single action), reviewed against the Multi-import reference image
+- [X] T052 [US2] Implement `MediaLibrarySource.kt` in `core/media/src/main/kotlin/<pkg>/core/media/library/` (albums, Videos/Photos/Audio queries, paging, partial "selected items" access)
+- [X] T053 [P] [US2] Implement `PermissionCoordinator.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/` (just-in-time request, partial access, denied rationale)
+- [X] T054 [P] [US2] Implement `SystemPickerLauncher.kt` in the same package as the no-broad-access path, following the Spike 2 outcome for persistable access
+- [X] T055 [US2] Implement `ImportMediaUseCase.kt` in `core/data/src/main/kotlin/<pkg>/core/data/importing/` (probe, fingerprint, per-file `UnsupportedFile` errors, progress, cancellation); media items are recorded only when items are added to the timeline, and items no longer referenced by any clip are removed on save, to pass T048
+- [X] T056 [US2] Create `AddMediaContract.kt` and `AddMediaViewModel.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/` to pass T047
+- [X] T057 [P] [US2] Implement `GridThumbnailLoader.kt` in `core/media/src/main/kotlin/<pkg>/core/media/thumbs/` (video frame and photo thumbnails via Coil, bounded and cancellable)
+- [X] T058 [P] [US2] Create `SelectionGrid.kt` (three columns, duration labels, numbered badges) and `AlbumChipRow.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/ui/`
+- [X] T059 [P] [US2] Create `SelectionTray.kt` (selected thumbnails, count, total duration, single "Add to timeline in order" action) in the same package
+- [X] T060 [US2] Create `AddMediaScreen.kt` in the same package assembling the header (close button and title only), segmented Videos/Photos/Audio, albums, grid, and tray (depends on T058, T059)
+- [X] T061 [US2] Wire the AddMedia route in `PetruNavHost.kt` and connect "Add to timeline in order" to `ProjectSession` (`AddVideoClips`/`AddAudioClips`), including the editor stub's add-clip entry; show an import progress state with a Cancel button for imports longer than one second (FR-011)
+- [X] T062 [US2] Add screenshot test `feature/importmedia/src/test/kotlin/<pkg>/feature/importmedia/AddMediaScreenshotTest.kt` recording the golden image (tray with the single action), reviewed against the Multi-import reference image
 
 **Checkpoint**: User Stories 1 and 2 work independently
 

@@ -3,11 +3,17 @@ package com.petruvideo.core.data.session
 import com.petruvideo.core.data.autosave.AutosaveWriter
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.data.repo.ProjectRepository
+import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.AddVideoClips
+import com.petruvideo.core.model.engine.AddVideoItem
 import com.petruvideo.core.model.engine.Command
 import com.petruvideo.core.model.engine.CommandResult
 import com.petruvideo.core.model.engine.EditHistory
+import com.petruvideo.core.model.engine.Notice
 import com.petruvideo.core.model.engine.RejectReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +76,21 @@ class ProjectSession(
         val history = editHistory ?: return
         history.replaceCurrent(history.current.copy(playheadMs = ms.coerceAtLeast(0)))
         publishAndSave()
+    }
+
+    /**
+     * Adds imported media in selection order: videos and photos after the clip under the playhead, audio files
+     * at the playhead on the audio lane. Returns the notices of the applied commands (e.g. a snapped audio clip).
+     */
+    fun addMedia(items: List<MediaItem>): List<Notice> {
+        val playhead = _timeline.value?.playheadMs ?: return emptyList()
+        val visual = items.filter { it.kind != MediaKind.Audio }
+        val audio = items.filter { it.kind == MediaKind.Audio }
+        val results = buildList {
+            if (visual.isNotEmpty()) add(apply(AddVideoClips(visual.map(::AddVideoItem), playhead)))
+            if (audio.isNotEmpty()) add(apply(AddAudioClips(audio, playhead)))
+        }
+        return results.filterIsInstance<CommandResult.Applied>().flatMap { it.notices }
     }
 
     suspend fun flush() = autosave.flush()

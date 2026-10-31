@@ -38,6 +38,11 @@ All Technical Context unknowns are resolved here. Library versions are deliberat
 - **Decision**: Store the content URI plus a fingerprint (display name, size, duration, last-modified, media kind). Query the library through the system media store with just-in-time media permissions (including partial "selected items" access), and offer the system file/photo picker as the no-broad-access path. A clip is "missing" when its URI cannot be opened or its fingerprint no longer matches; Relink lets the user pick a replacement and keeps trim and position.
 - **Rationale**: Content URIs are the only portable handle on scoped storage; the fingerprint lets us detect moved or replaced files and suggest likely matches when relinking.
 - **Alternatives considered**: Copying files into app storage (doubles space for multi-GB footage; rejected in clarification).
+
+**Spike 2 result (2026-10-30, Pixel 7 Pro emulator, API 34)**:
+- Verified: a MediaStore content URI stored by the app still opens and probes after the app process is killed (`am force-stop`) and relaunched (`MediaUriPersistenceTest`, step 1 then step 2). Library items chosen in the in-app grid are therefore safe to store by URI.
+- Decision for the no-broad-access path: use the system document picker (`OpenMultipleDocuments`) and call `takePersistableUriPermission`, not the photo picker, because only document grants are documented as surviving a restart. Photo picker URIs are not stored.
+- Not yet verified on a device: that the document-picker grant survives a restart, and behavior on the minimum OS (API 26). These are manual checks in quickstart scenario 3 and are repeated on the Samsung Fold in T135.
 - **Validate**: Spike 2 - confirm which picker-returned URIs stay readable across process death and device restart on the minimum and target OS versions, and whether persistable grants are needed for the picker path.
 
 ## 7. Thumbnails and waveforms

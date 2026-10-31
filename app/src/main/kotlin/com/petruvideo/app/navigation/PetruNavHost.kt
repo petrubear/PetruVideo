@@ -1,17 +1,15 @@
 package com.petruvideo.app.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.petruvideo.feature.editor.EditorRoute
+import com.petruvideo.feature.importmedia.AddMediaRoute
 import com.petruvideo.feature.projects.ProjectsRoute
 
 object Routes {
@@ -30,7 +28,13 @@ fun PetruNavHost(modifier: Modifier = Modifier) {
         composable(Routes.PROJECTS) {
             ProjectsRoute(onOpenEditor = { navController.navigate(Routes.editor(it)) })
         }
-        composable(Routes.ADD_MEDIA) { Placeholder("Add media") }
+        composable(Routes.ADD_MEDIA) {
+            val session: SessionViewModel = hiltViewModel()
+            AddMediaRoute(
+                onItemsReady = session::addMedia,
+                onClose = { navController.popBackStack() },
+            )
+        }
         composable(
             Routes.EDITOR,
             arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
@@ -38,12 +42,8 @@ fun PetruNavHost(modifier: Modifier = Modifier) {
             EditorRoute(
                 projectId = entry.arguments?.getString("projectId").orEmpty(),
                 onBack = { navController.popBackStack() },
+                onAddMedia = { navController.navigate(Routes.ADD_MEDIA) },
             )
         }
     }
-}
-
-@Composable
-private fun Placeholder(name: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(name) }
 }

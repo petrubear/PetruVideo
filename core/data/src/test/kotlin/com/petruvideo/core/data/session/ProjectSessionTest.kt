@@ -2,10 +2,14 @@ package com.petruvideo.core.data.session
 
 import app.cash.turbine.test
 import com.petruvideo.core.data.repo.LoadedProject
+import com.petruvideo.core.model.Fingerprint
+import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.engine.Command
 import com.petruvideo.core.model.engine.CommandResult
+import com.petruvideo.core.model.engine.Notice
 import com.petruvideo.core.model.engine.RejectReason
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -109,6 +113,39 @@ class ProjectSessionTest {
 
         session.timeline.test { awaitItem()?.playheadMs shouldBe 42 }
         session.timeline.test { awaitItem()?.playheadMs shouldBe 42 }
+        advanceUntilIdle()
+    }
+
+    private fun media(id: String, kind: MediaKind, duration: Long? = 10_000) = MediaItem(
+        id = id, kind = kind, uri = "content://m/$id", displayName = id, durationMs = duration,
+        width = if (kind == MediaKind.Audio) null else 1920, height = if (kind == MediaKind.Audio) null else 1080,
+        frameRate = 30f, hasAudio = true, fingerprint = Fingerprint(1, 1, duration, "x/y"),
+    )
+
+    @Test
+    fun `addMedia puts videos and photos on the video lane and audio on the audio lane`() = runTest {
+        val session = ProjectSession(FakeProjectRepository(mapOf("p" to loaded)), this)
+        session.open("p")
+
+        val notices = session.addMedia(
+            listOf(media("v", MediaKind.Video), media("a", MediaKind.Audio), media("p1", MediaKind.Photo, null)),
+        )
+
+        val t = session.timeline.value!!
+        t.videoLane.map { it.mediaItemId } shouldBe listOf("v", "p1")
+        t.audioLane.map { it.mediaItemId } shouldBe listOf("a")
+        notices shouldBe emptyList()
+        session.history.value.undoLabel shouldBe "Add audio"
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `addMedia reports a snapped audio clip`() = runTest {
+        val session = ProjectSession(FakeProjectRepository(mapOf("p" to loaded)), this)
+        session.open("p")
+        session.addMedia(listOf(media("a1", MediaKind.Audio)))
+
+        session.addMedia(listOf(media("a2", MediaKind.Audio))) shouldBe listOf(Notice.Snapped)
         advanceUntilIdle()
     }
 
