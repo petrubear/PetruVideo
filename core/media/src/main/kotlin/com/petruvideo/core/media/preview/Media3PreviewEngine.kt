@@ -68,11 +68,21 @@ class Media3PreviewEngine @Inject constructor(
         }
     }
 
+    private fun isDebuggable() =
+        context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+
     override fun load(timeline: Timeline, quality: PreviewQuality) {
         totalMs = timeline.totalDurationMs
         val composition = compositionFor(timeline, quality)
         val player = compositionPlayer ?: CompositionPlayer.Builder(context).build()
-            .also { it.addListener(listener); compositionPlayer = it }
+            .also {
+                it.addListener(listener)
+                if (isDebuggable()) PlaybackStats().let { stats ->
+                    it.setVideoFrameMetadataListener(stats)
+                    it.addAnalyticsListener(stats)
+                }
+                compositionPlayer = it
+            }
         hasComposition = composition != null
         if (composition == null) {
             player.pause()
