@@ -69,7 +69,7 @@ private fun CompactEditor(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
-            PreviewSurface(player, Modifier.fillMaxWidth().height(232.dp))
+            PreviewSurface(player, Modifier.fillMaxWidth().height(if (state.sheet != null) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,
                 canUndo = state.canUndo,
@@ -97,7 +97,13 @@ private fun CompactEditor(
                 Box(Modifier.weight(1f))
             }
             if (state.selection != null && state.clipTools.isNotEmpty()) {
-                ClipToolBar(state.clipTools, state.selectedAudioMuted, onTool = { onEvent(EditorEvent.UseTool(it)) })
+                SpeedVolumeSheet(state.sheet, onEvent)
+                ClipToolBar(
+                        state.clipTools,
+                        state.selectedAudioMuted,
+                        onTool = { onEvent(EditorEvent.UseTool(it)) },
+                        disabled = state.disabledTools.keys,
+                    )
             } else {
                 MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
             }

@@ -65,6 +65,10 @@ class FakePreviewEngine : PreviewEngine {
         _state.value = _state.value.copy(isPlaying = false)
     }
 
+    override fun setClipVolumeLive(clipId: String, percent: Int) {
+        calls += "volume $clipId $percent"
+    }
+
     override fun seekTo(positionMs: Long) {
         calls += "seek $positionMs"
         _state.value = _state.value.copy(positionMs = positionMs)

@@ -156,7 +156,7 @@ private fun SearchField(query: String, onEvent: (ProjectsEvent) -> Unit, modifie
 }
 
 @Composable
-private fun NoResults() {
+internal fun NoResults() {
     Text(
         "No projects match",
         style = PetruType.Body,

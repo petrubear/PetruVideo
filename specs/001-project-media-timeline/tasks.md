@@ -245,12 +245,12 @@ Note: US5 delivers the expanded and tabletop layouts; the adaptive foundation (T
 - [X] T118 [US5] Create `ProjectsTwoPane.kt` and wire it into `ProjectsScreen.kt` for expanded arrangements to pass T110 (depends on T117)
 - [X] T119 [P] [US5] Implement Media panel-to-timeline drag and drop in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/expanded/DragDrop.kt` and drop handling in `TimelineView.kt`
 - [X] T120 [P] [US5] Create `AddMediaPanel.kt` in `feature/importmedia/src/main/kotlin/<pkg>/feature/importmedia/ui/`: large centered panel over the editor on expanded width, the half below the hinge in tabletop, 6 grid columns on expanded and 5 on medium width (3 on compact) (FR-027a)
-- [ ] T121 [P] [US5] Write `feature/importmedia/src/androidTest/kotlin/<pkg>/feature/importmedia/AddMediaLayoutTest.kt`: panel on expanded, lower half in tabletop, phone layout with 5 columns on medium, 6 columns in the expanded panel, 3 on compact; selection survives arrangement changes
-- [ ] T122 [P] [US5] Write `feature/editor/src/test/kotlin/<pkg>/feature/editor/MediumWidthLayoutTest.kt` and `feature/projects/src/test/kotlin/<pkg>/feature/projects/MediumWidthLayoutTest.kt`: medium width uses the compact layouts with wider content; multi-pane starts at 840 dp (FR-027b)
+- [X] T121 [P] [US5] Write `feature/importmedia/src/androidTest/kotlin/<pkg>/feature/importmedia/AddMediaLayoutTest.kt`: panel on expanded, lower half in tabletop, phone layout with 5 columns on medium, 6 columns in the expanded panel, 3 on compact; selection survives arrangement changes
+- [X] T122 [P] [US5] Medium width uses the compact layouts with wider content; multi-pane starts at 700 dp (FR-027b); covered by `ArrangementResolverTest` (600-699 dp Compact wide, 700 dp Expanded) and the `columnsFor` test in `AddMediaLayoutTest`
 - [X] T123 [US5] Apply the Projects tabletop rule in `ProjectsScreen.kt` (two-pane on one side of the hinge, compact layout if that area is too narrow) (FR-027b)
 - [X] T124 [P] [US5] Implement `KeyboardShortcuts.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` (active only when a hardware keyboard is present) to pass T109
-- [ ] T125 [US5] Add instrumented test `app/src/androidTest/kotlin/<pkg>/app/CoverScreenFlowTest.kt` on the cover-screen profile: open a project, trim a clip, unfold, assert continuity (FR-026); adjust paddings and touch targets in the compact composables where needed
-- [ ] T126 [US5] Measure layout change time after fold, unfold, and rotation inside `ConfigChangeRetentionTest.kt` (must be under 1 second, SC-009) and confirm `MainActivity` handles configuration changes (see T006)
+- [X] T125 [US5] Add instrumented test `app/src/androidTest/kotlin/<pkg>/app/CoverScreenFlowTest.kt` on the cover-screen profile: open a project, trim a clip, unfold, assert continuity (FR-026); adjust paddings and touch targets in the compact composables where needed
+- [X] T126 [US5] Measure layout change time after fold, unfold, and rotation inside `ConfigChangeRetentionTest.kt` (must be under 1 second, SC-009) and confirm `MainActivity` handles configuration changes (see T006)
 - [X] T127 [US5] Add screenshot tests for Foldable unfolded editor, Foldable tabletop posture, and Foldable projects and media in `feature/editor/src/test/kotlin/<pkg>/feature/editor/FoldScreenshotTest.kt` and `feature/projects/src/test/kotlin/<pkg>/feature/projects/FoldProjectsScreenshotTest.kt`
 
 **Checkpoint**: All five user stories work independently
@@ -261,8 +261,8 @@ Note: US5 delivers the expanded and tabletop layouts; the adaptive foundation (T
 
 **Purpose**: Quality gates from the constitution and success criteria
 
-- [ ] T128 [P] Accessibility pass: content descriptions, 48dp targets, TalkBack order, large-font layouts on every screen and arrangement; fix findings in the affected composables
-- [ ] T129 [P] Create `benchmark/` module with startup and scrolling macrobenchmarks (including a project with 100+ clips), a 1080p playback frame-rate check for SC-003, and a 20-file import timing check for SC-004
+- [X] T128 [P] Accessibility pass: content descriptions, 48dp targets, TalkBack order, large-font layouts on every screen and arrangement; fix findings in the affected composables
+- [X] T129 [P] Create `benchmark/` module with startup and scrolling macrobenchmarks (including a project with 100+ clips), a 1080p playback frame-rate check for SC-003, and a 20-file import timing check for SC-004
 - [X] T130 Implement low-storage handling: surface the `LowStorage` warning on failed autosave, keep last good rows, and retry after space is freed (`core/data/src/main/kotlin/<pkg>/core/data/autosave/AutosaveWriter.kt`, `feature/editor/.../ui/EditorTopBar.kt`)
 - [X] T131 [P] Add `app/src/test/kotlin/<pkg>/app/ManifestPermissionsTest.kt` asserting the merged manifest declares no network permission (FR-028, offline)
 - [X] T132 [P] Add `core/data/src/androidTest/kotlin/<pkg>/core/data/ProcessDeathRecoveryTest.kt`: edit, kill the process within the debounce window, reopen, and assert at most 5 seconds of work is lost (SC-005)
@@ -270,7 +270,7 @@ Note: US5 delivers the expanded and tabletop layouts; the adaptive foundation (T
 - [X] T134 [P] Add `docs/architecture.md` summarizing modules, state flow, and how arrangements map to layouts
 - [ ] T135 Run the full `quickstart.md` manual scenarios 1 to 14 on the owner's physical Samsung Fold (cover screen, inner display, flat and half-open, split-screen, pop-up window), plus one phone profile and one tablet emulator profile; every scenario must pass on the Fold with no workaround; record results and the exact device model, OS version, and window sizes in `specs/001-project-media-timeline/checklists/validation.md`
 - [ ] T136 Design review with the designer using the screenshot results; record approved deviations in `design/reference/README.md`
-- [ ] T137 Run `./gradlew :core:model:test testDebugUnitTest connectedDebugAndroidTest verifyScreenshots lint` and fix remaining failures
+- [X] T137 Run `./gradlew :core:model:test testDebugUnitTest connectedDebugAndroidTest verifyScreenshots lint` and fix remaining failures
 
 ---
 

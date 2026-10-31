@@ -72,6 +72,7 @@ fun ProjectsTwoPane(
                         onSelect = { onEvent(ProjectsEvent.SelectProject(summary.project.id)) },
                     )
                 }
+                if (state.noResults) item { NoResults() }
             }
         }
     }, second = {

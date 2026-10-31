@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -108,9 +109,18 @@ fun AudioClipsRow(
                         "Detached",
                         style = PetruType.MonoSmall,
                         color = PetruColors.OnBackground,
-                        modifier = Modifier.align(Alignment.CenterStart).offset(x = LABEL_INSET),
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .offset(x = LABEL_INSET)
+                            .background(PetruColors.Background.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp),
                     )
                 }
+                ClipBadge(
+                    clip.speedMilli,
+                    clip.volumePercent,
+                    Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 2.dp),
+                )
                 if (clip.muted && clip.id != selectedClipId) MutedBadge(Modifier.align(Alignment.CenterEnd))
                 if (clip.id == selectedClipId) {
                     TrimHandles(

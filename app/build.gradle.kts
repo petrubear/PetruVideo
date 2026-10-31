@@ -20,6 +20,15 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        // Release-like and signed with the debug key, for the macrobenchmark module.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = false
+        }
     }
 }
 

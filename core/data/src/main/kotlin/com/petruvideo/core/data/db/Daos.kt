@@ -20,9 +20,9 @@ interface ProjectDao {
         """
         SELECT p.*,
           (SELECT COUNT(*) FROM video_clip v WHERE v.projectId = p.id) AS clipCount,
-          (SELECT COALESCE(SUM(v.sourceEndMs - v.sourceStartMs), 0) FROM video_clip v WHERE v.projectId = p.id)
+          (SELECT COALESCE(SUM(((v.sourceEndMs - v.sourceStartMs) * 1000 + v.speedMilli / 2) / v.speedMilli), 0) FROM video_clip v WHERE v.projectId = p.id)
             AS videoLengthMs,
-          (SELECT COALESCE(MAX(a.timelineStartMs + a.sourceEndMs - a.sourceStartMs), 0)
+          (SELECT COALESCE(MAX(a.timelineStartMs + ((a.sourceEndMs - a.sourceStartMs) * 1000 + a.speedMilli / 2) / a.speedMilli), 0)
              FROM audio_clip a WHERE a.projectId = p.id) AS audioEndMs
         FROM project p
         WHERE (:status IS NULL OR p.status = :status)

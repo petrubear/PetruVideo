@@ -3,11 +3,16 @@ package com.petruvideo.core.model.engine
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.PHOTO_MIN_MS
+import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import java.util.UUID
 
 private fun newId() = UUID.randomUUID().toString()
+
+/** Timeline offset into a clip converted to source time. */
+private fun sourceOffset(timelineOffsetMs: Long, speedMilli: Int) =
+    (timelineOffsetMs * speedMilli + SPEED_UNIT / 2) / SPEED_UNIT
 
 /**
  * Splits a video or audio clip at [atMs] on the timeline (normally the playhead). Both halves keep the clip's
@@ -42,7 +47,7 @@ class Split(
             first = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = offset)
             second = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = clip.lengthMs - offset)
         } else {
-            val cut = clip.sourceStartMs + offset
+            val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
             first = clip.copy(id = newClipId(), sourceEndMs = cut)
             second = clip.copy(id = newClipId(), sourceStartMs = cut)
         }
@@ -57,7 +62,7 @@ class Split(
         if (offset < MIN_CLIP_MS || clip.lengthMs - offset < MIN_CLIP_MS) {
             return CommandResult.Rejected(RejectReason.BelowMinimumLength)
         }
-        val cut = clip.sourceStartMs + offset
+        val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
         val first = clip.copy(id = newClipId(), sourceEndMs = cut)
         val second = clip.copy(id = newClipId(), sourceStartMs = cut, timelineStartMs = atMs)
         val lane = timeline.audioLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }

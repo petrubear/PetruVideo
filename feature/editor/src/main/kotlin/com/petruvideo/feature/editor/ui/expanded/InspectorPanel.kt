@@ -7,34 +7,38 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
-import com.petruvideo.core.designsystem.components.LabeledSlider
-import com.petruvideo.core.designsystem.components.SegmentedControl
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.formatDuration
+import com.petruvideo.feature.editor.ClipTool
+import com.petruvideo.feature.editor.EditorEvent
+import com.petruvideo.feature.editor.SheetState
+import com.petruvideo.feature.editor.ui.SpeedVolumeControls
 
 /** What the inspector shows about the selected clip. */
 data class InspectorClip(val name: String, val label: String, val lengthMs: Long, val startMs: Long)
 
 /**
- * The right pane of the unfolded editor: selected clip name and length, and the Video, Audio, and Speed tabs.
- * Their controls belong to later features, so they are dimmed and not interactive.
+ * The right pane of the unfolded editor: selected clip name and length, and its Speed and Volume controls (the same
+ * controls as the bottom sheet). Controls that do not apply to the clip are listed in [unavailable] with the reason.
  */
 @Composable
-fun InspectorPanel(clip: InspectorClip?, modifier: Modifier = Modifier) {
-    var tab by remember { mutableIntStateOf(0) }
+fun InspectorPanel(
+    clip: InspectorClip?,
+    settings: List<SheetState>,
+    unavailable: Map<ClipTool, String>,
+    onEvent: (EditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier.fillMaxHeight().background(PetruColors.Surface).padding(16.dp),
+        modifier.fillMaxHeight().background(PetruColors.Surface).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -56,13 +60,13 @@ fun InspectorPanel(clip: InspectorClip?, modifier: Modifier = Modifier) {
                 style = PetruType.Mono,
                 color = PetruColors.OnSurfaceMuted,
             )
-        }
-        SegmentedControl(listOf("Video", "Audio", "Speed"), tab, onSelect = { tab = it })
-        Column(Modifier.alpha(DIMMED), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            LabeledSlider("Scale", "100%", 0.5f, {}, enabled = false)
-            LabeledSlider("Opacity", "100%", 1f, {}, enabled = false)
-            LabeledSlider("Volume", "80%", 0.8f, {}, enabled = false)
-            Text("Coming soon", style = PetruType.Tiny, color = PetruColors.OnSurfaceMuted)
+            settings.forEach { sheet ->
+                Text(sheet.tool.label, style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                SpeedVolumeControls(sheet, onEvent)
+            }
+            unavailable.forEach { (tool, reason) ->
+                Text("${tool.label}: $reason", style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
+            }
         }
     }
 }
@@ -76,4 +80,3 @@ internal fun inspectorClip(
 ): InspectorClip = InspectorClip(media?.displayName ?: name, label, lengthMs, startMs)
 
 private const val MS_PER_SECOND = 1_000f
-private const val DIMMED = 0.4f

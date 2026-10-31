@@ -31,6 +31,8 @@ class DetachAudio(private val videoClipId: String, private val newClipId: () -> 
             sourceEndMs = clip.sourceEndMs,
             timelineStartMs = start,
             origin = AudioOrigin.Detached,
+            speedMilli = clip.speedMilli,
+            volumePercent = clip.volumePercent,
         )
         val video = timeline.videoLane.toMutableList().also { it[index] = clip.copy(attachedAudio = false) }
         return CommandResult.Applied(
@@ -85,13 +87,13 @@ class ReplaceAudio(private val clipId: String, private val replacement: MediaIte
         if (replacement.kind != MediaKind.Audio || duration == null || duration < MIN_CLIP_MS) {
             return CommandResult.Rejected(RejectReason.OutOfRange)
         }
-        val length = minOf(clip.lengthMs, duration)
+        val length = minOf(clip.sourceLengthMs, duration)
         val replaced = clip.copy(mediaItemId = replacement.id, sourceStartMs = 0, sourceEndMs = length)
         val lane = timeline.audioLane.map { if (it.id == clipId) replaced else it }
         return CommandResult.Applied(
             timeline = timeline.copy(media = timeline.media + (replacement.id to replacement), audioLane = lane),
             label = "Replace audio",
-            notices = if (length < clip.lengthMs) listOf(Notice.LengthChanged) else emptyList(),
+            notices = if (length < clip.sourceLengthMs) listOf(Notice.LengthChanged) else emptyList(),
         )
     }
 }

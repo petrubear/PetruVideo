@@ -73,4 +73,23 @@ class TimelineInvariantsTest {
         )
         TimelineInvariants.violations(t) shouldHaveSize 1
     }
+
+    @Test
+    fun `speed and volume out of range, a sped photo, and a too-short derived length are reported`() {
+        val t = Timeline(
+            projectId = "p",
+            media = mapOf("v" to testVideo("v"), "ph" to testPhoto("ph")),
+            videoLane = listOf(
+                VideoClip("a", "v", 0, 5_000, attachedAudio = true, speedMilli = 100),
+                VideoClip("b", "v", 0, 5_000, attachedAudio = true, volumePercent = 250),
+                VideoClip("c", "ph", 0, 5_000, attachedAudio = false, speedMilli = 2000),
+                VideoClip("d", "v", 0, 300, attachedAudio = true, speedMilli = 4000),
+            ),
+        )
+        val violations = TimelineInvariants.violations(t)
+        violations.any { "a speed" in it } shouldBe true
+        violations.any { "b volume" in it } shouldBe true
+        violations.any { "photo clip c" in it } shouldBe true
+        violations.any { "d is shorter" in it } shouldBe true
+    }
 }

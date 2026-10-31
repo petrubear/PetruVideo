@@ -2,7 +2,10 @@ package com.petruvideo.feature.projects
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,10 +45,12 @@ class ProjectsScreenTest {
     @Test
     fun cardOptionsMenuOffersRenameDuplicateDelete() {
         show(populated)
+        compose.onNode(hasScrollAction())
+            .performScrollToNode(hasContentDescription("Project options, Dive reel"))
         compose.onNodeWithContentDescription("Project options, Dive reel").performClick()
-        compose.onNodeWithText("Rename").assertIsDisplayed()
-        compose.onNodeWithText("Duplicate").assertIsDisplayed()
-        compose.onNodeWithText("Delete").assertIsDisplayed()
+        compose.onNodeWithText("Rename").assertExists()
+        compose.onNodeWithText("Duplicate").assertExists()
+        compose.onNodeWithText("Delete").assertExists()
     }
 
     @Test

@@ -7,6 +7,8 @@ import android.os.Looper
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.SpeedParameters
+import androidx.media3.common.audio.SpeedProvider
 import androidx.media3.common.Player
 import androidx.annotation.OptIn
 import androidx.media3.common.util.ExperimentalApi
@@ -44,6 +46,7 @@ class Media3PreviewEngine @Inject constructor(
     private var totalMs = 0L
     private var hasComposition = false
     private var polling = false
+    private var gains = mutableMapOf<String, GainAudioProcessor>()
 
     override val state: StateFlow<PreviewState> = _state
     override val player: Player? get() = compositionPlayer
@@ -117,6 +120,10 @@ class Media3PreviewEngine @Inject constructor(
         publish()
     }
 
+    override fun setClipVolumeLive(clipId: String, percent: Int) {
+        gains[clipId]?.setPercent(percent)
+    }
+
     override fun release() {
         polling = false
         handler.removeCallbacks(poll)
@@ -138,6 +145,7 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     private fun compositionFor(timeline: Timeline, quality: PreviewQuality): Composition? {
+        gains = mutableMapOf()
         val sequences = listOfNotNull(videoSequence(timeline, quality), audioSequence(timeline))
         return if (sequences.isEmpty()) null else Composition.Builder(sequences).build()
     }
@@ -163,7 +171,13 @@ class Media3PreviewEngine @Inject constructor(
                     EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
                         .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
                         .setRemoveAudio(!clip.attachedAudio)
-                        .setEffects(frame)
+                        .setSpeed(speedOf(clip.speedMilli))
+                        .setEffects(
+                            Effects(
+                                listOfNotNull(gainFor(clip.id, clip.volumePercent, clip.attachedAudio)),
+                                frame.videoEffects,
+                            ),
+                        )
                         .build(),
                 )
             }
@@ -186,12 +200,27 @@ class Media3PreviewEngine @Inject constructor(
                     EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
                         .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
                         .setRemoveVideo(true)
+                        .setSpeed(speedOf(clip.speedMilli))
+                        .setEffects(Effects(listOfNotNull(gainFor(clip.id, clip.volumePercent, true)), emptyList()))
                         .build(),
                 )
             }
             cursor = clip.timelineEndMs
         }
         return builder.build()
+    }
+
+    private fun gainFor(clipId: String, percent: Int, hasAudio: Boolean): GainAudioProcessor? =
+        if (hasAudio) GainAudioProcessor(percent).also { gains[clipId] = it } else null
+
+    /** A constant speed for the whole item with the pitch kept (research 1; experimental Media3 API). */
+    private fun speedOf(speedMilli: Int): SpeedParameters {
+        val speed = speedMilli / SPEED_DIVISOR
+        val provider = object : SpeedProvider {
+            override fun getSpeed(timeUs: Long) = speed
+            override fun getNextSpeedChangeTimeUs(timeUs: Long) = C.TIME_UNSET
+        }
+        return SpeedParameters(provider, true)
     }
 
     /** Fits every clip inside the project frame (bars, never cropping or stretching); smaller under pressure. */
@@ -223,5 +252,6 @@ class Media3PreviewEngine @Inject constructor(
         const val POLL_MS = 33L
         const val DEFAULT_FPS = 30
         const val US_PER_MS = 1_000L
+        const val SPEED_DIVISOR = 1000f
     }
 }

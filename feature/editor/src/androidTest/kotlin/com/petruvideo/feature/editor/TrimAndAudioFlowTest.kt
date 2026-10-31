@@ -109,16 +109,18 @@ class TrimAndAudioFlowTest {
     }
 
     @Test
-    fun theVideoToolBarOffersDetachAndDimsSpeedAndVolume() {
+    fun theVideoToolBarOffersDetachSpeedAndVolume() {
         val events = show(ClipSelection.Video("c1"), videoTools)
-        compose.onNodeWithContentDescription("Speed, coming soon").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Volume, coming soon").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Speed").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Volume").assertIsDisplayed()
         compose.onNodeWithContentDescription("Split").performClick()
+        compose.onNodeWithContentDescription("Speed").performClick()
         compose.onNodeWithContentDescription("Detach").performClick()
         compose.onNodeWithContentDescription("Duplicate").performClick()
         compose.onNodeWithContentDescription("Delete").performClick()
         assertEquals(
-            listOf(ClipTool.Split, ClipTool.Detach, ClipTool.Duplicate, ClipTool.Delete).map { EditorEvent.UseTool(it) },
+            listOf(ClipTool.Split, ClipTool.Speed, ClipTool.Detach, ClipTool.Duplicate, ClipTool.Delete)
+                .map { EditorEvent.UseTool(it) },
             events.toList(),
         )
     }

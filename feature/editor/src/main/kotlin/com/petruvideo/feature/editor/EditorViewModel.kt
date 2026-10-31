@@ -15,6 +15,8 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
+import com.petruvideo.core.model.SPEED_UNIT
+import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.engine.AddAudioClips
 import com.petruvideo.core.model.engine.AddVideoClips
@@ -31,6 +33,8 @@ import com.petruvideo.core.model.engine.RelinkMedia
 import com.petruvideo.core.model.engine.RemoveMissingMedia
 import com.petruvideo.core.model.engine.ReplaceAudio
 import com.petruvideo.core.model.engine.SetMuted
+import com.petruvideo.core.model.engine.SetSpeed
+import com.petruvideo.core.model.engine.SetVolume
 import com.petruvideo.core.model.engine.Split
 import com.petruvideo.core.model.engine.TrimEnd
 import com.petruvideo.core.model.engine.TrimStart
@@ -70,7 +74,11 @@ class EditorViewModel @Inject constructor(
         val fullscreen: Boolean = false,
         val comingSoon: String? = null,
         val message: String? = null,
+        /** The open Speed or Volume sheet: which tool and which clip. */
+        val sheet: OpenSheet? = null,
     )
+
+    private data class OpenSheet(val tool: ClipTool, val clipId: String)
 
     private data class Core(
         val project: Project?,
@@ -154,6 +162,11 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.RemoveMissing -> session.apply(RemoveMissingMedia(event.mediaItemId))
             is EditorEvent.TapInactiveTool -> local.update { it.copy(comingSoon = event.name) }
             EditorEvent.DismissMessage -> local.update { it.copy(comingSoon = null, message = null) }
+            is EditorEvent.SheetPreview -> previewValue(event.tool, event.value)
+            is EditorEvent.SheetCommit -> commitValue(event.tool, event.value)
+            is EditorEvent.SheetReset ->
+                commitValue(event.tool, if (event.tool == ClipTool.Speed) SPEED_UNIT else VOLUME_DEFAULT_PERCENT)
+            EditorEvent.SheetDismiss -> closeSheet()
         }
     }
 
@@ -182,7 +195,51 @@ class EditorViewModel @Inject constructor(
     private fun select(selection: ClipSelection?) {
         val timeline = session.timeline.value
         if (selection != null && (timeline == null || !exists(timeline, selection))) return
+        closeSheet()
         local.update { it.copy(selection = selection) }
+    }
+
+    private fun selectedClipId(): String? = local.value.selection?.clipId
+
+    private fun previewValue(tool: ClipTool, value: Int) {
+        val id = selectedClipId() ?: return
+        if (tool == ClipTool.Volume) engine.setClipVolumeLive(id, value)
+    }
+
+    private fun commitValue(tool: ClipTool, value: Int) {
+        val id = selectedClipId() ?: return
+        val command = if (tool == ClipTool.Speed) SetSpeed(id, value) else SetVolume(id, value)
+        val result = session.apply(command)
+        if (result !is CommandResult.Applied) {
+            restoreLiveVolume(tool, id)
+            return
+        }
+        if (Notice.SpeedLimited in result.notices) say(speedLimitMessage(result.timeline, id))
+    }
+
+    private fun closeSheet() {
+        val sheet = local.value.sheet ?: return
+        local.update { it.copy(sheet = null) }
+        restoreLiveVolume(sheet.tool, sheet.clipId)
+    }
+
+    /** A volume drag that did not become an edit must not leave its live gain behind. */
+    private fun restoreLiveVolume(tool: ClipTool, clipId: String) {
+        if (tool != ClipTool.Volume) return
+        val timeline = session.timeline.value ?: return
+        val committed = timeline.videoLane.firstOrNull { it.id == clipId }?.volumePercent
+            ?: timeline.audioLane.firstOrNull { it.id == clipId }?.volumePercent
+            ?: return
+        engine.setClipVolumeLive(clipId, committed)
+    }
+
+    private fun speedLimitMessage(timeline: Timeline, clipId: String): String {
+        val milli = timeline.videoLane.firstOrNull { it.id == clipId }?.speedMilli
+            ?: timeline.audioLane.firstOrNull { it.id == clipId }?.speedMilli
+            ?: return "Speed limited"
+        val audio = timeline.audioLane.any { it.id == clipId }
+        val reason = if (audio && milli < SPEED_UNIT) " to avoid overlapping the next audio clip" else ""
+        return "Limited to ${formatSpeed(milli)}$reason"
     }
 
     /** Applies [command] and tells the user when audio snapped or a replacement shortened a clip. */
@@ -227,7 +284,7 @@ class EditorViewModel @Inject constructor(
         val selection = local.value.selection?.takeIf { exists(timeline, it) } ?: return
         val id = selection.clipId
         when (tool) {
-            ClipTool.Speed, ClipTool.Volume -> local.update { it.copy(comingSoon = tool.label) }
+            ClipTool.Speed, ClipTool.Volume -> openSheet(tool, timeline, selection)
             ClipTool.Split -> run(Split(id, engine.state.value.positionMs))
             ClipTool.Detach -> run(DetachAudio(id))
             ClipTool.Duplicate -> run(Duplicate(id))
@@ -235,6 +292,15 @@ class EditorViewModel @Inject constructor(
             ClipTool.Mute -> timeline.audioLane.firstOrNull { it.id == id }?.let { run(SetMuted(id, !it.muted)) }
             ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
         }
+    }
+
+    private fun openSheet(tool: ClipTool, timeline: Timeline, selection: ClipSelection) {
+        val reason = disabledToolsFor(timeline, selection)[tool]
+        if (reason != null) {
+            say(reason)
+            return
+        }
+        local.update { it.copy(sheet = OpenSheet(tool, selection.clipId)) }
     }
 
     private fun relink(mediaItemId: String, replacement: MediaItem) {
@@ -289,11 +355,46 @@ class EditorViewModel @Inject constructor(
             missingMedia = timeline?.media?.values?.filter { it.availability == Availability.Missing }
                 ?.map { it.id }?.toSet().orEmpty(),
             clipTools = clipToolsFor(timeline, selection),
+            disabledTools = if (timeline != null && selection != null) {
+                disabledToolsFor(timeline, selection)
+            } else {
+                emptyMap()
+            },
+            sheet = if (timeline != null && selection != null) sheetFor(timeline, selection, local.sheet) else null,
             selectedAudioMuted = (selection as? ClipSelection.Audio)
                 ?.let { sel -> timeline?.audioLane?.firstOrNull { it.id == sel.clipId }?.muted } == true,
             fullscreen = local.fullscreen,
             comingSoon = local.comingSoon,
             message = local.message,
+        )
+    }
+
+    private fun disabledToolsFor(timeline: Timeline, selection: ClipSelection): Map<ClipTool, String> {
+        val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
+            ?: return emptyMap()
+        return when {
+            timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo ->
+                mapOf(ClipTool.Speed to "Photos have no speed", ClipTool.Volume to "Photos have no sound")
+            !clip.attachedAudio -> mapOf(ClipTool.Volume to "This clip has no sound")
+            else -> emptyMap()
+        }
+    }
+
+    private fun sheetFor(timeline: Timeline, selection: ClipSelection, open: OpenSheet?): SheetState? {
+        if (open == null || open.clipId != selection.clipId) return null
+        val video = timeline.videoLane.firstOrNull { it.id == open.clipId }
+        val audio = timeline.audioLane.firstOrNull { it.id == open.clipId }
+        val committed = when (open.tool) {
+            ClipTool.Speed -> video?.speedMilli ?: audio?.speedMilli
+            else -> video?.volumePercent ?: audio?.volumePercent
+        } ?: return null
+        val media = timeline.media[video?.mediaItemId ?: audio?.mediaItemId]
+        return SheetState(
+            tool = open.tool,
+            clipId = open.clipId,
+            clipName = media?.displayName.orEmpty(),
+            value = committed,
+            sourceLengthMs = video?.sourceLengthMs ?: audio?.sourceLengthMs ?: 0L,
         )
     }
 
@@ -305,7 +406,15 @@ class EditorViewModel @Inject constructor(
     private fun clipToolsFor(timeline: Timeline?, selection: ClipSelection?): List<ClipTool> = when (selection) {
         null -> emptyList()
         is ClipSelection.Audio ->
-            listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
+            listOf(
+                ClipTool.Split,
+                ClipTool.Speed,
+                ClipTool.Volume,
+                ClipTool.Mute,
+                ClipTool.Replace,
+                ClipTool.Duplicate,
+                ClipTool.Delete,
+            )
         is ClipSelection.Video -> {
             val attached = timeline?.videoLane?.firstOrNull { it.id == selection.clipId }?.attachedAudio == true
             listOfNotNull(

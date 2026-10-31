@@ -28,6 +28,7 @@ import com.petruvideo.feature.editor.ui.ClipToolBar
 import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.MainToolBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
+import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ui.TimelineView
 import com.petruvideo.feature.editor.ui.clock
 
@@ -112,7 +113,13 @@ fun TabletopControlsHalf(
             }
         }
         if (state.selection != null && state.clipTools.isNotEmpty()) {
-            ClipToolBar(state.clipTools, state.selectedAudioMuted, onTool = { onEvent(EditorEvent.UseTool(it)) })
+            SpeedVolumeSheet(state.sheet, onEvent)
+            ClipToolBar(
+                    state.clipTools,
+                    state.selectedAudioMuted,
+                    onTool = { onEvent(EditorEvent.UseTool(it)) },
+                    disabled = state.disabledTools.keys,
+            )
         } else {
             MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
         }

@@ -50,4 +50,19 @@ class TrimLimitsTest {
         TrimLimits.audio(clip, audio, false, 9_000) shouldBe TrimTarget(8_000, 7_000)
         TrimLimits.audio(clip, audio, false, -9_000) shouldBe TrimTarget(1_100, 100)
     }
+
+    @Test
+    fun `handles on a 2x clip move by what the user sees`() {
+        val fast = video.copy(speedMilli = 2000) // 4 s of source plays in 2 s
+        TrimLimits.video(fast, videoMedia, false, 500) shouldBe TrimTarget(7_000, 2_500)
+        TrimLimits.video(fast, videoMedia, true, 500) shouldBe TrimTarget(3_000, 1_500)
+        // the minimum is 100 ms of timeline, which is 200 ms of source
+        TrimLimits.video(fast, videoMedia, true, 9_000) shouldBe TrimTarget(5_800, 100)
+    }
+
+    @Test
+    fun `handles on a half speed audio clip`() {
+        val slow = AudioClip("a", "m", 0, 2_000, timelineStartMs = 0, origin = AudioOrigin.Added, speedMilli = 500)
+        TrimLimits.audio(slow, media(MediaKind.Audio, 10_000), false, 1_000) shouldBe TrimTarget(2_500, 5_000)
+    }
 }

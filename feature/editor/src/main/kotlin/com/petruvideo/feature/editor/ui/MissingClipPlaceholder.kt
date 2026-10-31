@@ -58,9 +58,9 @@ fun MissingMediaBar(
             if (count > 1) "$name and ${count - 1} more are missing" else "$name is missing",
             style = PetruType.BodySmall,
             color = PetruColors.OnBackground,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(vertical = 6.dp),
         )
         BarAction("Relink", PetruColors.Accent, onRelink)
         BarAction("Remove", PetruColors.Danger, onRemove)

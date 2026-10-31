@@ -18,6 +18,9 @@ object PetruColors {
     val Accent = Color(0xFF35F0C0)
     val OnAccent = Color(0xFF0B0C10)
     val Danger = Color(0xFFFF6B8A)
+
+    /** The volume range above 100%. */
+    val Boost = Color(0xFFFFB547)
 }
 
 /** Fixed lane colors: border and label color, with the matching dark fill. */

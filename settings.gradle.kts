@@ -25,3 +25,6 @@ include(":core:designsystem")
 include(":feature:projects")
 include(":feature:importmedia")
 include(":feature:editor")
+
+// Macrobenchmarks need extra artifacts and a physical device; enable with -Pbenchmark.
+if (providers.gradleProperty("benchmark").isPresent) include(":benchmark")

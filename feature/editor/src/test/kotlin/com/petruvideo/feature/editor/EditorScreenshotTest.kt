@@ -36,9 +36,21 @@ class EditorScreenshotTest {
             FloatArray(400) { abs(sin(it * 0.45f)) * 0.7f + 0.1f }
     }
 
-    private fun state(missing: Set<String> = emptySet(), selection: ClipSelection? = null): EditorState {
+    private fun state(
+        missing: Set<String> = emptySet(),
+        selection: ClipSelection? = null,
+        edited: Boolean = false,
+        sheet: SheetState? = null,
+    ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
+            videoLane = if (edited) {
+                loaded.timeline.videoLane.map {
+                    if (it.id == "c1") it.copy(speedMilli = 2000, volumePercent = 40) else it
+                }
+            } else {
+                loaded.timeline.videoLane
+            },
             media = loaded.timeline.media.mapValues { (id, item) ->
                 if (id in missing) item.copy(availability = Availability.Missing) else item
             },
@@ -53,10 +65,18 @@ class EditorScreenshotTest {
             canRedo = false,
             projectMedia = timeline.media.values.toList(),
             missingMedia = missing,
+            sheet = sheet,
             clipTools = when (selection) {
                 null -> emptyList()
-                is ClipSelection.Audio ->
-                    listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
+                is ClipSelection.Audio -> listOf(
+                    ClipTool.Split,
+                    ClipTool.Speed,
+                    ClipTool.Volume,
+                    ClipTool.Mute,
+                    ClipTool.Replace,
+                    ClipTool.Duplicate,
+                    ClipTool.Delete,
+                )
                 is ClipSelection.Video -> listOf(
                     ClipTool.Split,
                     ClipTool.Speed,
@@ -95,6 +115,57 @@ class EditorScreenshotTest {
             CompositionLocalProvider(LocalMediaLoaders provides loaders) {
                 PetruTheme {
                     EditorScreen(state(selection = ClipSelection.Audio("a1")), player = null, onEvent = {}, onBack = {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun volumeSheetAndBadges() {
+        val sheet = SheetState(ClipTool.Volume, "c1", "m1.mp4", 40, 4_000)
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c1"), edited = true, sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun volumeBoostSheet() {
+        val sheet = SheetState(ClipTool.Volume, "a1", "d.mp3", 150, 2_000)
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Audio("a1"), sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun speedSheet() {
+        val sheet = SheetState(ClipTool.Speed, "c1", "m1.mp4", 2000, 4_000)
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c1"), edited = true, sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
                 }
             }
         }

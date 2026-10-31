@@ -70,6 +70,7 @@ internal fun ToolButton(
     active: Boolean,
     onClick: () -> Unit,
     tint: androidx.compose.ui.graphics.Color? = null,
+    unavailableNote: String = "coming soon",
 ) {
     val color = tint ?: if (active) PetruColors.Accent else PetruColors.OnBackground
     Column(
@@ -79,7 +80,7 @@ internal fun ToolButton(
             .alpha(if (active) 1f else 0.4f)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 10.dp)
-            .semantics { contentDescription = if (active) label else "$label, coming soon" },
+            .semantics { contentDescription = if (active) label else "$label, $unavailableNote" },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
     ) {

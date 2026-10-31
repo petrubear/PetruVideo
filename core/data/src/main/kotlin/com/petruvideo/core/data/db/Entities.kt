@@ -1,5 +1,6 @@
 package com.petruvideo.core.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -76,6 +77,8 @@ data class VideoClipEntity(
     val sourceStartMs: Long,
     val sourceEndMs: Long,
     val attachedAudio: Boolean,
+    @ColumnInfo(defaultValue = "1000") val speedMilli: Int = 1000,
+    @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
 )
 
 @Entity(
@@ -108,4 +111,6 @@ data class AudioClipEntity(
     val sourceEndMs: Long,
     val muted: Boolean,
     val origin: String,
+    @ColumnInfo(defaultValue = "1000") val speedMilli: Int = 1000,
+    @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
 )

@@ -22,17 +22,30 @@ enum class ToolbarTab(val label: String, val active: Boolean) {
     Filters("Filters", false),
 }
 
-/** Clip tool bar actions. Speed and Volume stay dimmed until their features exist. */
+/** Clip tool bar actions. */
 enum class ClipTool(val label: String, val active: Boolean) {
     Split("Split", true),
-    Speed("Speed", false),
-    Volume("Volume", false),
+    Speed("Speed", true),
+    Volume("Volume", true),
     Detach("Detach", true),
     Duplicate("Duplicate", true),
     Delete("Delete", true),
     Mute("Mute", true),
     Replace("Replace", true),
 }
+
+/**
+ * The Speed or Volume control for one clip. [value] is the clip's committed speedMilli for Speed (1000 = 1x) or
+ * percent for Volume.
+ */
+data class SheetState(
+    val tool: ClipTool,
+    val clipId: String,
+    val clipName: String,
+    val value: Int,
+    /** Trimmed source length of the clip, so the Speed readout can show the resulting timeline length. */
+    val sourceLengthMs: Long,
+)
 
 data class PlaybackState(
     val isPlaying: Boolean = false,
@@ -54,6 +67,10 @@ data class EditorState(
     /** Ids of media items whose source file is missing. */
     val missingMedia: Set<String> = emptySet(),
     val clipTools: List<ClipTool> = emptyList(),
+    /** Tools of the selected clip shown dimmed, with the reason a tap explains. */
+    val disabledTools: Map<ClipTool, String> = emptyMap(),
+    /** The open Speed or Volume control, if any. */
+    val sheet: SheetState? = null,
     /** Whether the selected audio clip is muted (the Mute tool shows Unmute). */
     val selectedAudioMuted: Boolean = false,
     val fullscreen: Boolean = false,
@@ -92,6 +109,12 @@ sealed interface EditorEvent {
     data class RemoveMissing(val mediaItemId: String) : EditorEvent
     data class TapInactiveTool(val name: String) : EditorEvent
     data object DismissMessage : EditorEvent
+    /** The value while dragging: heard right away for Volume, not yet an edit. */
+    data class SheetPreview(val tool: ClipTool, val value: Int) : EditorEvent
+    /** The value on release or a quick choice, applied to the selected clip: one edit, one undo step. */
+    data class SheetCommit(val tool: ClipTool, val value: Int) : EditorEvent
+    data class SheetReset(val tool: ClipTool) : EditorEvent
+    data object SheetDismiss : EditorEvent
 }
 
 sealed interface EditorEffect {

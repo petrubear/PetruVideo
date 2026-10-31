@@ -19,6 +19,8 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             add("debugImplementation", lib("compose-ui-tooling"))
             add("androidTestImplementation", lib("compose-ui-test-junit4"))
             add("debugImplementation", lib("compose-ui-test-manifest"))
+            // Espresso before 3.6 crashes on Android 17 (InputManager.getInstance was removed).
+            add("androidTestImplementation", lib("androidx-test-espresso-core"))
         }
     }
 }

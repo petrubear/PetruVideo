@@ -110,6 +110,11 @@ fun VideoLaneView(
                 } else {
                     ClipThumbnails(clip, item, widthDp.value)
                 }
+                ClipBadge(
+                    clip.speedMilli,
+                    clip.volumePercent.takeIf { clip.attachedAudio },
+                    Modifier.align(Alignment.TopStart).padding(start = 4.dp, top = 4.dp),
+                )
                 if (clip.id == selectedClipId) {
                     TrimHandles(
                         geometry = geometry,
@@ -139,7 +144,7 @@ private fun ClipThumbnails(clip: VideoClip, item: MediaItem, widthDp: Float) {
     val tiles = maxOf(1, Math.ceil(widthDp / TILE_WIDTH.value.toDouble()).toInt())
     Row(Modifier.fillMaxHeight().background(PetruColors.SurfaceHigh)) {
         repeat(tiles) { i ->
-            val timeMs = clip.sourceStartMs + (clip.lengthMs * (i + 0.5) / tiles).toLong()
+            val timeMs = clip.sourceStartMs + (clip.sourceLengthMs * (i + 0.5) / tiles).toLong()
             val image by produceState<ImageBitmap?>(null, item.id, timeMs, heightPx) {
                 value = if (item.kind == MediaKind.Audio) null else loaders.thumbnail(item, timeMs, heightPx)
             }

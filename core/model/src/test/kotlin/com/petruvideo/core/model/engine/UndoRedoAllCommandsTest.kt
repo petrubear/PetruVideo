@@ -24,6 +24,8 @@ class UndoRedoAllCommandsTest {
             add(Duplicate(v.id))
             add(Delete(v.id))
             add(DetachAudio(v.id))
+            add(SetSpeed(v.id, random.nextInt(100, 5000)))
+            add(SetVolume(v.id, random.nextInt(0, 250)))
             add(MoveVideoClip(v.id, 0))
         }
         if (a != null) {
@@ -33,6 +35,8 @@ class UndoRedoAllCommandsTest {
             add(Delete(a.id))
             add(MoveAudioClip(a.id, a.timelineStartMs + 7))
             add(SetMuted(a.id, !a.muted))
+            add(SetSpeed(a.id, random.nextInt(100, 5000)))
+            add(SetVolume(a.id, random.nextInt(0, 250)))
             add(ReplaceAudio(a.id, testAudio("repl", 1_500)))
         }
         add(AddAudioClips(listOf(testAudio("new", 3_000)), 0))

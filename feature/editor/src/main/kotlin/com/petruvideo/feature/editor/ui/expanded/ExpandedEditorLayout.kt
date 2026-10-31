@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.PetruColors
@@ -27,6 +28,9 @@ import com.petruvideo.feature.editor.ClipSelection
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ui.ClipToolBar
+import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
+import com.petruvideo.feature.editor.ClipTool
+import com.petruvideo.feature.editor.SheetState
 import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
 import com.petruvideo.feature.editor.ui.TimelineView
@@ -51,6 +55,7 @@ fun ExpandedEditorLayout(
 ) {
     val timeline = state.timeline
     val separated = hinge != null && HingeAvoidance.isVertical(hinge)
+    val inspectorShown = separated || LocalConfiguration.current.screenWidthDp >= ArrangementResolver.INSPECTOR_MIN_DP
     Column(modifier.fillMaxSize().statusBarsPadding()) {
         if (!separated) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
@@ -67,7 +72,13 @@ fun ExpandedEditorLayout(
                 }
             }, second = {
                 Column(Modifier.fillMaxSize()) {
-                    InspectorPanel(selectedClip(state), Modifier.weight(1f).fillMaxWidth())
+                    InspectorPanel(
+                        selectedClip(state),
+                        inspectorSettings(state),
+                        state.disabledTools,
+                        onEvent,
+                        Modifier.weight(1f).fillMaxWidth(),
+                    )
                     TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
                 }
             })
@@ -78,13 +89,27 @@ fun ExpandedEditorLayout(
                     ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
                     MediaColumn(state, onEvent, Modifier.width(MEDIA_WIDTH))
                     PreviewColumn(state, player, onEvent, Modifier.weight(1f).fillMaxHeight())
-                    if (showInspector) InspectorPanel(selectedClip(state), Modifier.width(INSPECTOR_WIDTH))
+                    if (showInspector) {
+                        InspectorPanel(
+                            selectedClip(state),
+                            inspectorSettings(state),
+                            state.disabledTools,
+                            onEvent,
+                            Modifier.width(INSPECTOR_WIDTH),
+                        )
+                    }
                 }
             }
             if (timeline != null) TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
         }
         if (state.selection != null && state.clipTools.isNotEmpty()) {
-            ClipToolBar(state.clipTools, state.selectedAudioMuted, onTool = { onEvent(EditorEvent.UseTool(it)) })
+            if (!inspectorShown) SpeedVolumeSheet(state.sheet, onEvent)
+            ClipToolBar(
+                    state.clipTools,
+                    state.selectedAudioMuted,
+                    onTool = { onEvent(EditorEvent.UseTool(it)) },
+                    disabled = state.disabledTools.keys,
+            )
         }
     }
 }
@@ -146,6 +171,25 @@ private fun TimelineWithLabels(state: EditorState, onEvent: (EditorEvent) -> Uni
 private fun LaneLabel(text: String, height: androidx.compose.ui.unit.Dp) {
     Box(Modifier.width(LABEL_WIDTH).height(height), contentAlignment = Alignment.Center) {
         Text(text, style = PetruType.MonoSmall, color = PetruColors.OnSurfaceMuted)
+    }
+}
+
+/** Speed and Volume controls for the selected clip, minus the ones that do not apply to it. */
+private fun inspectorSettings(state: EditorState): List<SheetState> {
+    val timeline = state.timeline ?: return emptyList()
+    val id = state.selection?.clipId ?: return emptyList()
+    val video = timeline.videoLane.firstOrNull { it.id == id }
+    val audio = timeline.audioLane.firstOrNull { it.id == id }
+    val mediaId = video?.mediaItemId ?: audio?.mediaItemId ?: return emptyList()
+    val name = timeline.media[mediaId]?.displayName.orEmpty()
+    val sourceLength = video?.sourceLengthMs ?: audio?.sourceLengthMs ?: 0L
+    return listOf(ClipTool.Speed, ClipTool.Volume).filter { it !in state.disabledTools }.map { tool ->
+        val value = if (tool == ClipTool.Speed) {
+            video?.speedMilli ?: audio?.speedMilli
+        } else {
+            video?.volumePercent ?: audio?.volumePercent
+        }
+        SheetState(tool, id, name, value ?: 0, sourceLength)
     }
 }
 

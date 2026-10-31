@@ -32,7 +32,8 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
 
 /**
  * The clip tool bar shown instead of the main tool bar while a clip is selected. One bar serves video and audio
- * clips; the view model decides which tools apply. Speed and Volume are dimmed and say "coming soon" when tapped.
+ * clips; the view model decides which tools apply. Tools that do not apply to the clip (a photo has no speed or
+ * sound) are dimmed.
  */
 @Composable
 fun ClipToolBar(
@@ -40,6 +41,7 @@ fun ClipToolBar(
     muted: Boolean,
     onTool: (ClipTool) -> Unit,
     modifier: Modifier = Modifier,
+    disabled: Set<ClipTool> = emptySet(),
 ) {
     Row(
         modifier
@@ -58,7 +60,8 @@ fun ClipToolBar(
             ToolButton(
                 label = label,
                 icon = iconFor(tool, muted),
-                active = tool.active,
+                active = tool.active && tool !in disabled,
+                unavailableNote = if (tool.active) "unavailable" else "coming soon",
                 onClick = { onTool(tool) },
                 tint = if (tool == ClipTool.Delete) PetruColors.Danger else null,
             )

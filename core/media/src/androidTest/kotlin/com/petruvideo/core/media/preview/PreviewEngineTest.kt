@@ -150,4 +150,46 @@ class PreviewEngineTest {
         onMain { engine.load(timeline(listOf(a to 2_000L, a.copy(id = "a2") to 2_000L, a.copy(id = "a3") to 1_000L)), PreviewQuality.Reduced) }
         waitFor { engine.state.value.positionMs in 1_000..2_000 }
     }
+
+    @Test
+    fun aSpedUpClipPlaysAtTwiceTheSpeedAndEndsEarly() {
+        val a = item("video_with_audio.mp4")
+        val base = timeline(listOf(a to 2_000L))
+        val sped = base.copy(videoLane = base.videoLane.map { it.copy(speedMilli = 2000) })
+        onMain { engine.load(sped, PreviewQuality.Full) }
+        engine.state.value.durationMs shouldBe 1_000
+
+        val start = System.currentTimeMillis()
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended }
+        (System.currentTimeMillis() - start).shouldBeBetween(500L, 2_500L)
+    }
+
+    @Test
+    fun aSlowedClipPlaysLongerAndKeepsPlaying() {
+        val a = item("video_with_audio.mp4")
+        val base = timeline(listOf(a to 2_000L))
+        val slow = base.copy(videoLane = base.videoLane.map { it.copy(speedMilli = 500) })
+        onMain { engine.load(slow, PreviewQuality.Full) }
+        engine.state.value.durationMs shouldBe 4_000
+        onMain { engine.play() }
+        waitFor { engine.state.value.positionMs > 2_500 }
+        waitFor { engine.state.value.ended }
+    }
+
+    @Test
+    fun volumeAndSpeedOnAudioClipsPlayThroughWithLiveGain() {
+        val a = item("video_with_audio.mp4")
+        val music = item("audio.mp3")
+        val audio = AudioClip(
+            "m1", music.id, 0, 2_000, timelineStartMs = 0, origin = AudioOrigin.Added,
+            speedMilli = 1500, volumePercent = 150,
+        )
+        onMain { engine.load(timeline(listOf(a to 2_000L), audio = listOf(audio), extra = listOf(music)), PreviewQuality.Full) }
+        onMain { engine.play() }
+        onMain { engine.setClipVolumeLive("m1", 30) }
+        onMain { engine.setClipVolumeLive("c0", 0) }
+        waitFor { engine.state.value.ended }
+        engine.state.value.error shouldBe null
+    }
 }

@@ -4,6 +4,14 @@ const val MIN_CLIP_MS = 100L
 const val PHOTO_DEFAULT_MS = 5_000L
 const val PHOTO_MIN_MS = 500L
 const val PHOTO_MAX_MS = 60_000L
+const val SPEED_UNIT = 1000
+const val SPEED_MIN_MILLI = 250
+const val SPEED_MAX_MILLI = 4000
+const val VOLUME_DEFAULT_PERCENT = 100
+const val VOLUME_MAX_PERCENT = 200
+
+/** Timeline length of [sourceMs] of footage played at [speedMilli] (1000 = 1x), rounded to the millisecond. */
+fun timelineLengthMs(sourceMs: Long, speedMilli: Int): Long = (sourceMs * SPEED_UNIT + speedMilli / 2) / speedMilli
 
 enum class MediaKind { Video, Photo, Audio }
 
@@ -53,8 +61,11 @@ data class VideoClip(
     val sourceStartMs: Long,
     val sourceEndMs: Long,
     val attachedAudio: Boolean,
+    val speedMilli: Int = SPEED_UNIT,
+    val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
 ) {
-    val lengthMs: Long get() = sourceEndMs - sourceStartMs
+    val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
+    val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
 }
 
 data class AudioClip(
@@ -65,8 +76,11 @@ data class AudioClip(
     val timelineStartMs: Long,
     val muted: Boolean = false,
     val origin: AudioOrigin,
+    val speedMilli: Int = SPEED_UNIT,
+    val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
 ) {
-    val lengthMs: Long get() = sourceEndMs - sourceStartMs
+    val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
+    val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
     val timelineEndMs: Long get() = timelineStartMs + lengthMs
 }
 

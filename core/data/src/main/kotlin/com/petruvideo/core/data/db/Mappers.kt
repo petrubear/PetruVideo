@@ -68,13 +68,20 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
     fpMimeType = fingerprint.mimeType,
 )
 
-fun VideoClipEntity.toModel() = VideoClip(id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio)
+fun VideoClipEntity.toModel() =
+    VideoClip(id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent)
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
-    VideoClipEntity(id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio)
+    VideoClipEntity(
+        id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
+    )
 
-fun AudioClipEntity.toModel() =
-    AudioClip(id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin))
+fun AudioClipEntity.toModel() = AudioClip(
+    id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin),
+    speedMilli, volumePercent,
+)
 
-fun AudioClip.toEntity(projectId: String) =
-    AudioClipEntity(id, projectId, mediaItemId, timelineStartMs, sourceStartMs, sourceEndMs, muted, origin.name)
+fun AudioClip.toEntity(projectId: String) = AudioClipEntity(
+    id, projectId, mediaItemId, timelineStartMs, sourceStartMs, sourceEndMs, muted, origin.name,
+    speedMilli, volumePercent,
+)

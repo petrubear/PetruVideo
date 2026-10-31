@@ -127,7 +127,10 @@ class EditorViewModelTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Audio("a1")))
         e.state.clipTools shouldContainExactly
-            listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
+            listOf(
+                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Replace,
+                ClipTool.Duplicate, ClipTool.Delete,
+            )
 
         e.vm.onEvent(EditorEvent.Select(null))
         e.state.selection shouldBe null
@@ -298,12 +301,65 @@ class EditorViewModelTest {
     }
 
     @Test
-    fun `speed and volume only say coming soon`() = runTest {
+    fun `volume tool opens the sheet, a drag is live and a release is one undo step`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
+        e.state.sheet?.tool shouldBe ClipTool.Volume
+        e.state.sheet?.value shouldBe 100
+
+        e.vm.onEvent(EditorEvent.SheetPreview(ClipTool.Volume, 40))
+        e.engine.calls.last() shouldBe "volume c1 40"
+        e.state.canUndo shouldBe false
+
+        e.vm.onEvent(EditorEvent.SheetCommit(ClipTool.Volume, 40))
+        e.state.sheet?.value shouldBe 40
+        e.session.timeline.value!!.videoLane[0].volumePercent shouldBe 40
+        e.vm.onEvent(EditorEvent.Undo)
+        e.session.timeline.value!!.videoLane[0].volumePercent shouldBe 100
+    }
+
+    @Test
+    fun `dismissing after a drag puts the live volume back`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Audio("a1")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
+        e.vm.onEvent(EditorEvent.SheetPreview(ClipTool.Volume, 20))
+        e.vm.onEvent(EditorEvent.SheetDismiss)
+        e.state.sheet shouldBe null
+        e.engine.calls.last() shouldBe "volume a1 100"
+    }
+
+    @Test
+    fun `volume is dimmed for a clip without sound and says why`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
+        e.state.disabledTools.keys shouldBe setOf(ClipTool.Volume)
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
+        e.state.sheet shouldBe null
+        e.state.message shouldBe "This clip has no sound"
+    }
+
+    @Test
+    fun `speed commit changes the length, later clips move, and reset returns to 1x`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Speed))
-        e.state.comingSoon shouldBe "Speed"
-        e.state.canUndo shouldBe false
+        e.vm.onEvent(EditorEvent.SheetCommit(ClipTool.Speed, 2000))
+        val timeline = e.session.timeline.value!!
+        timeline.videoLane[0].lengthMs shouldBe 2_000
+        timeline.videoStartOf("c2") shouldBe 2_000
+        e.vm.onEvent(EditorEvent.SheetReset(ClipTool.Speed))
+        e.session.timeline.value!!.videoLane[0].lengthMs shouldBe 4_000
+    }
+
+    @Test
+    fun `selecting another clip closes the sheet`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Speed))
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c3")))
+        e.state.sheet shouldBe null
     }
 
     @Test

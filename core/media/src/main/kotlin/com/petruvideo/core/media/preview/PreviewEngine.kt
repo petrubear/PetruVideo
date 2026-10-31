@@ -36,6 +36,9 @@ interface PreviewEngine {
 
     fun seekTo(positionMs: Long)
 
+    /** Changes the volume of one clip in the loaded composition right away, without a rebuild or an edit. */
+    fun setClipVolumeLive(clipId: String, percent: Int)
+
     fun release()
 }
 

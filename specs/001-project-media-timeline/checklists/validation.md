@@ -39,3 +39,31 @@ Status: P = passed on the Fold, F = failed, - = not yet run.
 - Bottom of the inner screen shows a light strip where the gesture bar is; check whether it is real.
 - With the Exported filter on and nothing exported, the list is blank with no message.
 - A/V sync within 40 ms (T071) and the mid-range phone (T068) are not measured.
+
+## Automated run on the Fold (2026-10-31, SM-F976B, Android 17)
+
+All connected suites pass on the physical Fold: core:data 17, core:media 32, feature:editor 22 (including accessibility checks), feature:projects 13 (including accessibility), feature:importmedia 1 (accessibility), app 2 (rotation retention under 1 s, cover-screen flow). Unit tests, Paparazzi goldens, detekt and lint pass. Espresso 3.7.0 is pinned because older Espresso crashes on Android 17.
+
+## Manual run on the Fold, driven over adb (2026-10-31, SM-F976B, inner screen 752x835 dp)
+
+| Scenario | Result | Notes |
+|----------|--------|-------|
+| 1 First project | Pass | New project, Import, 3 videos added to the timeline in a few taps |
+| 2 Multi-import in order | Pass | Badges 1, 2, 3 follow selection order; tray showed 3 selected, 1:32 total; the clip chosen first landed first |
+| 3 Permissions | Pass | Explanation with "Allow access" and "Choose files instead" shown before access was granted; grid loaded after grant |
+| 5 Trim, split, duplicate, delete, undo/redo | Pass | Start handle drag trimmed 0.7 s (1:32.0 to 1:31.3); Split at the scrubbed playhead gave Clip 1 and Clip 2; Duplicate added 43.4 s; Delete removed it; each undone |
+| 6 Detach | Pass | Detach created "Detached audio" under the clip; Undo removed it; waveform shown |
+| 7 Format from first clip | Pass | Portrait first clip gave 720p, 30 fps in the top bar |
+| 9 Autosave and recovery | Pass | Edit, force-stop 2 s later, relaunch: project reopened with 4 clips, 1:31, 5 media items |
+| 13 Music over original sound | Pass | Added audio sits at the playhead on A1 in blue over the video's own sound in orange |
+| 4 Playback | Pass | 30.0 fps, 0 dropped frames, longest gap 36 ms over 8 s; play to first frame 78 ms |
+| Overlapping second audio snap | Not seen | Snap rule covered by unit tests; the snap message was not captured on screen |
+| 8 Missing media | Pass (Relink not driven) | Clip imported, source deleted, project reopened: the bar shows the file name with Relink and Remove; Remove took the total from 1:45.3 to 1:31.3 and Undo restored it. The bar text was cut to "is mi..." at 373 dp; it now wraps to two lines. Relink opens the system picker and was not driven |
+| 10 Split-screen | Pass | App on the right half (373 dp wide, compact layout) beside another app: same project, playhead 44.6, total 1:45.3 and "saved" kept; no restart |
+| 10 (pop-up window), 11, 12, 14 | Not done by hand | Pop-up window, keyboard, TalkBack and large font need hands on the device (the owner does not use keyboard or mouse) |
+
+Bugs found and fixed during this run: dark status bar icons and a light navigation bar on a dark app (system bars now forced dark); "Detached" label unreadable over the waveform (now on a dark backing); the Projects two-pane list showed nothing when a filter matched no project (now shows "No projects match").
+
+Decision: the preview frame updates when a trim handle is released, not during the drag. FR-018 and FR-019 ask for handles, a duration badge, and the result on release; a live frame would mean rebuilding the playback timeline on every drag step.
+
+A/V sync within 40 ms is not measured: the Fold shows steady 30 fps, but no tool here measures audio to video offset, and no mid-range phone was available.
