@@ -14,7 +14,7 @@ android {
 
 dependencies {
     api(project(":core:model"))
-    implementation(libs.media3.exoplayer)
+    api(libs.media3.exoplayer)
     implementation(libs.media3.transformer)
     api(libs.coil.compose)
     implementation(libs.coil.video)

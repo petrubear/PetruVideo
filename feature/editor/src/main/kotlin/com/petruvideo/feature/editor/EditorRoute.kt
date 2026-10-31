@@ -27,13 +27,13 @@ fun EditorRoute(
     modifier: Modifier = Modifier,
     viewModel: EditorViewModel = hiltViewModel(),
 ) {
-    val project by viewModel.project.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(projectId) { viewModel.open(projectId) }
 
     Column(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconAction(PetruIcons.Back, "Back", onBack)
-            Text(project?.name.orEmpty(), style = PetruType.Title, color = PetruColors.OnBackground)
+            Text(state.header?.name.orEmpty(), style = PetruType.Title, color = PetruColors.OnBackground)
             IconAction(PetruIcons.Add, "Add media", onAddMedia)
         }
     }

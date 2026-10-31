@@ -70,6 +70,9 @@ sealed interface EditorEvent {
     data class StepFrame(val direction: Int) : EditorEvent
     data class Select(val selection: ClipSelection?) : EditorEvent
     data class MoveClip(val clipId: String, val newIndex: Int) : EditorEvent
+    /** The timeline's add clip button: opens Add media. */
+    data object AddClip : EditorEvent
+    data class RequestRelink(val mediaItemId: String) : EditorEvent
     data object Undo : EditorEvent
     data object Redo : EditorEvent
     data class SetFullscreen(val on: Boolean) : EditorEvent

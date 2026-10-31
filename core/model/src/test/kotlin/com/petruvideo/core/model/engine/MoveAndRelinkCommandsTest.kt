@@ -122,6 +122,21 @@ class MoveAndRelinkCommandsTest {
     }
 
     @Test
+    fun `removing missing media drops its clips and the item`() {
+        val result = applied(RemoveMissingMedia("m1").apply(base))
+        result.timeline.videoLane.map { it.id } shouldContainExactly listOf("c2", "c3")
+        ("m1" in result.timeline.media) shouldBe false
+        TimelineInvariants.violations(result.timeline).shouldBeEmpty()
+    }
+
+    @Test
+    fun `removing detached audio media drops its audio clips`() {
+        val result = applied(RemoveMissingMedia("d").apply(base))
+        result.timeline.audioLane.shouldBeEmpty()
+        RemoveMissingMedia("zzz").apply(base) shouldBe CommandResult.Rejected(RejectReason.NotFound)
+    }
+
+    @Test
     fun `a photo can be relinked to another photo`() {
         val t = base.copy(
             media = base.media + ("ph" to testPhoto("ph")),

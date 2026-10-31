@@ -2,6 +2,7 @@ package com.petruvideo.core.media.thumbs
 
 import android.content.Context
 import android.graphics.Bitmap
+import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.Timeline
 import java.io.File
 
@@ -13,10 +14,10 @@ class ProjectThumbnailUpdater(
     private val context: Context,
     private val generator: ThumbnailStripGenerator,
     private val save: suspend (projectId: String, ref: String?) -> Unit,
-) {
+) : ThumbnailRefresher {
     private var lastKey: Pair<String, String?>? = null
 
-    suspend fun update(projectId: String, timeline: Timeline) {
+    override suspend fun refresh(projectId: String, timeline: Timeline) {
         val first = timeline.videoLane.firstOrNull()
         val key = first?.let { "${it.mediaItemId}@${it.sourceStartMs}" }
         if (lastKey == projectId to key) return

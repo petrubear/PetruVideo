@@ -3,6 +3,7 @@ package com.petruvideo.core.data.session
 import com.petruvideo.core.data.autosave.AutosaveWriter
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.data.repo.ProjectRepository
+import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Project
@@ -91,6 +92,21 @@ class ProjectSession(
             if (audio.isNotEmpty()) add(apply(AddAudioClips(audio, playhead)))
         }
         return results.filterIsInstance<CommandResult.Applied>().flatMap { it.notices }
+    }
+
+    /**
+     * Records which media files are currently missing. Availability is recomputed whenever a project opens, is not
+     * saved, and is not an undo step.
+     */
+    fun setAvailability(availability: Map<String, Availability>) {
+        val history = editHistory ?: return
+        val current = history.current
+        val media = current.media.mapValues { (id, item) ->
+            item.copy(availability = availability[id] ?: item.availability)
+        }
+        if (media == current.media) return
+        history.replaceCurrent(current.copy(media = media))
+        publish()
     }
 
     suspend fun flush() = autosave.flush()

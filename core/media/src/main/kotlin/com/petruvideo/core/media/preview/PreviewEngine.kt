@@ -1,0 +1,50 @@
+package com.petruvideo.core.media.preview
+
+import androidx.media3.common.Player
+import com.petruvideo.core.media.pressure.PreviewQuality
+import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.Timeline
+import kotlinx.coroutines.flow.StateFlow
+
+data class PreviewState(
+    val isPlaying: Boolean = false,
+    val positionMs: Long = 0,
+    val durationMs: Long = 0,
+    /** Playback reached the end of the timeline. */
+    val ended: Boolean = false,
+    /** Set when playback stopped because it cannot continue (e.g. under heavy pressure); cleared on next play. */
+    val error: String? = null,
+)
+
+/**
+ * Plays a [Timeline] (video lane with attached sound, audio lane, gaps silent or black) for the editor. The
+ * editor depends only on this interface so the playback technology can change (research 1).
+ */
+interface PreviewEngine {
+    val state: StateFlow<PreviewState>
+
+    /** The player to draw into a surface, or null before the first [load]. */
+    val player: Player?
+
+    /** Replaces the content, keeping the current position where it still exists. Missing media is skipped. */
+    fun load(timeline: Timeline, quality: PreviewQuality)
+
+    fun play()
+
+    fun pause()
+
+    fun seekTo(positionMs: Long)
+
+    fun release()
+}
+
+/** Reports which media is missing; implemented by `MissingMediaChecker`. */
+fun interface MediaAvailabilityChecker {
+    suspend fun check(items: Collection<MediaItem>): Map<String, Availability>
+}
+
+/** Refreshes the project thumbnail when the first clip changes; implemented by `ProjectThumbnailUpdater`. */
+fun interface ThumbnailRefresher {
+    suspend fun refresh(projectId: String, timeline: Timeline)
+}

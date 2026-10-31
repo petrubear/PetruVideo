@@ -2,6 +2,7 @@ package com.petruvideo.core.media
 
 import android.content.Context
 import android.net.Uri
+import com.petruvideo.core.media.preview.MediaAvailabilityChecker
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -13,9 +14,11 @@ import kotlinx.coroutines.withContext
  * Recomputes media availability when a project opens (FR-012). An item is missing when its source cannot be
  * opened or its size no longer matches the stored fingerprint. Availability is never stored.
  */
-class MissingMediaChecker @Inject constructor(@ApplicationContext private val context: Context) {
+class MissingMediaChecker @Inject constructor(
+    @ApplicationContext private val context: Context,
+) : MediaAvailabilityChecker {
 
-    suspend fun check(items: Collection<MediaItem>): Map<String, Availability> = withContext(Dispatchers.IO) {
+    override suspend fun check(items: Collection<MediaItem>): Map<String, Availability> = withContext(Dispatchers.IO) {
         items.associate { it.id to availabilityOf(it) }
     }
 

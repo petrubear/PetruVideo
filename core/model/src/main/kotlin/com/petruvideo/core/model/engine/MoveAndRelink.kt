@@ -74,3 +74,18 @@ class RelinkMedia(private val mediaItemId: String, private val replacement: Medi
     }
 }
 
+
+/** Removes a missing media item and every clip that uses it (the "Remove" choice for a missing clip). */
+class RemoveMissingMedia(private val mediaItemId: String) : Command {
+    override fun apply(timeline: Timeline): CommandResult {
+        if (mediaItemId !in timeline.media) return CommandResult.Rejected(RejectReason.NotFound)
+        return CommandResult.Applied(
+            timeline = timeline.copy(
+                media = timeline.media - mediaItemId,
+                videoLane = timeline.videoLane.filterNot { it.mediaItemId == mediaItemId },
+                audioLane = timeline.audioLane.filterNot { it.mediaItemId == mediaItemId },
+            ),
+            label = "Remove missing media",
+        )
+    }
+}
