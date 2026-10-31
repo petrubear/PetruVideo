@@ -61,6 +61,7 @@ private fun statusLine(header: EditorHeader?): String {
         SaveStatus.Saved -> "saved"
         SaveStatus.Saving -> "saving"
         is SaveStatus.Failed -> "not saved"
+        is SaveStatus.LowStorage -> "storage full: free space to keep saving"
     }
     return listOfNotNull(header.formatLabel, save).joinToString(" · ")
 }

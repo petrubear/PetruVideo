@@ -43,3 +43,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.kotest.assertions)
 }
+
+// The manifest test reads the merged manifest, so make sure it is built first.
+tasks.matching { it.name == "testDebugUnitTest" }.configureEach { dependsOn("processDebugMainManifest") }

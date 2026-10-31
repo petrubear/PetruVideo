@@ -68,6 +68,8 @@ fun EditorRoute(
         }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
+    // Coming back from freeing space retries a save that failed for lack of it.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.flush() }
     BackHandler { viewModel.flush(); onBack() }
 
     CompositionLocalProvider(LocalMediaLoaders provides mediaViewModel.loaders) {

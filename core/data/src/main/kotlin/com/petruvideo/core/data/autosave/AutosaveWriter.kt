@@ -1,5 +1,6 @@
 package com.petruvideo.core.data.autosave
 
+import android.database.sqlite.SQLiteFullException
 import com.petruvideo.core.model.Timeline
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,20 @@ sealed interface SaveStatus {
     data object Saved : SaveStatus
     data object Saving : SaveStatus
     data class Failed(val cause: Throwable) : SaveStatus
+
+    /** The device is out of space. The last good copy is intact and saving resumes once space is freed. */
+    data class LowStorage(val cause: Throwable) : SaveStatus
+}
+
+private fun isOutOfSpace(e: Throwable): Boolean {
+    var cause: Throwable? = e
+    while (cause != null) {
+        if (cause is SQLiteFullException || cause.message?.contains("No space left", ignoreCase = true) == true) {
+            return true
+        }
+        cause = cause.cause
+    }
+    return false
 }
 
 /**
@@ -68,7 +83,7 @@ class AutosaveWriter(
                 throw e
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 if (pending == null) pending = job
-                _status.value = SaveStatus.Failed(e)
+                _status.value = if (isOutOfSpace(e)) SaveStatus.LowStorage(e) else SaveStatus.Failed(e)
             }
         }
     }

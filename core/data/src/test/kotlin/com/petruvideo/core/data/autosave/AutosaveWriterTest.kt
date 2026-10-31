@@ -125,6 +125,26 @@ class AutosaveWriterTest {
     }
 
     @Test
+    fun `running out of space is reported as low storage and saves once space is freed`() = runTest {
+        var full = true
+        val saved = mutableListOf<Long>()
+        val writer = AutosaveWriter(this, { _, t ->
+            if (full) error("write failed: No space left on device")
+            saved += t.playheadMs
+        })
+
+        writer.submit("p", timeline(5))
+        advanceUntilIdle()
+        writer.status.value.shouldBeInstanceOf<SaveStatus.LowStorage>()
+
+        full = false
+        writer.retry()
+
+        saved shouldBe listOf(5L)
+        writer.status.value shouldBe SaveStatus.Saved
+    }
+
+    @Test
     fun `a new submission after a failure saves the newest timeline`() = runTest {
         val rec = Recorder().apply { failNext = true }
         val writer = AutosaveWriter(this, rec::save)
