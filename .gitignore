@@ -1,0 +1,74 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+# Local configuration
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+captures/
+.externalNativeBuild/
+.cxx/
+.navigation/
+
+# Keystores and signing
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Google services (contain project keys)
+google-services.json
+google-services-*.json
+
+# Generated files
+bin/
+gen/
+proguard/
+output.json
+
+# Log files
+*.log
+
+# NDK
+obj/
+
+# Lint
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Test reports
+**/build/reports/
+**/build/test-results/
+
+# Kotlin
+.kotlin/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.hprof
+*.swp
+*~
+.fleet/
+
+# Claude Code personal settings
+.claude/settings.local.json
