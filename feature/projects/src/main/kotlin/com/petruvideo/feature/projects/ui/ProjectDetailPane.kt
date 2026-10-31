@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -55,19 +56,24 @@ fun ProjectDetailPane(
     }
     val project = summary.project
     Column(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            PlaceholderThumbnail(
-                seed = project.id,
-                modifier = Modifier.width(260.dp).aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
-            )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(project.name, style = PetruType.Display, color = PetruColors.OnBackground)
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Stat("CLIPS", summary.clipCount.toString())
-                    Stat("LENGTH", formatDuration(summary.durationMs))
-                    Stat("FORMAT", project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-")
+        BoxWithConstraints {
+            val stacked = maxWidth < SIDE_BY_SIDE_MIN
+            if (stacked) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    PlaceholderThumbnail(
+                        seed = project.id,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
+                    )
+                    ProjectFacts(summary, onOpen)
                 }
-                PillButton("Open editor", onOpen, Modifier.fillMaxWidth())
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    PlaceholderThumbnail(
+                        seed = project.id,
+                        modifier = Modifier.width(THUMB_WIDTH).aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
+                    )
+                    ProjectFacts(summary, onOpen, Modifier.weight(1f))
+                }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -87,6 +93,20 @@ fun ProjectDetailPane(
         ) {
             items(media, key = { it.id }) { MediaTile(it) }
         }
+    }
+}
+
+@Composable
+private fun ProjectFacts(summary: ProjectSummary, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    val project = summary.project
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(project.name, style = PetruType.Display, color = PetruColors.OnBackground, maxLines = 2)
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Stat("CLIPS", summary.clipCount.toString())
+            Stat("LENGTH", formatDuration(summary.durationMs))
+            Stat("FORMAT", project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-")
+        }
+        PillButton("Open editor", onOpen, Modifier.fillMaxWidth())
     }
 }
 
@@ -143,6 +163,8 @@ private fun MediaTile(item: MediaItem) {
 }
 
 private const val THUMB_RATIO = 1.5f
+private val THUMB_WIDTH = 260.dp
+private val SIDE_BY_SIDE_MIN = 560.dp
 private const val TILE_RATIO = 1.6f
 private const val MEDIA_COLUMNS = 4
 private const val DIMMED = 0.4f

@@ -50,9 +50,11 @@ class ProjectsViewModel @Inject constructor(
 
     /** Media of the project in the detail pane; reloaded when the selection or the projects change. */
     private val detailMedia: Flow<List<MediaItem>> = combine(projects, ui) { all, ui ->
-        ui.selectedProjectId ?: all.firstOrNull()?.project?.id
-    }.distinctUntilChanged().flatMapLatest { id ->
-        flow { emit(id?.let { repository.loadProject(it)?.timeline?.media?.values?.toList() }.orEmpty()) }
+        val summary = all.firstOrNull { it.project.id == ui.selectedProjectId } ?: all.firstOrNull()
+        // Keyed on the edit time too, so the media list follows the project when it changes.
+        summary?.let { it.project.id to it.project.modifiedAt }
+    }.distinctUntilChanged().flatMapLatest { key ->
+        flow { emit(key?.let { repository.loadProject(it.first)?.timeline?.media?.values?.toList() }.orEmpty()) }
     }
 
     val state: StateFlow<ProjectsState> = combine(projects, ui, detailMedia.onStart { emit(emptyList()) }, ::toState)
