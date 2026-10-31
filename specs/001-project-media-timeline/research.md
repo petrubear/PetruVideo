@@ -89,6 +89,7 @@ All Technical Context unknowns are resolved here. Library versions are deliberat
 
 - **Decision**: The mid-range reference device (phone from the last three years, about 6 GB of RAM, mid-tier chipset) and the foldable test device or emulator profile are chosen and recorded as part of Spike 1 (tasks T068).
 - **Primary device**: the owner's physical Samsung Fold is the primary foldable target; its exact model, OS and One UI version, and cover and inner window sizes are recorded during Spike 1 and used to validate the arrangement rules (including half-open posture, split-screen, and pop-up windows).
+- **Recorded 2026-10-31 (wireless debugging)**: the owner's foldable is an SM-F976B (Fold 8 Ultra class), Android 17 (API 37), One UI 9.0, Snapdragon SM8850. Cover screen 1080x2520 at 480 dpi (360x840 dp); inner screen 2256x2504 at 480 dpi (752x835 dp). Because the inner width is 752 dp, multi-pane layouts start at 700 dp (inspector from 840 dp). Verified by screenshot on the inner screen: two-pane Projects, the unfolded editor, and the Add media panel. Playback frame rate and A/V sync (T068, T071) are not yet measured.
 - **Rationale**: SC-003, SC-004, and SC-009 need a named device class to be checkable.
 
 ## 15. Memory and thermal pressure
