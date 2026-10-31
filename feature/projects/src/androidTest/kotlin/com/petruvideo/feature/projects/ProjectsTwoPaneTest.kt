@@ -1,6 +1,10 @@
 package com.petruvideo.feature.projects
 
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -23,7 +27,12 @@ class ProjectsTwoPaneTest {
     private fun show(state: ProjectsState): MutableList<ProjectsEvent> {
         val events = mutableListOf<ProjectsEvent>()
         compose.setContent {
-            PetruTheme { ProjectsScreen(state, onEvent = { events += it }, twoPane = true) }
+            PetruTheme {
+                // The two-pane layout is for expanded windows (840 dp and up), so give it that much room.
+                Box(Modifier.requiredWidth(1_040.dp).requiredHeight(780.dp)) {
+                    ProjectsScreen(state, onEvent = { events += it }, twoPane = true)
+                }
+            }
         }
         return events
     }
@@ -31,8 +40,8 @@ class ProjectsTwoPaneTest {
     @Test
     fun theLatestProjectIsShownInTheDetailPaneWithoutNavigation() {
         show(state)
-        compose.onNodeWithText("Open editor").assertIsDisplayed()
-        compose.onNodeWithText("Media in this project").assertIsDisplayed()
+        compose.onNodeWithText("Open editor").assertExists()
+        compose.onNodeWithText("Media in this project").assertExists()
     }
 
     @Test

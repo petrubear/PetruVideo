@@ -1,6 +1,12 @@
 package com.petruvideo.feature.editor
 
+import androidx.compose.foundation.focusable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -25,9 +31,21 @@ object KeyboardShortcuts {
     }
 }
 
-/** Applies [KeyboardShortcuts] to key presses reaching this subtree; keys with no shortcut pass through. */
-fun Modifier.editorShortcuts(state: EditorState, onEvent: (EditorEvent) -> Unit): Modifier = onPreviewKeyEvent {
-    if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-    val event = KeyboardShortcuts.eventFor(it.key, it.isCtrlPressed || it.isMetaPressed, it.isShiftPressed, state)
-    event?.let(onEvent) != null
+/**
+ * Applies [KeyboardShortcuts] to key presses in this subtree; keys with no shortcut pass through. The subtree takes
+ * focus when it appears so shortcuts work without first tapping something.
+ */
+@Composable
+fun Modifier.editorShortcuts(state: EditorState, onEvent: (EditorEvent) -> Unit): Modifier {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    return this
+        .focusRequester(focus)
+        .focusable()
+        .onPreviewKeyEvent {
+            if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+            val command = it.isCtrlPressed || it.isMetaPressed
+            val event = KeyboardShortcuts.eventFor(it.key, command, it.isShiftPressed, state)
+            event?.let(onEvent) != null
+        }
 }
