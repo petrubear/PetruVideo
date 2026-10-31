@@ -27,6 +27,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             add("androidTestImplementation", lib("androidx-test-ext-junit"))
             add("androidTestImplementation", lib("androidx-test-runner"))
             add("androidTestImplementation", lib("kotest-assertions"))
+            add("androidTestImplementation", lib("turbine"))
         }
     }
 }
