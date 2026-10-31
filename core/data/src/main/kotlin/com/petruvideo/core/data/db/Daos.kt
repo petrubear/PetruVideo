@@ -83,3 +83,21 @@ interface TimelineDao {
     @Query("DELETE FROM media_item WHERE projectId = :projectId")
     suspend fun deleteMedia(projectId: String)
 }
+
+@Dao
+interface ExportDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun putSettings(settings: ExportSettingsEntity)
+
+    @Query("SELECT * FROM export_settings WHERE projectId = :projectId")
+    suspend fun settings(projectId: String): ExportSettingsEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun putJob(job: ExportJobEntity)
+
+    @Query("SELECT * FROM export_job WHERE projectId = :projectId")
+    suspend fun job(projectId: String): ExportJobEntity?
+
+    @Query("UPDATE export_job SET state = 'Failed', reason = 'Interrupted' WHERE state IN ('Waiting', 'Rendering')")
+    suspend fun markInterrupted(): Int
+}

@@ -169,6 +169,7 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.SetFullscreen -> local.update { it.copy(fullscreen = event.on) }
             is EditorEvent.Relink -> relink(event.mediaItemId, event.replacement)
             is EditorEvent.RemoveMissing -> session.apply(RemoveMissingMedia(event.mediaItemId))
+            EditorEvent.OpenExport -> openExport()
             is EditorEvent.TapInactiveTool -> local.update { it.copy(comingSoon = event.name) }
             EditorEvent.DismissMessage -> local.update { it.copy(comingSoon = null, message = null) }
             is EditorEvent.SheetPreview -> previewValue(event.tool, event.value)
@@ -183,6 +184,16 @@ class EditorViewModel @Inject constructor(
             EditorEvent.ReverbReset -> resetReverb()
             EditorEvent.ReverbDismiss -> closeReverb()
         }
+    }
+
+    private fun openExport() {
+        if (state.value.isEmpty) {
+            say("Add a clip to export")
+            return
+        }
+        pause()
+        flush()
+        effectChannel.trySend(EditorEffect.OpenExport)
     }
 
     private fun play() {

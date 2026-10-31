@@ -68,7 +68,7 @@ private fun CompactEditor(
     val timeline = state.timeline
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
+            EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
             val panelOpen = state.sheet != null || state.reverbPanel != null
             PreviewSurface(player, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(

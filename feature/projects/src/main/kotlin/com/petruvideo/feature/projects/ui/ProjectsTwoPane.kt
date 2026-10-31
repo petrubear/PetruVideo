@@ -82,7 +82,7 @@ fun ProjectsTwoPane(
             onOpen = { selectedId?.let { onEvent(ProjectsEvent.OpenProject(it)) } },
             onDuplicate = { selectedId?.let { onEvent(ProjectsEvent.Duplicate(it)) } },
             onDelete = { selectedId?.let { onEvent(ProjectsEvent.RequestDelete(it)) } },
-            onExport = { onEvent(ProjectsEvent.TapInactive("Export")) },
+            onExport = { selectedId?.let { onEvent(ProjectsEvent.ExportProject(it)) } },
             modifier = Modifier.statusBarsPadding(),
         )
     })

@@ -118,6 +118,8 @@ sealed interface EditorEvent {
     data class Relink(val mediaItemId: String, val replacement: MediaItem) : EditorEvent
     data class RemoveMissing(val mediaItemId: String) : EditorEvent
     data class TapInactiveTool(val name: String) : EditorEvent
+    /** The Export button: opens the export screen for this project. */
+    data object OpenExport : EditorEvent
     data object DismissMessage : EditorEvent
     /** The value while dragging: heard right away for Volume, not yet an edit. */
     data class SheetPreview(val tool: ClipTool, val value: Int) : EditorEvent
@@ -137,6 +139,7 @@ sealed interface EditorEvent {
 
 sealed interface EditorEffect {
     data object OpenAddMedia : EditorEffect
+    data object OpenExport : EditorEffect
     data class PickRelinkFile(val mediaItemId: String) : EditorEffect
     data class PickReplacementAudio(val clipId: String) : EditorEffect
 }

@@ -33,3 +33,11 @@ Room v3 to v4 migration, a small project exported on the device and checked with
 10. **Size (SC-003)**: compare the estimate with the real size for five settings.
 11. **Layouts**: cover screen, unfolded, tabletop; fold and rotate during a render; nothing under the hinge.
 12. **Sources unchanged (SC-008)**: checksums before and after.
+
+## Results so far (2026-10-31, Pixel 7 Pro emulator API 34)
+
+- `gradle --offline testDebugUnitTest verifyPaparazziDebug detekt lintDebug connectedDebugAndroidTest` passes.
+- Device tests export real projects with `TransformerRunner` and `GallerySaver` (`ExportPipelineTest`): length within 70 ms, short side equals the chosen resolution, audio present, a muted clip, music with reverb at 150% volume, 30 fps output at 30 fps footage, a MediaStore row that is not pending in `Movies/PetruVideo`, no row when saving fails, and a cancel that ends in under 2 seconds with no cache file and no gallery row.
+- Migration 3 to 4, the coordinator state machine, the view model, the screen in every arrangement, accessibility with a 2x font, and goldens for the compact, unfolded, hinge-split, and tabletop layouts also pass.
+- Finding: Media3's frame-drop effect cannot turn 30 fps footage into 24 fps (it keeps frames in whole steps), so a lower frame rate is offered only when it divides the footage's rate (60 to 30). 24 from 30 fps footage is shown as "Not available for this footage". This is a change from the first spec, recorded in `spec.md`.
+- Still to do on the Samsung Fold and a mid-range phone: time the exports (SC-002, SC-006), measure A/V sync and preview smoothness during a render, check the notification and the background run by hand, the layouts on the device, the HDR notice, and the designer review of the two buttons under Save to gallery.

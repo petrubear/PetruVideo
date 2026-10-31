@@ -30,6 +30,7 @@ fun EditorRoute(
     projectId: String,
     onBack: () -> Unit,
     onAddMedia: () -> Unit,
+    onExport: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditorViewModel = hiltViewModel(),
     mediaViewModel: EditorMediaViewModel = hiltViewModel(),
@@ -39,6 +40,7 @@ fun EditorRoute(
     val context = LocalContext.current
     var relinkTarget by remember { mutableStateOf<String?>(null) }
     val currentAddMedia by rememberUpdatedState(onAddMedia)
+    val currentExport by rememberUpdatedState(onExport)
 
     val relinkPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         val target = relinkTarget
@@ -59,6 +61,7 @@ fun EditorRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 EditorEffect.OpenAddMedia -> currentAddMedia()
+                EditorEffect.OpenExport -> currentExport()
                 is EditorEffect.PickReplacementAudio -> pickReplacement(effect.clipId)
                 is EditorEffect.PickRelinkFile -> {
                     relinkTarget = effect.mediaItemId

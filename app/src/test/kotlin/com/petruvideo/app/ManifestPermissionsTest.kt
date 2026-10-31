@@ -30,8 +30,16 @@ class ManifestPermissionsTest {
     }
 
     @Test
-    fun `only media read permissions are requested, besides the playback wake lock`() {
-        val allowed = listOf("android.permission.READ_EXTERNAL_STORAGE", "android.permission.WAKE_LOCK")
+    fun `only media read and export permissions are requested, besides the playback wake lock`() {
+        val allowed = listOf(
+            "android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.WAKE_LOCK",
+            // Export: the background render service, its progress notification, and the legacy save on Android 8 to 9.
+            "android.permission.FOREGROUND_SERVICE",
+            "android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING",
+            "android.permission.POST_NOTIFICATIONS",
+            "android.permission.WRITE_EXTERNAL_STORAGE",
+        )
         permissions.filterNot {
             it.startsWith("android.permission.READ_MEDIA_") || it in allowed || it.contains("DYNAMIC_RECEIVER")
         }.shouldBe(emptyList())

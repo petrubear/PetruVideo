@@ -78,7 +78,7 @@ fun ProjectDetailPane(
             }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ActionChip("Duplicate", onDuplicate)
-            ActionChip("Export", onExport, dimmed = true)
+            ActionChip("Export", onExport)
             ActionChip("Delete", onDelete, color = PetruColors.Danger)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

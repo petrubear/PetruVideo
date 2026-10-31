@@ -59,12 +59,12 @@ fun ExpandedEditorLayout(
     val inspectorShown = separated || LocalConfiguration.current.screenWidthDp >= ArrangementResolver.INSPECTOR_MIN_DP
     Column(modifier.fillMaxSize().statusBarsPadding()) {
         if (!separated) {
-            EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
+            EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
         }
         if (separated) {
             HingeSplit(hinge, Modifier.weight(1f), first = {
                 Column(Modifier.fillMaxSize()) {
-                    EditorTopBar(state.header, onBack, { onEvent(EditorEvent.TapInactiveTool("Export")) })
+                    EditorTopBar(state.header, onBack, { onEvent(EditorEvent.OpenExport) })
                     Row(Modifier.weight(1f)) {
                         ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
                         MediaColumn(state, onEvent, Modifier.weight(1f))

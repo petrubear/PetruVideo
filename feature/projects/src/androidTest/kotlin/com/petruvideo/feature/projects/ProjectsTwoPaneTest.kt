@@ -59,9 +59,9 @@ class ProjectsTwoPaneTest {
     }
 
     @Test
-    fun exportIsDimmedAndOnlySaysComingSoon() {
+    fun exportOpensTheExportScreenForTheSelectedProject() {
         val events = show(state)
         compose.onNodeWithText("Export").performClick()
-        assertEquals(ProjectsEvent.TapInactive("Export"), events.last())
+        assertEquals(ProjectsEvent.ExportProject("a"), events.last())
     }
 }

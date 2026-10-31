@@ -22,6 +22,7 @@ import com.petruvideo.feature.projects.ui.ProjectsScreen
 @Composable
 fun ProjectsRoute(
     onOpenEditor: (projectId: String) -> Unit,
+    onOpenExport: (projectId: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProjectsViewModel = hiltViewModel(),
 ) {
@@ -31,6 +32,7 @@ fun ProjectsRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is ProjectsEffect.OpenEditor -> onOpenEditor(effect.projectId)
+                is ProjectsEffect.OpenExport -> onOpenExport(effect.projectId)
             }
         }
     }

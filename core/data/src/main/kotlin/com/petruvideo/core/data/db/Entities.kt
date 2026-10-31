@@ -129,3 +129,25 @@ data class ReverbColumns(
     @ColumnInfo(defaultValue = "20") val preDelayMs: Int = 20,
     @ColumnInfo(defaultValue = "30") val mix: Int = 30,
 )
+
+@Entity(tableName = "export_settings")
+data class ExportSettingsEntity(
+    @PrimaryKey val projectId: String,
+    val resolution: String,
+    val frameRate: Int,
+    val quality: String,
+)
+
+/** The latest export of a project; [state] and the result columns are the flat form of an export state. */
+@Entity(tableName = "export_job")
+data class ExportJobEntity(
+    @PrimaryKey val projectId: String,
+    val jobId: String,
+    val startedAt: Long,
+    val state: String,
+    val progress: Int,
+    val reason: String?,
+    val resultUri: String?,
+    val bytes: Long,
+    val durationMs: Long,
+)

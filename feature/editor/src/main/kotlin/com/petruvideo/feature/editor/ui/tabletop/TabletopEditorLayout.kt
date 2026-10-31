@@ -43,7 +43,7 @@ fun TabletopPreviewHalf(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().statusBarsPadding()) {
-        EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.TapInactiveTool("Export")) })
+        EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
         PreviewSurface(player, Modifier.weight(1f).fillMaxWidth())
     }
 }

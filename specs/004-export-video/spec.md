@@ -116,6 +116,7 @@ The export screen follows the existing layouts: a single column on the phone, pr
 - **FR-003**: Defaults MUST be the largest of 720p, 1080p, 2K, and 4K that does not exceed 1080p or the cap in FR-005a, the nearest option to the project's frame rate that does not exceed its cap, and Recommended quality.
 - **FR-004**: The screen MUST show the file format, the bitrate, and the estimated file size for the current choices and update them within 100 ms of any change; the estimate MUST be within 15% of the real file size.
 - **FR-005**: Resolutions and frame rates the device cannot encode MUST be dimmed with a short reason and MUST NOT be startable.
+- **FR-005b**: A lower frame rate MUST be offered only when it divides the highest source frame rate evenly (for example 30 from 60 fps footage), because frames are dropped in whole steps; other options are dimmed with "Not available for this footage".
 - **FR-005a**: The highest selectable resolution MUST be the largest source resolution used by any clip in the project (photos count at their pixel size), and the highest selectable frame rate MUST be the highest source frame rate used (photos count at the project's rate); options above these MUST be dimmed with a short reason. Clips smaller than the chosen output are scaled to fit without stretching.
 - **FR-006**: The resolution MUST apply to the short side of the frame and keep the project's aspect ratio.
 - **FR-007**: The last-used choices MUST be remembered per project.
