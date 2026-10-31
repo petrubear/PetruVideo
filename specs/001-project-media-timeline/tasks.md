@@ -154,7 +154,7 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 - [X] T064 [P] [US3] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/TimelineGeometryTest.kt`: time-to-pixel mapping, ruler ticks, playhead-centered scrolling, clip hit-testing
 - [X] T065 [P] [US3] Write failing `feature/editor/src/test/kotlin/<pkg>/feature/editor/EditorViewModelTest.kt`: seek, play/pause, selection, undo/redo availability, inactive tool tap shows "coming soon", missing clip handling, thumbnail refresh when the first clip changes
 - [X] T066 [P] [US3] Write failing `core/media/src/androidTest/kotlin/<pkg>/core/media/waveform/WaveformPeaksTest.kt`: peaks computed once, cached by fingerprint, no waveform for silent video
-- [ ] T067 [P] [US3] Write failing `core/media/src/androidTest/kotlin/<pkg>/core/media/preview/PreviewEngineTest.kt`: continuous playback across clip boundaries, seek accuracy, A/V sync tolerance, clips of a different size or frame rate fitted inside the frame without cropping or stretching, missing clips skipped with a placeholder, overlapping audio mixed
+- [X] T067 [P] [US3] Write failing `core/media/src/androidTest/kotlin/<pkg>/core/media/preview/PreviewEngineTest.kt`: continuous playback across clip boundaries, seek accuracy, A/V sync tolerance, clips of a different size or frame rate fitted inside the frame without cropping or stretching, missing clips skipped with a placeholder, overlapping audio mixed
 
 ### Implementation for User Story 3
 
@@ -169,16 +169,16 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 - [X] T076 [US3] Implement `ResourcePressureMonitor.kt` in `core/media/src/main/kotlin/<pkg>/core/media/pressure/` (memory trim callbacks and thermal status) that lowers preview resolution and frame rate and thumbnail size, emits a non-blocking notice, and pauses playback only if it cannot continue (FR-031); add `ResourcePressureMonitorTest.kt` with simulated pressure signals in `core/media/src/androidTest/kotlin/<pkg>/core/media/pressure/` (depends on T071, T072)
 - [X] T077 [US3] Create `EditorContract.kt` (state and events per contracts/ui-screens.md) and `TimelineGeometry.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` to pass T064
 - [X] T078 [US3] Implement `EditorViewModel.kt` in the same package (playback, scrubbing, selection, undo/redo wiring, autosave status, missing-media actions, and project thumbnail refresh through `ProjectThumbnailUpdater` when the first clip changes) to pass T065 (depends on T026, T069, T071, T074, T075, T077)
-- [ ] T079 [P] [US3] Create `EditorTopBar.kt` (back, name, format and save status, dimmed Export) and `TransportRow.kt` (time readout, undo, play, redo, fullscreen) in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/`
-- [ ] T080 [P] [US3] Create `PreviewSurface.kt` and `FullscreenPreview.kt` in the same package (playback continues from the same position)
-- [ ] T081 [P] [US3] Create `TimelineRuler.kt` and `Playhead.kt` in the same package (fixed center playhead, highlighted current second)
-- [ ] T082 [P] [US3] Create `VideoLaneView.kt` (thumbnail strips, drag to reorder, photo clips) and `AudioLaneView.kt` (attached waveform under video clips, audio clips) in the same package
-- [ ] T083 [P] [US3] Create `MissingClipPlaceholder.kt` with Relink and Remove actions in the same package
-- [ ] T084 [P] [US3] Create `MainToolBar.kt` (Edit active; Audio, Text, Overlay, Effects, Filters dimmed with "coming soon") in the same package
-- [ ] T085 [US3] Create `TimelineView.kt` combining ruler, lanes, playhead, scrolling/scrubbing gestures, the add clip button (inserts after the clip under the playhead), and the empty-timeline state (helpful message, playback controls disabled) (depends on T081, T082, T083)
-- [ ] T086 [US3] Replace the stub with the compact `EditorScreen.kt` and `EditorRoute.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` assembling top bar, preview, transport, timeline, and main tool bar (depends on T078 to T085)
-- [ ] T087 [US3] Add Compose UI test `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/TimelineFlowTest.kt`: add three clips, scrub, play across boundaries, reorder, photo duration, missing media Relink and Remove
-- [ ] T088 [US3] Add screenshot test `feature/editor/src/test/kotlin/<pkg>/feature/editor/EditorScreenshotTest.kt` recording the golden image for the compact editor, reviewed against the Timeline and trim reference image
+- [X] T079 [P] [US3] Create `EditorTopBar.kt` (back, name, format and save status, dimmed Export) and `TransportRow.kt` (time readout, undo, play, redo, fullscreen) in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/`
+- [X] T080 [P] [US3] Create `PreviewSurface.kt` and `FullscreenPreview.kt` in the same package (playback continues from the same position)
+- [X] T081 [P] [US3] Create `TimelineRuler.kt` and `Playhead.kt` in the same package (fixed center playhead, highlighted current second)
+- [X] T082 [P] [US3] Create `VideoLaneView.kt` (thumbnail strips, drag to reorder, photo clips) and `AudioLaneView.kt` (attached waveform under video clips, audio clips) in the same package
+- [X] T083 [P] [US3] Create `MissingClipPlaceholder.kt` with Relink and Remove actions in the same package
+- [X] T084 [P] [US3] Create `MainToolBar.kt` (Edit active; Audio, Text, Overlay, Effects, Filters dimmed with "coming soon") in the same package
+- [X] T085 [US3] Create `TimelineView.kt` combining ruler, lanes, playhead, scrolling/scrubbing gestures, the add clip button (inserts after the clip under the playhead), and the empty-timeline state (helpful message, playback controls disabled) (depends on T081, T082, T083)
+- [X] T086 [US3] Replace the stub with the compact `EditorScreen.kt` and `EditorRoute.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/` assembling top bar, preview, transport, timeline, and main tool bar (depends on T078 to T085)
+- [X] T087 [US3] Add Compose UI test `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/TimelineFlowTest.kt`: add three clips, scrub, play across boundaries, reorder, photo duration, missing media Relink and Remove
+- [X] T088 [US3] Add screenshot test `feature/editor/src/test/kotlin/<pkg>/feature/editor/EditorScreenshotTest.kt` recording the golden image for the compact editor, reviewed against the Timeline and trim reference image
 
 **Checkpoint**: User Stories 1 to 3 work independently
 

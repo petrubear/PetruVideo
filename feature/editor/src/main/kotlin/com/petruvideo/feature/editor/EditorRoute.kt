@@ -1,24 +1,30 @@
 package com.petruvideo.feature.editor
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Text
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.petruvideo.core.designsystem.PetruColors
-import com.petruvideo.core.designsystem.PetruType
-import com.petruvideo.core.designsystem.components.IconAction
-import com.petruvideo.core.designsystem.icons.PetruIcons
+import com.petruvideo.feature.editor.ui.EditorScreen
+import com.petruvideo.feature.editor.ui.LocalMediaLoaders
+import kotlinx.coroutines.launch
 
-/** Stub that loads the project through `ProjectSession`; replaced by the real editor in US3 (T086). */
+/** Opens the project through `ProjectSession`, shows the editor, and connects its effects to the screen. */
 @Composable
 fun EditorRoute(
     projectId: String,
@@ -26,15 +32,49 @@ fun EditorRoute(
     onAddMedia: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditorViewModel = hiltViewModel(),
+    mediaViewModel: EditorMediaViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(projectId) { viewModel.open(projectId) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var relinkTarget by remember { mutableStateOf<String?>(null) }
+    val currentAddMedia by rememberUpdatedState(onAddMedia)
 
-    Column(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconAction(PetruIcons.Back, "Back", onBack)
-            Text(state.header?.name.orEmpty(), style = PetruType.Title, color = PetruColors.OnBackground)
-            IconAction(PetruIcons.Add, "Add media", onAddMedia)
+    val relinkPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        val target = relinkTarget
+        if (uri != null && target != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            scope.launch {
+                mediaViewModel.probe(uri.toString())?.let { viewModel.onEvent(EditorEvent.Relink(target, it)) }
+            }
         }
     }
+
+    LaunchedEffect(projectId) { viewModel.open(projectId) }
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                EditorEffect.OpenAddMedia -> currentAddMedia()
+                is EditorEffect.PickRelinkFile -> {
+                    relinkTarget = effect.mediaItemId
+                    relinkPicker.launch(arrayOf("video/*", "image/*", "audio/*"))
+                }
+            }
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
+    BackHandler { viewModel.flush(); onBack() }
+
+    CompositionLocalProvider(LocalMediaLoaders provides mediaViewModel.loaders) {
+        EditorScreen(
+            state = state,
+            player = viewModel.previewPlayer,
+            onEvent = viewModel::onEvent,
+            onBack = { viewModel.flush(); onBack() },
+            modifier = modifier,
+        )
+    }
 }
+

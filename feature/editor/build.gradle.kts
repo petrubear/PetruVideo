@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":core:media"))
     implementation(project(":core:designsystem"))
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.media3.ui)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)

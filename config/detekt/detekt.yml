@@ -23,11 +23,14 @@ naming:
     constantPattern: '[A-Z][A-Z0-9_]*'
 
 complexity:
+  LongMethod:
+    ignoreAnnotated: ['Composable']
   CyclomaticComplexMethod:
     ignoreSimpleWhenEntries: true
   LongParameterList:
     functionThreshold: 8
     constructorThreshold: 10
     ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
   TooManyFunctions:
     active: false
