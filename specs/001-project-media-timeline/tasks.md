@@ -34,14 +34,14 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 **Purpose**: Gradle project, modules, and tooling
 
-- [ ] T001 Create root Gradle build: `settings.gradle.kts` (include app, core:model, core:data, core:media, core:designsystem, feature:projects, feature:importmedia, feature:editor), root `build.gradle.kts`, `gradle.properties`, and `gradle/libs.versions.toml` pinning Kotlin, AGP, Compose BOM, Material 3 adaptive, WindowManager, Media3, Room, Hilt, Navigation Compose, Coil, JUnit, Turbine, Kotest
-- [ ] T002 Create convention plugins in `build-logic/convention/src/main/kotlin/` (`AndroidLibraryConventionPlugin.kt`, `AndroidComposeConventionPlugin.kt`, `HiltConventionPlugin.kt`) and `build-logic/settings.gradle.kts` (minSdk 26, targetSdk latest stable, JVM 17)
-- [ ] T003 [P] Create `core/model/build.gradle.kts` as a pure Kotlin/JVM module (no Android plugins)
-- [ ] T004 [P] Create `core/data/build.gradle.kts` (Room, KSP), `core/media/build.gradle.kts` (Media3, Coil), `core/designsystem/build.gradle.kts` (Compose, WindowManager)
-- [ ] T005 [P] Create `feature/projects/build.gradle.kts`, `feature/importmedia/build.gradle.kts`, `feature/editor/build.gradle.kts` (Compose + Hilt, depend only on core modules)
-- [ ] T006 Create `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml` (resizeableActivity true; MainActivity handling `screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden|navigation|density|layoutDirection` so fold, resize, and rotation never restart it), `app/src/main/kotlin/<pkg>/app/PetruVideoApp.kt` (`@HiltAndroidApp`), and `MainActivity.kt`
-- [ ] T007 [P] Add static analysis: `.editorconfig` (ktlint rules) and `config/detekt/detekt.yml`; wire into the convention plugins
-- [ ] T008 [P] Add `.github/workflows/ci.yml` running `:core:model:test`, `testDebugUnitTest`, and `lint` on every push
+- [X] T001 Create root Gradle build: `settings.gradle.kts` (include app, core:model, core:data, core:media, core:designsystem, feature:projects, feature:importmedia, feature:editor), root `build.gradle.kts`, `gradle.properties`, and `gradle/libs.versions.toml` pinning Kotlin, AGP, Compose BOM, Material 3 adaptive, WindowManager, Media3, Room, Hilt, Navigation Compose, Coil, JUnit, Turbine, Kotest
+- [X] T002 Create convention plugins in `build-logic/convention/src/main/kotlin/` (`AndroidLibraryConventionPlugin.kt`, `AndroidComposeConventionPlugin.kt`, `HiltConventionPlugin.kt`) and `build-logic/settings.gradle.kts` (minSdk 26, targetSdk latest stable, JVM 17)
+- [X] T003 [P] Create `core/model/build.gradle.kts` as a pure Kotlin/JVM module (no Android plugins)
+- [X] T004 [P] Create `core/data/build.gradle.kts` (Room, KSP), `core/media/build.gradle.kts` (Media3, Coil), `core/designsystem/build.gradle.kts` (Compose, WindowManager)
+- [X] T005 [P] Create `feature/projects/build.gradle.kts`, `feature/importmedia/build.gradle.kts`, `feature/editor/build.gradle.kts` (Compose + Hilt, depend only on core modules)
+- [X] T006 Create `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml` (resizeableActivity true; MainActivity handling `screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden|navigation|density|layoutDirection` so fold, resize, and rotation never restart it), `app/src/main/kotlin/<pkg>/app/PetruVideoApp.kt` (`@HiltAndroidApp`), and `MainActivity.kt`
+- [X] T007 [P] Add static analysis: `.editorconfig` (ktlint rules) and `config/detekt/detekt.yml`; wire into the convention plugins
+- [X] T008 [P] Add `.github/workflows/ci.yml` running `:core:model:test`, `testDebugUnitTest`, and `lint` on every push
 
 ---
 
