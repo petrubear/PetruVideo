@@ -18,6 +18,8 @@ naming:
     constantPattern: '[A-Z][A-Z0-9_]*'
 
 complexity:
+  CyclomaticComplexMethod:
+    ignoreSimpleWhenEntries: true
   LongParameterList:
     functionThreshold: 8
     constructorThreshold: 10

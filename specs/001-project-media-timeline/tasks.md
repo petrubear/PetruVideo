@@ -89,20 +89,20 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 ### Tests for User Story 1
 
-- [ ] T034 [P] [US1] Write failing `feature/projects/src/test/kotlin/<pkg>/feature/projects/ProjectsViewModelTest.kt`: filter counts, search narrowing, continue-editing selection, rename, duplicate, delete requires confirmation
-- [ ] T035 [P] [US1] Write failing `core/data/src/androidTest/kotlin/<pkg>/core/data/repo/RoomProjectRepositoryTest.kt`: create, observe ordering by `modifiedAt`, filters, query, duplicate deep copy, delete leaves media untouched
-- [ ] T036 [P] [US1] Write failing Compose UI test `feature/projects/src/androidTest/kotlin/<pkg>/feature/projects/ProjectsScreenTest.kt`: New project tile, card options menu, empty state, dimmed navigation entries show "coming soon"
+- [X] T034 [P] [US1] Write failing `feature/projects/src/test/kotlin/<pkg>/feature/projects/ProjectsViewModelTest.kt`: filter counts, search narrowing, continue-editing selection, rename, duplicate, delete requires confirmation
+- [X] T035 [P] [US1] Write failing `core/data/src/androidTest/kotlin/<pkg>/core/data/repo/RoomProjectRepositoryTest.kt`: create, observe ordering by `modifiedAt`, filters, query, duplicate deep copy, delete leaves media untouched
+- [X] T036 [P] [US1] Write failing Compose UI test `feature/projects/src/androidTest/kotlin/<pkg>/feature/projects/ProjectsScreenTest.kt`: New project tile, card options menu, empty state, dimmed navigation entries show "coming soon"
 
 ### Implementation for User Story 1
 
-- [ ] T037 [US1] Create `ProjectsContract.kt` (state, events per contracts/ui-screens.md) in `feature/projects/src/main/kotlin/<pkg>/feature/projects/`
-- [ ] T038 [US1] Implement `ProjectsViewModel.kt` in the same package to pass T034
-- [ ] T039 [P] [US1] Create `ContinueEditingCard.kt` and `FilterChipRow.kt` in `feature/projects/src/main/kotlin/<pkg>/feature/projects/ui/` matching the designed Projects screen
-- [ ] T040 [P] [US1] Create `ProjectCard.kt`, `NewProjectTile.kt`, and `ProjectOptionsMenu.kt` in the same package (thumbnail, duration badge, "Exported" badge, options)
-- [ ] T041 [P] [US1] Create `ProjectDialogs.kt` (rename dialog, delete confirmation) in the same package
-- [ ] T042 [US1] Create `ProjectsScreen.kt` in the same package assembling header with search and settings buttons, search field, empty states, the grid, and the dimmed bottom navigation (depends on T039, T040, T041)
-- [ ] T043 [US1] Wire the Projects route in `PetruNavHost.kt`: New project creates a project and navigates to a minimal `EditorRoute` stub in `feature/editor/src/main/kotlin/<pkg>/feature/editor/EditorRoute.kt` that loads the project through `ProjectSession`
-- [ ] T044 [US1] Add screenshot test `feature/projects/src/test/kotlin/<pkg>/feature/projects/ProjectsScreenshotTest.kt` recording the golden image for the compact Projects screen, reviewed against the `design/reference/` Projects image
+- [X] T037 [US1] Create `ProjectsContract.kt` (state, events per contracts/ui-screens.md) in `feature/projects/src/main/kotlin/<pkg>/feature/projects/`
+- [X] T038 [US1] Implement `ProjectsViewModel.kt` in the same package to pass T034
+- [X] T039 [P] [US1] Create `ContinueEditingCard.kt` and `FilterChipRow.kt` in `feature/projects/src/main/kotlin/<pkg>/feature/projects/ui/` matching the designed Projects screen
+- [X] T040 [P] [US1] Create `ProjectCard.kt`, `NewProjectTile.kt`, and `ProjectOptionsMenu.kt` in the same package (thumbnail, duration badge, "Exported" badge, options)
+- [X] T041 [P] [US1] Create `ProjectDialogs.kt` (rename dialog, delete confirmation) in the same package
+- [X] T042 [US1] Create `ProjectsScreen.kt` in the same package assembling header with search and settings buttons, search field, empty states, the grid, and the dimmed bottom navigation (depends on T039, T040, T041)
+- [X] T043 [US1] Wire the Projects route in `PetruNavHost.kt`: New project creates a project and navigates to a minimal `EditorRoute` stub in `feature/editor/src/main/kotlin/<pkg>/feature/editor/EditorRoute.kt` that loads the project through `ProjectSession`
+- [X] T044 [US1] Add screenshot test `feature/projects/src/test/kotlin/<pkg>/feature/projects/ProjectsScreenshotTest.kt` recording the golden image for the compact Projects screen, reviewed against the `design/reference/` Projects image
 
 **Checkpoint**: User Story 1 works on its own
 

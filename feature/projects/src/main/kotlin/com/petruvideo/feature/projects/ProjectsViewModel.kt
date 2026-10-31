@@ -1,0 +1,108 @@
+package com.petruvideo.feature.projects
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.petruvideo.core.data.repo.ProjectFilter
+import com.petruvideo.core.data.repo.ProjectRepository
+import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.model.ProjectStatus
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+@HiltViewModel
+class ProjectsViewModel @Inject constructor(
+    private val repository: ProjectRepository,
+) : ViewModel() {
+
+    /** Screen-only state that is not stored with the projects. */
+    private data class Ui(
+        val filter: ProjectFilter = ProjectFilter.All,
+        val query: String = "",
+        val searchOpen: Boolean = false,
+        val selectedProjectId: String? = null,
+        val pendingDeleteId: String? = null,
+        val comingSoon: String? = null,
+    )
+
+    private val ui = MutableStateFlow(Ui())
+    private val effectChannel = Channel<ProjectsEffect>(Channel.BUFFERED)
+
+    val effects = effectChannel.receiveAsFlow()
+
+    val state: StateFlow<ProjectsState> = combine(repository.observeProjects(), ui, ::toState)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ProjectsState())
+
+    fun onEvent(event: ProjectsEvent) {
+        when (event) {
+            ProjectsEvent.NewProject -> viewModelScope.launch {
+                effectChannel.send(ProjectsEffect.OpenEditor(repository.createProject().id))
+            }
+            is ProjectsEvent.OpenProject -> effectChannel.trySend(ProjectsEffect.OpenEditor(event.id))
+            is ProjectsEvent.SelectProject -> ui.update { it.copy(selectedProjectId = event.id) }
+            is ProjectsEvent.SetFilter -> ui.update { it.copy(filter = event.filter) }
+            is ProjectsEvent.SetQuery -> ui.update { it.copy(query = event.query) }
+            is ProjectsEvent.Rename -> rename(event)
+            is ProjectsEvent.Duplicate -> viewModelScope.launch { repository.duplicateProject(event.id) }
+            is ProjectsEvent.RequestDelete -> ui.update { it.copy(pendingDeleteId = event.id) }
+            ProjectsEvent.CancelDelete -> ui.update { it.copy(pendingDeleteId = null) }
+            ProjectsEvent.ConfirmDelete -> confirmDelete()
+            ProjectsEvent.OpenSearch -> ui.update { it.copy(searchOpen = true) }
+            ProjectsEvent.CloseSearch -> ui.update { it.copy(searchOpen = false, query = "") }
+            is ProjectsEvent.TapInactive -> ui.update { it.copy(comingSoon = event.name) }
+            ProjectsEvent.DismissComingSoon -> ui.update { it.copy(comingSoon = null) }
+        }
+    }
+
+    private fun rename(event: ProjectsEvent.Rename) {
+        val name = event.name.trim()
+        if (name.isEmpty()) return
+        viewModelScope.launch { repository.rename(event.id, name) }
+    }
+
+    private fun confirmDelete() {
+        val id = ui.value.pendingDeleteId ?: return
+        ui.update {
+            it.copy(
+                pendingDeleteId = null,
+                selectedProjectId = it.selectedProjectId.takeUnless { selected -> selected == id },
+            )
+        }
+        viewModelScope.launch { repository.deleteProject(id) }
+    }
+
+    private fun toState(all: List<ProjectSummary>, ui: Ui): ProjectsState {
+        val byFilter = when (ui.filter) {
+            ProjectFilter.All -> all
+            ProjectFilter.Drafts -> all.filter { it.project.status == ProjectStatus.Draft }
+            ProjectFilter.Exported -> all.filter { it.project.status == ProjectStatus.Exported }
+        }
+        val query = ui.query.trim()
+        val visible = if (query.isEmpty()) byFilter else byFilter.filter { it.project.name.contains(query, true) }
+        return ProjectsState(
+            isLoading = false,
+            continueEditing = all.firstOrNull(),
+            projects = visible,
+            filter = ui.filter,
+            counts = ProjectCounts(
+                all = all.size,
+                drafts = all.count { it.project.status == ProjectStatus.Draft },
+                exported = all.count { it.project.status == ProjectStatus.Exported },
+            ),
+            query = ui.query,
+            searchOpen = ui.searchOpen,
+            selectedProjectId = ui.selectedProjectId,
+            pendingDeleteId = ui.pendingDeleteId,
+            noResults = all.isNotEmpty() && visible.isEmpty(),
+            comingSoon = ui.comingSoon,
+        )
+    }
+}

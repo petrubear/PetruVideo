@@ -6,9 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.petruvideo.feature.editor.EditorRoute
+import com.petruvideo.feature.projects.ProjectsRoute
 
 object Routes {
     const val PROJECTS = "projects"
@@ -23,9 +27,19 @@ object Routes {
 fun PetruNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     NavHost(navController, startDestination = Routes.PROJECTS, modifier = modifier) {
-        composable(Routes.PROJECTS) { Placeholder("Projects") }
+        composable(Routes.PROJECTS) {
+            ProjectsRoute(onOpenEditor = { navController.navigate(Routes.editor(it)) })
+        }
         composable(Routes.ADD_MEDIA) { Placeholder("Add media") }
-        composable(Routes.EDITOR) { Placeholder("Editor") }
+        composable(
+            Routes.EDITOR,
+            arguments = listOf(navArgument("projectId") { type = NavType.StringType }),
+        ) { entry ->
+            EditorRoute(
+                projectId = entry.arguments?.getString("projectId").orEmpty(),
+                onBack = { navController.popBackStack() },
+            )
+        }
     }
 }
 

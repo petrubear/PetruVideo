@@ -11,6 +11,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         extensions.configure<LibraryExtension> {
             compileSdk = 37
             defaultConfig.minSdk = 26
+            defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
@@ -23,6 +24,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             add("testImplementation", lib("kotest-assertions"))
             add("testImplementation", lib("turbine"))
             add("testImplementation", lib("kotlinx-coroutines-test"))
+            add("androidTestImplementation", lib("androidx-test-ext-junit"))
+            add("androidTestImplementation", lib("androidx-test-runner"))
+            add("androidTestImplementation", lib("kotest-assertions"))
         }
     }
 }
