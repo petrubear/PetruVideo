@@ -42,11 +42,9 @@ class EditHistory(initial: Timeline, private val capacity: Int = DEFAULT_CAPACIT
         return true
     }
 
-    /** Replaces the current timeline without recording history (for playhead moves and loading). */
-    fun reset(timeline: Timeline) {
+    /** Replaces the current timeline without recording an undo step (used for playhead moves). */
+    fun replaceCurrent(timeline: Timeline) {
         current = timeline
-        undoStack.clear()
-        redoStack.clear()
     }
 
     private companion object {

@@ -3,13 +3,16 @@ package com.petruvideo.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.Text
+import androidx.activity.enableEdgeToEdge
+import com.petruvideo.app.navigation.PetruNavHost
+import com.petruvideo.core.designsystem.PetruTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { Text("PetruVideo") }
+        enableEdgeToEdge()
+        setContent { PetruTheme { PetruNavHost() } }
     }
 }
