@@ -48,9 +48,9 @@ fun EditorScreen(
                 canUndo = state.canUndo,
                 canRedo = state.canRedo,
                 enabled = !state.isEmpty,
-                onUndo = { onEvent(EditorEvent.Undo) },
+                onUndo = { if (state.canUndo) onEvent(EditorEvent.Undo) },
                 onPlayPause = { onEvent(if (state.playback.isPlaying) EditorEvent.Pause else EditorEvent.Play) },
-                onRedo = { onEvent(EditorEvent.Redo) },
+                onRedo = { if (state.canRedo) onEvent(EditorEvent.Redo) },
                 onFullscreen = { onEvent(EditorEvent.SetFullscreen(true)) },
             )
             if (timeline != null) {
@@ -61,6 +61,7 @@ fun EditorScreen(
                     onSeek = { onEvent(EditorEvent.SeekTo(it)) },
                     onSelect = { onEvent(EditorEvent.Select(it)) },
                     onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
+                    onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
                     onAddClip = { onEvent(EditorEvent.AddClip) },
                     modifier = Modifier.weight(1f),
                 )
@@ -68,7 +69,11 @@ fun EditorScreen(
             } else {
                 Box(Modifier.weight(1f))
             }
-            MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
+            if (state.selection != null && state.clipTools.isNotEmpty()) {
+                ClipToolBar(state.clipTools, state.selectedAudioMuted, onTool = { onEvent(EditorEvent.UseTool(it)) })
+            } else {
+                MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
+            }
         }
         Banner(state, onEvent, Modifier.align(Alignment.BottomCenter).padding(bottom = 168.dp))
         if (state.fullscreen) FullscreenPreview(player, onClose = { onEvent(EditorEvent.SetFullscreen(false)) })

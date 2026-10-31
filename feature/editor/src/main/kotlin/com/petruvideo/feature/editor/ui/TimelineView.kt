@@ -45,6 +45,7 @@ fun TimelineView(
     onSeek: (Long) -> Unit,
     onSelect: (ClipSelection?) -> Unit,
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
+    onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     onAddClip: () -> Unit,
     modifier: Modifier = Modifier,
     geometry: TimelineGeometry = remember { TimelineGeometry() },
@@ -86,6 +87,7 @@ fun TimelineView(
                         selectedClipId = (selection as? ClipSelection.Video)?.clipId,
                         onSelect = { onSelect(ClipSelection.Video(it)) },
                         onMoveClip = onMoveClip,
+                        onTrim = onTrim,
                     )
                     AttachedAudioRow(timeline.videoLane, timeline.media, geometry)
                     AudioClipsRow(
@@ -94,6 +96,7 @@ fun TimelineView(
                         geometry = geometry,
                         selectedClipId = (selection as? ClipSelection.Audio)?.clipId,
                         onSelect = { onSelect(ClipSelection.Audio(it)) },
+                        onTrim = onTrim,
                     )
                 }
             }

@@ -8,6 +8,8 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
@@ -38,6 +41,7 @@ import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.feature.editor.TimelineGeometry
+import com.petruvideo.feature.editor.TrimLimits
 
 private val LANE_HEIGHT = 56.dp
 private val TILE_WIDTH = 40.dp
@@ -58,11 +62,13 @@ fun VideoLaneView(
     selectedClipId: String?,
     onSelect: (String) -> Unit,
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
+    onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current.density
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragDx by remember { mutableFloatStateOf(0f) }
+    var previewLength by remember { mutableStateOf<Pair<String, Long>?>(null) }
 
     Row(modifier.height(LANE_HEIGHT)) {
         lane.forEachIndexed { index, clip ->
@@ -103,6 +109,23 @@ fun VideoLaneView(
                     MissingClipPlaceholder(item?.displayName.orEmpty(), Modifier.fillMaxHeight().width(widthDp))
                 } else {
                     ClipThumbnails(clip, item, widthDp.value)
+                }
+                if (clip.id == selectedClipId) {
+                    TrimHandles(
+                        geometry = geometry,
+                        currentLengthMs = clip.lengthMs,
+                        target = { start, delta -> TrimLimits.video(clip, item, start, delta) },
+                        onPreview = { _, target -> previewLength = clip.id to target.lengthMs },
+                        onCommit = { start, target ->
+                            previewLength = null
+                            if (target.lengthMs != clip.lengthMs) onTrim(clip.id, start, target.newSourceMs)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    DurationBadge(
+                        previewLength?.takeIf { it.first == clip.id }?.second ?: clip.lengthMs,
+                        Modifier.align(Alignment.TopCenter).padding(top = 4.dp),
+                    )
                 }
             }
         }

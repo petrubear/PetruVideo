@@ -52,11 +52,14 @@ fun EditorRoute(
         }
     }
 
+    val pickReplacement = rememberReplaceAudioPicker(mediaViewModel, viewModel::onEvent)
+
     LaunchedEffect(projectId) { viewModel.open(projectId) }
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 EditorEffect.OpenAddMedia -> currentAddMedia()
+                is EditorEffect.PickReplacementAudio -> pickReplacement(effect.clipId)
                 is EditorEffect.PickRelinkFile -> {
                     relinkTarget = effect.mediaItemId
                     relinkPicker.launch(arrayOf("video/*", "image/*", "audio/*"))

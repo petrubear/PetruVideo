@@ -197,7 +197,7 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 - [X] T091 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/DetachAudioTest.kt`: creates a `Detached` clip with the same range and start, clears `attachedAudio`, rejects clips without sound, undo restores
 - [X] T092 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AudioClipCommandsTest.kt`: `MoveAudioClip` overlap snaps to the next free position with a `Snapped` notice, `SetMuted`, `ReplaceAudio` keeps position and length, shorter replacement emits `LengthChanged`
 - [X] T093 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/UndoRedoAllCommandsTest.kt`: invariant 4 (`undo(apply(c, t)) == t`) for every command
-- [ ] T094 [P] [US4] Write failing Compose UI test `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/TrimAndAudioFlowTest.kt`: drag handles (including lengthening a photo), badge updates live, minimum length stop, split, detach, replace, delete detached audio to keep only added audio, overlap snap message, undo/redo button states
+- [X] T094 [P] [US4] Write failing Compose UI test `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/TrimAndAudioFlowTest.kt`: drag handles (including lengthening a photo), badge updates live, minimum length stop, split, detach, replace, delete detached audio to keep only added audio, overlap snap message, undo/redo button states
 
 ### Implementation for User Story 4
 
@@ -205,14 +205,14 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 - [X] T096 [US4] Implement `Split`, `Duplicate`, and `Delete` in `core/model/src/main/kotlin/<pkg>/core/model/engine/SplitDuplicateDelete.kt` to pass T090
 - [X] T097 [US4] Implement `DetachAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/DetachAudio.kt` to pass T091
 - [X] T098 [US4] Implement `MoveAudioClip`, `SetMuted`, and `ReplaceAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/AudioClipCommands.kt` to pass T092 and T093
-- [ ] T099 [P] [US4] Create `TrimHandles.kt` (white handles, live drag, stops at minimum length, preview shows the frame at the handle, photo clips can also be lengthened up to 60 s) and `DurationBadge.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/`
-- [ ] T100 [P] [US4] Create `VideoClipToolBar.kt` (Split, Speed dimmed, Volume dimmed, Detach only when attached audio exists, Duplicate, Delete) and `AudioClipToolBar.kt` (Split, Mute, Replace, Duplicate, Delete) in the same package
-- [ ] T101 [P] [US4] Create `MutedBadge.kt` and the "Detached" label for audio clips in the same package, matching the Detached audio selected design
-- [ ] T102 [US4] Extend `EditorViewModel.kt` and `EditorContract.kt` with trim, split, duplicate, delete, detach, replace, and mute events, tool bar derivation from selection, and `LengthChanged` and `Snapped` messaging
-- [ ] T103 [US4] Implement the replace-audio flow: audio picker (Add media audio tab or system picker) returning a media item to `ReplaceAudio` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ReplaceAudioFlow.kt`
-- [ ] T104 [US4] Integrate trim handles, selection outline, and the two tool bars into `TimelineView.kt` and `EditorScreen.kt`, including dimmed undo/redo states (depends on T099 to T103)
-- [ ] T105 [US4] Add screenshot tests recording golden images for the Timeline and trim (clip selected) and Detached audio selected states in `EditorScreenshotTest.kt`, reviewed against the matching reference images
-- [ ] T106 [US4] Add instrumented test `core/data/src/androidTest/kotlin/<pkg>/core/data/OriginalsUnchangedTest.kt`: checksum of source files identical before and after a full edit session (SC-007)
+- [X] T099 [P] [US4] Create `TrimHandles.kt` (white handles, live drag, stops at minimum length, preview shows the frame at the handle, photo clips can also be lengthened up to 60 s) and `DurationBadge.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/`
+- [X] T100 [P] [US4] Create `VideoClipToolBar.kt` (Split, Speed dimmed, Volume dimmed, Detach only when attached audio exists, Duplicate, Delete) and `AudioClipToolBar.kt` (Split, Mute, Replace, Duplicate, Delete) in the same package
+- [X] T101 [P] [US4] Create `MutedBadge.kt` and the "Detached" label for audio clips in the same package, matching the Detached audio selected design
+- [X] T102 [US4] Extend `EditorViewModel.kt` and `EditorContract.kt` with trim, split, duplicate, delete, detach, replace, and mute events, tool bar derivation from selection, and `LengthChanged` and `Snapped` messaging
+- [X] T103 [US4] Implement the replace-audio flow: audio picker (Add media audio tab or system picker) returning a media item to `ReplaceAudio` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ReplaceAudioFlow.kt`
+- [X] T104 [US4] Integrate trim handles, selection outline, and the two tool bars into `TimelineView.kt` and `EditorScreen.kt`, including dimmed undo/redo states (depends on T099 to T103)
+- [X] T105 [US4] Add screenshot tests recording golden images for the Timeline and trim (clip selected) and Detached audio selected states in `EditorScreenshotTest.kt`, reviewed against the matching reference images
+- [X] T106 [US4] Add instrumented test `core/data/src/androidTest/kotlin/<pkg>/core/data/OriginalsUnchangedTest.kt`: checksum of source files identical before and after a full edit session (SC-007)
 
 **Checkpoint**: User Stories 1 to 4 work independently
 

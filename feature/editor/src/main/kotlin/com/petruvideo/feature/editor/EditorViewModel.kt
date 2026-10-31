@@ -15,11 +15,21 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.engine.Command
 import com.petruvideo.core.model.engine.CommandResult
+import com.petruvideo.core.model.engine.DetachAudio
+import com.petruvideo.core.model.engine.Delete
+import com.petruvideo.core.model.engine.Duplicate
+import com.petruvideo.core.model.engine.MoveAudioClip
 import com.petruvideo.core.model.engine.MoveVideoClip
 import com.petruvideo.core.model.engine.Notice
 import com.petruvideo.core.model.engine.RelinkMedia
 import com.petruvideo.core.model.engine.RemoveMissingMedia
+import com.petruvideo.core.model.engine.ReplaceAudio
+import com.petruvideo.core.model.engine.SetMuted
+import com.petruvideo.core.model.engine.Split
+import com.petruvideo.core.model.engine.TrimEnd
+import com.petruvideo.core.model.engine.TrimStart
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.math.min
@@ -125,6 +135,10 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.StepFrame -> seek(engine.state.value.positionMs + event.direction * frameMs())
             is EditorEvent.Select -> select(event.selection)
             is EditorEvent.MoveClip -> session.apply(MoveVideoClip(event.clipId, event.newIndex))
+            is EditorEvent.TrimClip -> run(trimCommand(event))
+            is EditorEvent.MoveAudio -> run(MoveAudioClip(event.clipId, event.newStartMs))
+            is EditorEvent.UseTool -> useTool(event.tool)
+            is EditorEvent.ReplaceAudio -> run(ReplaceAudio(event.clipId, event.replacement))
             EditorEvent.AddClip -> { pause(); effectChannel.trySend(EditorEffect.OpenAddMedia) }
             is EditorEvent.RequestRelink -> effectChannel.trySend(EditorEffect.PickRelinkFile(event.mediaItemId))
             EditorEvent.Undo -> session.undo()
@@ -163,6 +177,33 @@ class EditorViewModel @Inject constructor(
         val timeline = session.timeline.value
         if (selection != null && (timeline == null || !exists(timeline, selection))) return
         local.update { it.copy(selection = selection) }
+    }
+
+    /** Applies [command] and tells the user when audio snapped or a replacement shortened a clip. */
+    private fun run(command: Command) {
+        val result = session.apply(command) as? CommandResult.Applied ?: return
+        when {
+            Notice.Snapped in result.notices -> say("Audio moved to the next free spot")
+            Notice.LengthChanged in result.notices -> say("Clip shortened to fit the new file")
+        }
+    }
+
+    private fun trimCommand(event: EditorEvent.TrimClip): Command =
+        if (event.start) TrimStart(event.clipId, event.newSourceMs) else TrimEnd(event.clipId, event.newSourceMs)
+
+    private fun useTool(tool: ClipTool) {
+        val timeline = session.timeline.value ?: return
+        val selection = local.value.selection?.takeIf { exists(timeline, it) } ?: return
+        val id = selection.clipId
+        when (tool) {
+            ClipTool.Speed, ClipTool.Volume -> local.update { it.copy(comingSoon = tool.label) }
+            ClipTool.Split -> run(Split(id, engine.state.value.positionMs))
+            ClipTool.Detach -> run(DetachAudio(id))
+            ClipTool.Duplicate -> run(Duplicate(id))
+            ClipTool.Delete -> run(Delete(id))
+            ClipTool.Mute -> timeline.audioLane.firstOrNull { it.id == id }?.let { run(SetMuted(id, !it.muted)) }
+            ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
+        }
     }
 
     private fun relink(mediaItemId: String, replacement: MediaItem) {
@@ -217,6 +258,8 @@ class EditorViewModel @Inject constructor(
             missingMedia = timeline?.media?.values?.filter { it.availability == Availability.Missing }
                 ?.map { it.id }?.toSet().orEmpty(),
             clipTools = clipToolsFor(timeline, selection),
+            selectedAudioMuted = (selection as? ClipSelection.Audio)
+                ?.let { sel -> timeline?.audioLane?.firstOrNull { it.id == sel.clipId }?.muted } == true,
             fullscreen = local.fullscreen,
             comingSoon = local.comingSoon,
             message = local.message,

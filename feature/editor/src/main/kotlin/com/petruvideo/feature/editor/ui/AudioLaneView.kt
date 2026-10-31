@@ -15,6 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,10 +39,12 @@ import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import com.petruvideo.feature.editor.TimelineGeometry
+import com.petruvideo.feature.editor.TrimLimits
 
 private val WAVE_ROW_HEIGHT = 32.dp
 private val WAVE_SHAPE = RoundedCornerShape(7.dp)
 private const val MUTED_ALPHA = 0.6f
+private val LABEL_INSET = 20.dp
 
 /**
  * The sound attached to each video clip, as a waveform right under the clip it belongs to. A video with no
@@ -74,8 +79,10 @@ fun AudioClipsRow(
     geometry: TimelineGeometry,
     selectedClipId: String?,
     onSelect: (String) -> Unit,
+    onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var previewLength by remember { mutableStateOf<Pair<String, Long>?>(null) }
     Box(modifier.height(WAVE_ROW_HEIGHT)) {
         clips.forEach { clip ->
             val item = media[clip.mediaItemId] ?: return@forEach
@@ -101,7 +108,25 @@ fun AudioClipsRow(
                         "Detached",
                         style = PetruType.MonoSmall,
                         color = PetruColors.OnBackground,
-                        modifier = Modifier.align(Alignment.CenterStart).offset(x = 4.dp),
+                        modifier = Modifier.align(Alignment.CenterStart).offset(x = LABEL_INSET),
+                    )
+                }
+                if (clip.muted && clip.id != selectedClipId) MutedBadge(Modifier.align(Alignment.CenterEnd))
+                if (clip.id == selectedClipId) {
+                    TrimHandles(
+                        geometry = geometry,
+                        currentLengthMs = clip.lengthMs,
+                        target = { start, delta -> TrimLimits.audio(clip, item, start, delta) },
+                        onPreview = { _, target -> previewLength = clip.id to target.lengthMs },
+                        onCommit = { start, target ->
+                            previewLength = null
+                            if (target.lengthMs != clip.lengthMs) onTrim(clip.id, start, target.newSourceMs)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    DurationBadge(
+                        previewLength?.takeIf { it.first == clip.id }?.second ?: clip.lengthMs,
+                        Modifier.align(Alignment.CenterEnd).offset(x = -LABEL_INSET),
                     )
                 }
             }

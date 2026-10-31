@@ -4,7 +4,9 @@ import app.cash.turbine.test
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.pressure.ResourcePressureMonitor
+import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.MediaKind
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
@@ -243,5 +245,77 @@ class EditorViewModelTest {
         advanceUntilIdle()
         e.engine.calls.last() shouldBe "pause"
         e.state.message shouldBe "Playback paused to cool down"
+    }
+
+    @Test
+    fun `committing a trim is one undoable step`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.TrimClip("c1", start = false, newSourceMs = 3_000))
+        e.state.timeline?.videoLane?.first()?.lengthMs shouldBe 3_000
+        e.vm.onEvent(EditorEvent.Undo)
+        e.state.timeline?.videoLane?.first()?.lengthMs shouldBe 4_000
+    }
+
+    @Test
+    fun `split uses the playhead and keeps both halves`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.vm.onEvent(EditorEvent.SeekTo(1_500))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Split))
+        e.state.timeline?.videoLane?.map { it.lengthMs }?.take(2) shouldContainExactly listOf(1_500L, 2_500L)
+    }
+
+    @Test
+    fun `detach moves the sound to the audio lane and the tool disappears`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c3")))
+        e.state.clipTools.contains(ClipTool.Detach) shouldBe true
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Detach))
+        e.state.timeline?.audioLane?.count { it.origin == AudioOrigin.Detached } shouldBe 2
+        e.state.clipTools.contains(ClipTool.Detach) shouldBe false
+        e.state.message shouldBe null
+    }
+
+    @Test
+    fun `deleting the selected clip clears the selection`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Delete))
+        e.state.timeline?.videoLane?.map { it.id } shouldContainExactly listOf("c1", "c3")
+        e.state.selection shouldBe null
+        e.state.clipTools shouldBe emptyList()
+    }
+
+    @Test
+    fun `mute toggles and the tool bar reports the state`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Audio("a1")))
+        e.state.selectedAudioMuted shouldBe false
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
+        e.state.selectedAudioMuted shouldBe true
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
+        e.state.selectedAudioMuted shouldBe false
+    }
+
+    @Test
+    fun `speed and volume only say coming soon`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Speed))
+        e.state.comingSoon shouldBe "Speed"
+        e.state.canUndo shouldBe false
+    }
+
+    @Test
+    fun `replace asks the screen for an audio file and a shorter file tells the user`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Audio("a1")))
+        e.vm.effects.test {
+            e.vm.onEvent(EditorEvent.UseTool(ClipTool.Replace))
+            awaitItem() shouldBe EditorEffect.PickReplacementAudio("a1")
+        }
+        e.vm.onEvent(EditorEvent.ReplaceAudio("a1", media("r", MediaKind.Audio).copy(durationMs = 1_000)))
+        e.state.timeline?.audioLane?.first()?.lengthMs shouldBe 1_000
+        e.state.message shouldBe "Clip shortened to fit the new file"
     }
 }

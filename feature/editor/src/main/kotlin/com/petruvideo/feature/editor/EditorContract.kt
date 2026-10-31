@@ -54,6 +54,8 @@ data class EditorState(
     /** Ids of media items whose source file is missing. */
     val missingMedia: Set<String> = emptySet(),
     val clipTools: List<ClipTool> = emptyList(),
+    /** Whether the selected audio clip is muted (the Mute tool shows Unmute). */
+    val selectedAudioMuted: Boolean = false,
     val fullscreen: Boolean = false,
     /** Name of the inactive tool that was tapped, shown as "coming soon". */
     val comingSoon: String? = null,
@@ -70,6 +72,12 @@ sealed interface EditorEvent {
     data class StepFrame(val direction: Int) : EditorEvent
     data class Select(val selection: ClipSelection?) : EditorEvent
     data class MoveClip(val clipId: String, val newIndex: Int) : EditorEvent
+    /** Commits a trim handle drag. [newSourceMs] is a position in the clip's source (see TrimStart/TrimEnd). */
+    data class TrimClip(val clipId: String, val start: Boolean, val newSourceMs: Long) : EditorEvent
+    data class MoveAudio(val clipId: String, val newStartMs: Long) : EditorEvent
+    /** A tool from the clip tool bar, applied to the current selection. */
+    data class UseTool(val tool: ClipTool) : EditorEvent
+    data class ReplaceAudio(val clipId: String, val replacement: MediaItem) : EditorEvent
     /** The timeline's add clip button: opens Add media. */
     data object AddClip : EditorEvent
     data class RequestRelink(val mediaItemId: String) : EditorEvent
@@ -85,4 +93,5 @@ sealed interface EditorEvent {
 sealed interface EditorEffect {
     data object OpenAddMedia : EditorEffect
     data class PickRelinkFile(val mediaItemId: String) : EditorEffect
+    data class PickReplacementAudio(val clipId: String) : EditorEffect
 }

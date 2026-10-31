@@ -53,6 +53,19 @@ class EditorScreenshotTest {
             canRedo = false,
             projectMedia = timeline.media.values.toList(),
             missingMedia = missing,
+            clipTools = when (selection) {
+                null -> emptyList()
+                is ClipSelection.Audio ->
+                    listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
+                is ClipSelection.Video -> listOf(
+                    ClipTool.Split,
+                    ClipTool.Speed,
+                    ClipTool.Volume,
+                    ClipTool.Detach,
+                    ClipTool.Duplicate,
+                    ClipTool.Delete,
+                )
+            },
         )
     }
 
@@ -71,6 +84,17 @@ class EditorScreenshotTest {
             CompositionLocalProvider(LocalMediaLoaders provides loaders) {
                 PetruTheme {
                     EditorScreen(state(selection = ClipSelection.Video("c2")), player = null, onEvent = {}, onBack = {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun selectedDetachedAudioShowsHandlesAndAudioTools() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(state(selection = ClipSelection.Audio("a1")), player = null, onEvent = {}, onBack = {})
                 }
             }
         }

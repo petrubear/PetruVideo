@@ -1,0 +1,67 @@
+package com.petruvideo.feature.editor.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import com.petruvideo.core.designsystem.PetruColors
+import com.petruvideo.core.designsystem.icons.PetruIcons
+import com.petruvideo.feature.editor.ClipTool
+
+private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
+    ClipTool.Split -> PetruIcons.Split
+    ClipTool.Speed -> PetruIcons.Speed
+    ClipTool.Volume -> PetruIcons.Volume
+    ClipTool.Detach -> PetruIcons.Detach
+    ClipTool.Duplicate -> PetruIcons.Duplicate
+    ClipTool.Delete -> PetruIcons.Delete
+    ClipTool.Mute -> if (muted) PetruIcons.Volume else PetruIcons.Mute
+    ClipTool.Replace -> PetruIcons.Replace
+}
+
+/**
+ * The clip tool bar shown instead of the main tool bar while a clip is selected. One bar serves video and audio
+ * clips; the view model decides which tools apply. Speed and Volume are dimmed and say "coming soon" when tapped.
+ */
+@Composable
+fun ClipToolBar(
+    tools: List<ClipTool>,
+    muted: Boolean,
+    onTool: (ClipTool) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        tools.forEach { tool ->
+            val label = if (tool == ClipTool.Mute && muted) "Unmute" else tool.label
+            ToolButton(
+                label = label,
+                icon = iconFor(tool, muted),
+                active = tool.active,
+                onClick = { onTool(tool) },
+                tint = if (tool == ClipTool.Delete) PetruColors.Danger else null,
+            )
+        }
+    }
+}
