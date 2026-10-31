@@ -35,8 +35,8 @@ Dependencies point inward: features use `core:*`; `core:model` depends on nothin
 
 | Arrangement | When | Editor | Projects | Add media |
 |-------------|------|--------|----------|-----------|
-| Compact | under 840 dp (wide content 600 to 839 dp) | phone layout | grid, 2 or 3 columns | full screen, 3 or 5 columns |
-| Expanded | 840 dp and up | rail, Media, preview, inspector, timeline | list and detail panes | centered panel, 6 columns |
+| Compact | under 700 dp (wide content 600 to 699 dp) | phone layout | grid, 2 or 3 columns | full screen, 3 or 5 columns |
+| Expanded | 700 dp and up | rail, Media, preview, timeline (inspector from 840 dp) | list and detail panes | centered panel, 6 columns |
 | Tabletop | half-opened, horizontal separating hinge | preview above, controls below | two-pane below the hinge | picker below the hinge |
 
 `AdaptiveScaffold` renders the slot for the arrangement. With a vertical separating hinge, `HingeSplit` leaves a gap

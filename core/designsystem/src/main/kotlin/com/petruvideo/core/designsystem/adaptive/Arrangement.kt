@@ -21,10 +21,10 @@ data class ArrangementInput(
 )
 
 sealed interface Arrangement {
-    /** Phone layouts. [wideContent] is true on medium width (600 to 839 dp): same layouts, wider content. */
+    /** Phone layouts. [wideContent] is true on medium width (600 to 699 dp): same layouts, wider content. */
     data class Compact(val wideContent: Boolean) : Arrangement
 
-    /** Multi-pane layouts, from 840 dp. [hinge] is set when a separating hinge must be avoided. */
+    /** Multi-pane layouts, from 700 dp (the unfolded Fold is 752 dp wide). [hinge] is set for a separating hinge. */
     data class Expanded(val hinge: HingeBounds?) : Arrangement
 
     /** Half-folded with a horizontal hinge: preview above, controls below. */
@@ -33,7 +33,10 @@ sealed interface Arrangement {
 
 object ArrangementResolver {
     const val MEDIUM_MIN_DP = 600
-    const val EXPANDED_MIN_DP = 840
+    const val EXPANDED_MIN_DP = 700
+
+    /** From this width the editor also shows the inspector pane; below it the preview keeps the room. */
+    const val INSPECTOR_MIN_DP = 840
 
     /** A pure function of the window and fold state, never of the device model (FR-023). */
     fun resolve(input: ArrangementInput): Arrangement {

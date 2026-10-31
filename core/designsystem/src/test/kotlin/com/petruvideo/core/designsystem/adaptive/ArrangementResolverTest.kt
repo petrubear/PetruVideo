@@ -24,14 +24,15 @@ class ArrangementResolverTest {
     }
 
     @Test
-    fun `medium width 600 to 839 resolves to Compact with wide content`() {
+    fun `medium width 600 to 699 resolves to Compact with wide content`() {
         ArrangementResolver.resolve(input(widthDp = 600)) shouldBe Arrangement.Compact(wideContent = true)
-        ArrangementResolver.resolve(input(widthDp = 839)) shouldBe Arrangement.Compact(wideContent = true)
+        ArrangementResolver.resolve(input(widthDp = 699)) shouldBe Arrangement.Compact(wideContent = true)
     }
 
     @Test
-    fun `expanded width from 840 dp resolves to Expanded when flat`() {
-        ArrangementResolver.resolve(input(widthDp = 840)) shouldBe Arrangement.Expanded(hinge = null)
+    fun `expanded width from 700 dp resolves to Expanded when flat`() {
+        ArrangementResolver.resolve(input(widthDp = 700)) shouldBe Arrangement.Expanded(hinge = null)
+        ArrangementResolver.resolve(input(widthDp = 752)) shouldBe Arrangement.Expanded(hinge = null)
         ArrangementResolver.resolve(input(widthDp = 960, fold = FoldState.Flat)) shouldBe Arrangement.Expanded(null)
     }
 
@@ -92,6 +93,6 @@ class ArrangementResolverTest {
 
     @Test
     fun `the arrangement is chosen from window size and posture, not the device`() {
-        ArrangementResolver.resolve(input(widthDp = 700, fold = FoldState.Flat)) shouldBe Arrangement.Compact(true)
+        ArrangementResolver.resolve(input(widthDp = 650, fold = FoldState.Flat)) shouldBe Arrangement.Compact(true)
     }
 }

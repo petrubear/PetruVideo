@@ -231,7 +231,7 @@ On a foldable device the app adapts to the screen as the designer drew it:
 - **FR-027**: On large screens, users MUST be able to drag media from the Media panel (media already used in the project) onto the timeline and use keyboard shortcuts for play, step, delete, undo, and redo. A mouse or stylus MUST be able to do everything touch can do (select, drag trim handles, scrub, reorder, drag and drop); controls MUST show a hover highlight for a mouse, and the mouse wheel or trackpad MUST scroll the timeline sideways.
 
 - **FR-027a**: On expanded width the Add media screen MUST appear as a large centered panel over the editor with the same content as the phone layout (6 grid columns, selection tray at the bottom); in tabletop posture it MUST fill the half below the hinge. On medium width it MUST use the phone layout with 5 grid columns (the phone layout uses 3).
-- **FR-027b**: Medium width (600 to 839 dp) MUST use the compact layouts with wider content; multi-pane layouts MUST start at expanded width (840 dp and up). In tabletop posture the Projects screen MUST use the expanded two-pane layout confined to the area on one side of the hinge, or the compact layout if that area is too narrow.
+- **FR-027b**: Medium width (600 to 699 dp) MUST use the compact layouts with wider content; multi-pane layouts MUST start at expanded width (700 dp and up, so the unfolded Samsung Fold, 752 dp wide, gets them). The editor inspector pane appears from 840 dp; between 700 and 839 dp the preview keeps that room. In tabletop posture the Projects screen MUST use the expanded two-pane layout confined to the area on one side of the hinge, or the compact layout if that area is too narrow.
 
 **General**
 

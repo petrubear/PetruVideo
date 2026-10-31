@@ -1,6 +1,7 @@
 package com.petruvideo.feature.editor.ui.expanded
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
+import com.petruvideo.core.designsystem.adaptive.ArrangementResolver
 import com.petruvideo.core.designsystem.adaptive.HingeBounds
 import com.petruvideo.core.designsystem.adaptive.HingeSplit
 import com.petruvideo.core.designsystem.adaptive.HingeAvoidance
@@ -70,11 +72,14 @@ fun ExpandedEditorLayout(
                 }
             })
         } else {
-            Row(Modifier.weight(1f)) {
-                ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
-                MediaColumn(state, onEvent, Modifier.width(MEDIA_WIDTH))
-                PreviewColumn(state, player, onEvent, Modifier.weight(1f).fillMaxHeight())
-                InspectorPanel(selectedClip(state), Modifier.width(INSPECTOR_WIDTH))
+            BoxWithConstraints(Modifier.weight(1f)) {
+                val showInspector = maxWidth.value >= ArrangementResolver.INSPECTOR_MIN_DP
+                Row(Modifier.fillMaxSize()) {
+                    ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
+                    MediaColumn(state, onEvent, Modifier.width(MEDIA_WIDTH))
+                    PreviewColumn(state, player, onEvent, Modifier.weight(1f).fillMaxHeight())
+                    if (showInspector) InspectorPanel(selectedClip(state), Modifier.width(INSPECTOR_WIDTH))
+                }
             }
             if (timeline != null) TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
         }

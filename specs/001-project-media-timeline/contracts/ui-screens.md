@@ -10,7 +10,7 @@ Design artboards: Projects, Multi-import, Timeline and trim, Detached audio sele
 |-------------|------|--------|
 | Compact | Compact width (under 600 dp), or the cover screen | Single pane, designed phone layout |
 | Compact, wide content | Medium width (600 to 839 dp) | Same layouts as compact with more grid columns and a content max width |
-| Expanded | Expanded width (840 dp and up), flat | Multi-pane as designed (editor: rail, Media panel, preview, inspector, timeline; projects: list + detail). Add media is a large centered panel over the editor |
+| Expanded | Expanded width (700 dp and up), flat | Multi-pane as designed (editor: rail, Media panel, preview, inspector, timeline; projects: list + detail). Add media is a large centered panel over the editor |
 | Tabletop | Half-opened with horizontal fold | Editor: preview on one side of the hinge, transport, timeline, and tool bar on the other; Add media fills the half below the hinge. Projects: two-pane on one side of the hinge, or the compact layout if that area is too narrow |
 
 No interactive element may overlap a separating hinge or fold occlusion. Changing arrangement preserves screen state.

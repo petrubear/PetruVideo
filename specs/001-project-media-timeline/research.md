@@ -54,7 +54,7 @@ All Technical Context unknowns are resolved here. Library versions are deliberat
 
 ## 8. Adaptive layout and fold posture
 
-- **Decision**: A single `AdaptiveEditorScaffold` chooses the layout from window size class and `FoldingFeature` state: compact and medium (600 to 839 dp) -> phone layout, with wider content (more grid columns) on medium; expanded (840 dp and up) and flat -> multi-pane (rail, library, preview, inspector, timeline); half-opened with horizontal fold -> tabletop (preview above the hinge, controls below); separating hinge -> content split so no interactive element crosses it. Layout choice is a pure function of an `ArrangementInput` so it is unit-testable. The activity handles resize and fold configuration changes itself so the player and view models survive.
+- **Decision**: A single `AdaptiveEditorScaffold` chooses the layout from window size class and `FoldingFeature` state: compact and medium (600 to 699 dp) -> phone layout, with wider content (more grid columns) on medium; expanded (700 dp and up; the inspector from 840 dp) and flat -> multi-pane (rail, library, preview, inspector, timeline); half-opened with horizontal fold -> tabletop (preview above the hinge, controls below); separating hinge -> content split so no interactive element crosses it. Layout choice is a pure function of an `ArrangementInput` so it is unit-testable. The activity handles resize and fold configuration changes itself so the player and view models survive.
 - **Rationale**: Satisfies Principle VIII and FR-023 to FR-027 without per-device branches. A pure function makes SC-009 and SC-010 testable without hardware.
 - **Alternatives considered**: Separate activities per posture (state loss, restarts); device-model checks (fragile).
 

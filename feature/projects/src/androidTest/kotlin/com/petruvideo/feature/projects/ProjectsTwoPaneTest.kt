@@ -28,7 +28,7 @@ class ProjectsTwoPaneTest {
         val events = mutableListOf<ProjectsEvent>()
         compose.setContent {
             PetruTheme {
-                // The two-pane layout is for expanded windows (840 dp and up), so give it that much room.
+                // The two-pane layout is for expanded windows (700 dp and up), so give it that much room.
                 Box(Modifier.requiredWidth(1_040.dp).requiredHeight(780.dp)) {
                     ProjectsScreen(state, onEvent = { events += it }, twoPane = true)
                 }
