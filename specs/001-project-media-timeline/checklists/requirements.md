@@ -2,6 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-10-30
+**Updated**: 2026-10-30
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -29,6 +30,15 @@
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into specification
 
+## Design and Constitution Alignment
+
+- [x] Every in-scope screen maps to a designer artboard (Design Reference table)
+- [x] Out-of-scope designed screens and inactive controls are explicitly listed
+- [x] Foldable requirements present (constitution Principle VIII): unfolded, tabletop, cover screen, state retention
+- [x] Accessibility basics present (labels, 48dp targets, scalable text)
+
 ## Notes
 
-- All items pass on first validation; no clarifications needed (reasonable defaults recorded in Assumptions).
+- All items pass. Updated from the first spec to follow the designer's screens and the v1.1.0 constitution.
+- Defaults recorded in Assumptions: inactive tools for later features are shown but disabled; the media-access vs. no-broad-access import path.
+- Clarify session 2026-10-30: 5 questions resolved (project format, missing media, inactive tools, attached audio with Detach, no linking needed). Design updated: Detach added to the clip tool bar and a "Detached audio selected" screen added.
