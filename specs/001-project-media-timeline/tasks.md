@@ -192,19 +192,19 @@ Base package `com.petruvideo`, shortened below as `<pkg>` = `com/petruvideo`. Mo
 
 ### Tests for User Story 4
 
-- [ ] T089 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/TrimCommandsTest.kt`: `TrimStart`/`TrimEnd` bounds, 100 ms minimum, photo clips lengthened and shortened between 500 and 60000 ms, restoring trimmed footage, later clips shift
-- [ ] T090 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/SplitDuplicateDeleteTest.kt`: split halves are contiguous and keep attached audio, duplicate rules, delete removes attached audio but not detached audio, split-then-join property
-- [ ] T091 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/DetachAudioTest.kt`: creates a `Detached` clip with the same range and start, clears `attachedAudio`, rejects clips without sound, undo restores
-- [ ] T092 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AudioClipCommandsTest.kt`: `MoveAudioClip` overlap snaps to the next free position with a `Snapped` notice, `SetMuted`, `ReplaceAudio` keeps position and length, shorter replacement emits `LengthChanged`
-- [ ] T093 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/UndoRedoAllCommandsTest.kt`: invariant 4 (`undo(apply(c, t)) == t`) for every command
+- [X] T089 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/TrimCommandsTest.kt`: `TrimStart`/`TrimEnd` bounds, 100 ms minimum, photo clips lengthened and shortened between 500 and 60000 ms, restoring trimmed footage, later clips shift
+- [X] T090 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/SplitDuplicateDeleteTest.kt`: split halves are contiguous and keep attached audio, duplicate rules, delete removes attached audio but not detached audio, split-then-join property
+- [X] T091 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/DetachAudioTest.kt`: creates a `Detached` clip with the same range and start, clears `attachedAudio`, rejects clips without sound, undo restores
+- [X] T092 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/AudioClipCommandsTest.kt`: `MoveAudioClip` overlap snaps to the next free position with a `Snapped` notice, `SetMuted`, `ReplaceAudio` keeps position and length, shorter replacement emits `LengthChanged`
+- [X] T093 [P] [US4] Write failing `core/model/src/test/kotlin/<pkg>/core/model/engine/UndoRedoAllCommandsTest.kt`: invariant 4 (`undo(apply(c, t)) == t`) for every command
 - [ ] T094 [P] [US4] Write failing Compose UI test `feature/editor/src/androidTest/kotlin/<pkg>/feature/editor/TrimAndAudioFlowTest.kt`: drag handles (including lengthening a photo), badge updates live, minimum length stop, split, detach, replace, delete detached audio to keep only added audio, overlap snap message, undo/redo button states
 
 ### Implementation for User Story 4
 
-- [ ] T095 [US4] Implement `TrimStart`/`TrimEnd` in `core/model/src/main/kotlin/<pkg>/core/model/engine/TrimCommands.kt` to pass T089
-- [ ] T096 [US4] Implement `Split`, `Duplicate`, and `Delete` in `core/model/src/main/kotlin/<pkg>/core/model/engine/SplitDuplicateDelete.kt` to pass T090
-- [ ] T097 [US4] Implement `DetachAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/DetachAudio.kt` to pass T091
-- [ ] T098 [US4] Implement `MoveAudioClip`, `SetMuted`, and `ReplaceAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/AudioClipCommands.kt` to pass T092 and T093
+- [X] T095 [US4] Implement `TrimStart`/`TrimEnd` in `core/model/src/main/kotlin/<pkg>/core/model/engine/TrimCommands.kt` to pass T089
+- [X] T096 [US4] Implement `Split`, `Duplicate`, and `Delete` in `core/model/src/main/kotlin/<pkg>/core/model/engine/SplitDuplicateDelete.kt` to pass T090
+- [X] T097 [US4] Implement `DetachAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/DetachAudio.kt` to pass T091
+- [X] T098 [US4] Implement `MoveAudioClip`, `SetMuted`, and `ReplaceAudio` in `core/model/src/main/kotlin/<pkg>/core/model/engine/AudioClipCommands.kt` to pass T092 and T093
 - [ ] T099 [P] [US4] Create `TrimHandles.kt` (white handles, live drag, stops at minimum length, preview shows the frame at the handle, photo clips can also be lengthened up to 60 s) and `DurationBadge.kt` in `feature/editor/src/main/kotlin/<pkg>/feature/editor/ui/`
 - [ ] T100 [P] [US4] Create `VideoClipToolBar.kt` (Split, Speed dimmed, Volume dimmed, Detach only when attached audio exists, Duplicate, Delete) and `AudioClipToolBar.kt` (Split, Mute, Replace, Duplicate, Delete) in the same package
 - [ ] T101 [P] [US4] Create `MutedBadge.kt` and the "Detached" label for audio clips in the same package, matching the Detached audio selected design
