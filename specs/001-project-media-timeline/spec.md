@@ -100,7 +100,7 @@ The **editor** matches the designed layout: a top bar (back button, project name
 2. **Given** a timeline, **When** the user scrolls it horizontally, **Then** the playhead stays centered, the preview shows the frame under it, and the current time updates.
 3. **Given** a timeline, **When** the user presses play, **Then** video and audio play continuously across clip boundaries until the end or until paused.
 4. **Given** the user taps the add clip button, **When** they pick media, **Then** it is inserted after the clip under the playhead (at the playhead if it sits on a clip boundary, at the start if the timeline is empty) and the timeline updates.
-5. **Given** a clip, **When** the user taps it, **Then** it becomes selected (highlighted outline with trim handles) and the clip tool bar (Split, Speed, Volume, Duplicate, Delete) replaces the idle state.
+5. **Given** a clip, **When** the user taps it, **Then** it becomes selected (highlighted outline with trim handles) and the clip tool bar (Split, Speed, Volume, Detach, Duplicate, Delete) replaces the idle state.
 6. **Given** a selected clip, **When** the user long-presses and drags it, **Then** it moves to the new position and the total length is recalculated.
 7. **Given** a still photo on the timeline, **When** it is selected, **Then** its trim handles can shorten or lengthen it between 0.5 and 60 seconds with the duration badge updating live, starting from a 5 second default.
 8. **Given** the user taps the full-screen button, **When** the full-screen preview opens, **Then** playback continues from the same position.
@@ -216,7 +216,7 @@ On a foldable device the app adapts to the screen as the designer drew it:
 - **FR-019**: Users MUST be able to trim a clip's start and end with handles and restore trimmed footage by dragging them back; a clip MUST NOT be trimmable below 0.1 seconds.
 - **FR-020**: Users MUST be able to split a clip at the playhead, duplicate a clip, and delete a clip, for both video clips and audio clips.
 - **FR-020a**: A selected video clip that has sound MUST offer a "Detach" action that turns its sound into a separate audio clip on the audio lane at the same position and length and makes the video silent. The action MUST be undoable.
-- **FR-020b**: Users MUST be able to trim, move, mute, and unmute a detached or added audio clip independently of any video clip, and replace it with another audio file chosen from the device; the replacement MUST keep the original position and length.
+- **FR-020b**: Users MUST be able to trim, move, mute, and unmute a detached or added audio clip independently of any video clip, and replace it with another audio file chosen from the device; the replacement MUST keep the original position and length, except that a shorter replacement shortens the clip and the user MUST be told.
 - **FR-020c**: Audio-only files MUST be addable to the audio lane, starting at the playhead and following each other in selection order.
 - **FR-020d**: Audio clips MUST NOT overlap each other on the audio lane: when an add or move would overlap another audio clip, the clip MUST snap to the next free position and the user MUST be told. An audio clip MAY overlap a video's attached sound, and both MUST play together. To hear only new audio, the user can detach the original sound and delete or mute it.
 - **FR-021**: Every timeline change MUST be undoable and redoable, and the undo and redo buttons MUST reflect availability.
@@ -281,6 +281,6 @@ On a foldable device the app adapts to the screen as the designer drew it:
 - Supported import formats follow the project constitution.
 - Phone portrait is the primary compact layout; foldable inner-display layouts (unfolded and tabletop) and the cover screen are required, per the constitution.
 - Performance targets align with the project constitution's real-time preview budget. "Mid-range device" means a phone from the last three years with about 6 GB of RAM and a mid-tier chipset; the exact reference devices are chosen at planning and recorded in the plan.
-- The "Continue editing" card's progress bar shows how far the saved playhead position is through the project's total length. This is an assumption to confirm with the designer.
+- The "Continue editing" card's progress bar shows how far the saved playhead position (persisted with the project) is through the project's total length. This is an assumption to confirm with the designer; the data needed is already stored.
 - The project thumbnail is the first frame of the first video or photo on the timeline.
 - The owner's physical Samsung Fold is the primary foldable target; the exact model, OS version, and window sizes are recorded during planning spikes and used to validate the layout rules.
