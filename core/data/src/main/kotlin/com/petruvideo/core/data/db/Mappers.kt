@@ -6,10 +6,12 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Bass
+import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.Echo
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.Equalizer
 import com.petruvideo.core.model.Fade
+import com.petruvideo.core.model.FilterLook
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
@@ -91,13 +93,13 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
 
 fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
-    reverb = reverb.toModel(), fx = fx.toModel(),
+    reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
-        muted, reverb.toColumns(), fx.toColumns(),
+        muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
     )
 
 fun AudioClipEntity.toModel() = AudioClip(
@@ -159,3 +161,10 @@ fun TextClip.toEntity(projectId: String) = TextClipEntity(
     style.outline.enabled, style.outline.colorArgb, style.outline.widthPermille,
     animIn.kind.name, animIn.lengthMs, animOut.kind.name, animOut.lengthMs,
 )
+
+fun FilterColumns.toModel() = ClipFilter(
+    FilterLook.entries.firstOrNull { it.name == look } ?: FilterLook.None,
+    intensity, brightness, contrast, saturation, warmth, vignette,
+)
+
+fun ClipFilter.toColumns() = FilterColumns(look.name, intensity, brightness, contrast, saturation, warmth, vignette)

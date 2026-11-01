@@ -31,6 +31,8 @@ import com.petruvideo.feature.editor.ui.ClipToolBar
 import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
 import com.petruvideo.feature.editor.ui.TextTabBar
+import com.petruvideo.feature.editor.ui.FilterPanel
+import com.petruvideo.feature.editor.ui.FiltersTabBar
 import com.petruvideo.feature.editor.ui.TextPanel
 import com.petruvideo.feature.editor.ui.PreviewWithText
 import com.petruvideo.feature.editor.ui.ReverbPanel
@@ -90,6 +92,7 @@ fun ExpandedEditorLayout(
                         state.selectedFx,
                         state.selectedClipLengthMs,
                         state.selectedText,
+                        state.selectedFilter,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                     )
@@ -113,6 +116,7 @@ fun ExpandedEditorLayout(
                             state.selectedFx,
                             state.selectedClipLengthMs,
                             state.selectedText,
+                            state.selectedFilter,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                         )
@@ -127,6 +131,7 @@ fun ExpandedEditorLayout(
                 ReverbPanel(state.reverbPanel, onEvent)
                 AudioPanel(state.audioPanel, onEvent)
                 TextPanel(state.textPanel, onEvent)
+                FilterPanel(state.filterPanel, onEvent)
             }
             ClipToolBar(
                     state.clipTools,
@@ -134,6 +139,8 @@ fun ExpandedEditorLayout(
                     onTool = { onEvent(EditorEvent.UseTool(it)) },
                     disabled = state.disabledTools.keys,
             )
+        } else if (state.toolbarTab == ToolbarTab.Filters) {
+            FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
         } else if (state.toolbarTab == ToolbarTab.Text) {
             TextTabBar(
                 onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },

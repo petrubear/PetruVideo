@@ -83,6 +83,7 @@ data class VideoClipEntity(
     @ColumnInfo(defaultValue = "0") val muted: Boolean = false,
     @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
     @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
+    @Embedded(prefix = "flt_") val filter: FilterColumns = FilterColumns(),
 )
 
 @Entity(
@@ -130,6 +131,17 @@ data class ReverbColumns(
     @ColumnInfo(defaultValue = "50") val damping: Int = 50,
     @ColumnInfo(defaultValue = "20") val preDelayMs: Int = 20,
     @ColumnInfo(defaultValue = "30") val mix: Int = 30,
+)
+
+/** A clip's filter as columns `flt_look`, `flt_intensity`, and so on. */
+data class FilterColumns(
+    @ColumnInfo(defaultValue = "'None'") val look: String = "None",
+    @ColumnInfo(defaultValue = "100") val intensity: Int = 100,
+    @ColumnInfo(defaultValue = "0") val brightness: Int = 0,
+    @ColumnInfo(defaultValue = "0") val contrast: Int = 0,
+    @ColumnInfo(defaultValue = "0") val saturation: Int = 0,
+    @ColumnInfo(defaultValue = "0") val warmth: Int = 0,
+    @ColumnInfo(defaultValue = "0") val vignette: Int = 0,
 )
 
 /** A clip's fade, noise reduction, equalizer and voice effects as columns `fx_fadeInMs`, `fx_nrEnabled`, and so on. */

@@ -13,7 +13,9 @@ import com.petruvideo.core.media.preview.PreviewState
 import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.Equalizer
+import com.petruvideo.core.model.FILTER_INTENSITY_DEFAULT
 import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
@@ -33,6 +35,7 @@ import com.petruvideo.core.model.engine.AddAudioClips
 import com.petruvideo.core.model.engine.AddText
 import com.petruvideo.core.model.engine.AddVideoClips
 import com.petruvideo.core.model.engine.AddVideoItem
+import com.petruvideo.core.model.engine.ApplyFilterToAll
 import com.petruvideo.core.model.engine.ApplyReverbPreset
 import com.petruvideo.core.model.engine.Command
 import com.petruvideo.core.model.engine.CommandResult
@@ -44,10 +47,15 @@ import com.petruvideo.core.model.engine.MoveText
 import com.petruvideo.core.model.engine.MoveVideoClip
 import com.petruvideo.core.model.engine.Notice
 import com.petruvideo.core.model.engine.RelinkMedia
+import com.petruvideo.core.model.engine.RemoveFilter
 import com.petruvideo.core.model.engine.RemoveMissingMedia
 import com.petruvideo.core.model.engine.ReplaceAudio
+import com.petruvideo.core.model.engine.ResetFilterAdjustments
 import com.petruvideo.core.model.engine.SetEqualizer
 import com.petruvideo.core.model.engine.SetFade
+import com.petruvideo.core.model.engine.SetFilterAdjustments
+import com.petruvideo.core.model.engine.SetFilterIntensity
+import com.petruvideo.core.model.engine.SetFilterLook
 import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
 import com.petruvideo.core.model.engine.SetReverbEnabled
@@ -110,13 +118,9 @@ class EditorViewModel @Inject constructor(
         val tab: ToolbarTab = ToolbarTab.Edit,
         /** The open text panel: which tool and which clip. */
         val text: OpenText? = null,
+        /** The open filter panel: which tool and which clip. */
+        val filter: OpenFilter? = null,
     )
-
-    private data class OpenSheet(val tool: ClipTool, val clipId: String)
-
-    private data class OpenAudio(val kind: AudioToolKind, val clipId: String)
-
-    private data class OpenText(val kind: TextToolKind, val clipId: String)
 
     private data class Core(
         val project: Project?,
@@ -129,7 +133,8 @@ class EditorViewModel @Inject constructor(
     /** What the engine plays; the playhead is deliberately not part of it. */
     private data class Content(val timeline: Timeline) {
         override fun equals(other: Any?) = other is Content &&
-            other.timeline.videoLane == timeline.videoLane &&
+            other.timeline.videoLane.map { it.copy(filter = it.filter.structural()) } ==
+                timeline.videoLane.map { it.copy(filter = it.filter.structural()) } &&
             other.timeline.audioLane == timeline.audioLane &&
             other.timeline.media == timeline.media &&
             other.timeline.textLane.map { it.id } == timeline.textLane.map { it.id } &&
@@ -172,6 +177,11 @@ class EditorViewModel @Inject constructor(
         viewModelScope.launch {
             session.timeline.filterNotNull().map { it.textLane }.distinctUntilChanged()
                 .collect { lane -> lane.forEach(engine::setTextLive) }
+        }
+        viewModelScope.launch {
+            session.timeline.filterNotNull().map { t -> t.videoLane.associate { it.id to it.filter } }
+                .distinctUntilChanged()
+                .collect { filters -> filters.forEach { (id, filter) -> engine.setClipFilterLive(id, filter) } }
         }
         viewModelScope.launch { pressure.notices.collect(::onPressureNotice) }
     }
@@ -230,6 +240,13 @@ class EditorViewModel @Inject constructor(
             EditorEvent.AudioDismiss -> closeAudio()
             is EditorEvent.SelectTab -> selectTab(event.tab)
             EditorEvent.AddText -> addText()
+            is EditorEvent.OpenFilterTool -> openFilter(event.kind)
+            is EditorEvent.FilterPreview -> selectedPictureId()?.let { engine.setClipFilterLive(it, event.filter) }
+            is EditorEvent.FilterCommit -> commitFilter(event.filter)
+            EditorEvent.FilterResetAdjustments -> selectedPictureId()?.let { run(ResetFilterAdjustments(it)) }
+            EditorEvent.FilterRemove -> selectedPictureId()?.let { run(RemoveFilter(it)) }
+            EditorEvent.FilterApplyAll -> selectedPictureId()?.let { run(ApplyFilterToAll(it)) }
+            EditorEvent.FilterDismiss -> closeFilter()
             is EditorEvent.OpenTextTool -> openText(event.kind)
             is EditorEvent.TextPreview -> previewText(event.clip)
             is EditorEvent.TextCommit -> commitText(event.clip)
@@ -279,6 +296,7 @@ class EditorViewModel @Inject constructor(
         closeSheet()
         closeReverb()
         closeAudio()
+        closeFilter()
         local.update { it.copy(selection = selection, text = null) }
     }
 
@@ -300,9 +318,6 @@ class EditorViewModel @Inject constructor(
         if (Notice.SpeedLimited in result.notices) say(speedLimitMessage(result.timeline, id))
     }
 
-    private fun soundClipReverb(timeline: Timeline, id: String): Reverb? =
-        timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.reverb
-            ?: timeline.audioLane.firstOrNull { it.id == id }?.reverb
 
     private fun commitReverb(reverb: Reverb) {
         val id = selectedClipId() ?: return
@@ -326,6 +341,47 @@ class EditorViewModel @Inject constructor(
     private fun restoreLiveReverb(clipId: String) {
         val timeline = session.timeline.value ?: return
         soundClipReverb(timeline, clipId)?.let { engine.setClipReverbLive(clipId, it) }
+    }
+
+    private fun selectedPictureId(): String? =
+        (local.value.selection as? ClipSelection.Video)?.clipId
+
+    private fun openFilter(kind: FilterToolKind) {
+        val id = selectedPictureId() ?: return
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        local.update { it.copy(filter = OpenFilter(kind, id), sheet = null, text = null) }
+    }
+
+    private fun closeFilter() {
+        val open = local.value.filter ?: return
+        local.update { it.copy(filter = null) }
+        restoreLiveFilter(open.clipId)
+    }
+
+    /** A drag that did not become an edit must not leave its live values behind. */
+    private fun restoreLiveFilter(clipId: String) {
+        session.timeline.value?.videoLane?.firstOrNull { it.id == clipId }
+            ?.let { engine.setClipFilterLive(clipId, it.filter) }
+    }
+
+    /** Applies each changed part of [filter]; one gesture changes one part, so it is one undo step. */
+    private fun commitFilter(filter: ClipFilter) {
+        val id = selectedPictureId() ?: return
+        val current = session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.filter ?: return
+        val commands = buildList {
+            if (filter.look != current.look) add(SetFilterLook(id, filter.look))
+            val baseIntensity = if (filter.look != current.look) FILTER_INTENSITY_DEFAULT else current.intensity
+            if (filter.intensity != baseIntensity) {
+                add(SetFilterIntensity(id, filter.intensity))
+            }
+            val moved = filter.copy(look = current.look, intensity = current.intensity)
+            if (moved != current) add(SetFilterAdjustments(id, filter))
+        }
+        val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
+        if (!applied) restoreLiveFilter(id)
     }
 
     private var pendingText: TextClip? = null
@@ -402,16 +458,6 @@ class EditorViewModel @Inject constructor(
         }
     }
 
-    private fun textPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenText?): TextPanelState? {
-        if (timeline == null || selection == null || open == null) return null
-        if (open.clipId != selection.clipId) return null
-        val clip = timeline.textLane.firstOrNull { it.id == open.clipId } ?: return null
-        return TextPanelState(open.kind, clip)
-    }
-
-    private fun soundClip(timeline: Timeline, id: String): Pair<AudioFx, Long>? =
-        timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.let { it.fx to it.lengthMs }
-            ?: timeline.audioLane.firstOrNull { it.id == id }?.let { it.fx to it.lengthMs }
 
     private fun openAudio(kind: AudioToolKind) {
         val timeline = session.timeline.value ?: return
@@ -555,6 +601,8 @@ class EditorViewModel @Inject constructor(
             ClipTool.Mute -> toggleMute(timeline, id)
             ClipTool.Reverb -> openReverb(timeline, selection)
             ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
+            ClipTool.FilterLooks -> openFilter(FilterToolKind.Looks)
+            ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
             ClipTool.TextStyle -> openText(TextToolKind.Style)
             ClipTool.TextAnim -> openText(TextToolKind.Animation)
@@ -657,18 +705,18 @@ class EditorViewModel @Inject constructor(
             projectMedia = timeline?.media?.values?.toList().orEmpty(),
             missingMedia = timeline?.media?.values?.filter { it.availability == Availability.Missing }
                 ?.map { it.id }?.toSet().orEmpty(),
-            clipTools = clipToolsFor(timeline, selection),
-            disabledTools = if (timeline != null && selection != null) {
-                disabledToolsFor(timeline, selection)
-            } else {
-                emptyMap()
-            },
-            sheet = if (timeline != null && selection != null) sheetFor(timeline, selection, local.sheet) else null,
+            clipTools = clipToolsFor(timeline, selection, local.tab),
+            disabledTools = disabledToolsFor(timeline, selection),
+            sheet = sheetFor(timeline, selection, local.sheet),
             selectedAudioMuted = isMuted(timeline, selection?.clipId),
             reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
             audioPanel = audioPanelFor(timeline, selection, local.audio),
             toolbarTab = local.tab,
             textPanel = textPanelFor(timeline, selection, local.text),
+            filterPanel = filterPanelFor(timeline, selection, local.filter, core.preview.positionMs),
+            selectedFilter = selection?.let {
+                filterPanelFor(timeline, it, OpenFilter(FilterToolKind.Looks, it.clipId), core.preview.positionMs)
+            },
             selectedText = timeline?.textLane?.firstOrNull { it.id == selection?.clipId },
             selectedReverb = selection?.let { sel -> timeline?.let { soundClipReverb(it, sel.clipId) } },
             selectedFx = sound?.first,
@@ -679,111 +727,6 @@ class EditorViewModel @Inject constructor(
         )
     }
 
-    private fun isMuted(timeline: Timeline?, id: String?) =
-        timeline?.audioLane?.firstOrNull { it.id == id }?.muted
-            ?: timeline?.videoLane?.firstOrNull { it.id == id }?.muted ?: false
-
-    private fun audioPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenAudio?): AudioPanelState? {
-        if (timeline == null || selection == null || open == null) return null
-        if (open.clipId != selection.clipId) return null
-        val (fx, length) = soundClip(timeline, open.clipId) ?: return null
-        val video = timeline.videoLane.firstOrNull { it.id == open.clipId }
-        val audio = timeline.audioLane.firstOrNull { it.id == open.clipId }
-        val media = timeline.media[video?.mediaItemId ?: audio?.mediaItemId]
-        return AudioPanelState(
-            kind = open.kind,
-            clipId = open.clipId,
-            clipName = media?.displayName.orEmpty(),
-            fx = fx,
-            clipLengthMs = length,
-            volumePercent = video?.volumePercent ?: audio?.volumePercent ?: VOLUME_DEFAULT_PERCENT,
-            muted = video?.muted ?: audio?.muted ?: false,
-            reverb = video?.reverb ?: audio?.reverb ?: Reverb(),
-        )
-    }
-
-    private fun reverbPanelFor(timeline: Timeline?, selection: ClipSelection?, open: String?): ReverbPanelState? {
-        if (timeline == null || selection == null || open != selection.clipId) return null
-        val reverb = soundClipReverb(timeline, open) ?: return null
-        val mediaId = timeline.videoLane.firstOrNull { it.id == open }?.mediaItemId
-            ?: timeline.audioLane.firstOrNull { it.id == open }?.mediaItemId
-        return ReverbPanelState(open, timeline.media[mediaId]?.displayName.orEmpty(), reverb)
-    }
-
-    private fun disabledToolsFor(timeline: Timeline, selection: ClipSelection): Map<ClipTool, String> {
-        val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
-            ?: return emptyMap()
-        val noSound = "This clip has no sound"
-        return when {
-            timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
-                ClipTool.Speed to "Photos have no speed",
-                ClipTool.Volume to "Photos have no sound",
-                ClipTool.Mute to "Photos have no sound",
-                ClipTool.Reverb to "Photos have no sound",
-                ClipTool.Audio to "Photos have no sound",
-            )
-            !clip.attachedAudio ->
-                mapOf(
-                ClipTool.Volume to noSound,
-                ClipTool.Mute to noSound,
-                ClipTool.Reverb to noSound,
-                ClipTool.Audio to noSound,
-            )
-            else -> emptyMap()
-        }
-    }
-
-    private fun sheetFor(timeline: Timeline, selection: ClipSelection, open: OpenSheet?): SheetState? {
-        if (open == null || open.clipId != selection.clipId) return null
-        val video = timeline.videoLane.firstOrNull { it.id == open.clipId }
-        val audio = timeline.audioLane.firstOrNull { it.id == open.clipId }
-        val committed = when (open.tool) {
-            ClipTool.Speed -> video?.speedMilli ?: audio?.speedMilli
-            else -> video?.volumePercent ?: audio?.volumePercent
-        } ?: return null
-        val media = timeline.media[video?.mediaItemId ?: audio?.mediaItemId]
-        return SheetState(
-            tool = open.tool,
-            clipId = open.clipId,
-            clipName = media?.displayName.orEmpty(),
-            value = committed,
-            sourceLengthMs = video?.sourceLengthMs ?: audio?.sourceLengthMs ?: 0L,
-        )
-    }
-
-    private fun exists(timeline: Timeline, selection: ClipSelection) = when (selection) {
-        is ClipSelection.Video -> timeline.videoLane.any { it.id == selection.clipId }
-        is ClipSelection.Audio -> timeline.audioLane.any { it.id == selection.clipId }
-        is ClipSelection.Text -> timeline.textLane.any { it.id == selection.clipId }
-    }
-
-    private fun clipToolsFor(timeline: Timeline?, selection: ClipSelection?): List<ClipTool> = when (selection) {
-        null -> emptyList()
-        is ClipSelection.Text -> listOf(
-            ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate,
-            ClipTool.Delete,
-        )
-        is ClipSelection.Audio ->
-            listOf(
-                ClipTool.Split,
-                ClipTool.Speed,
-                ClipTool.Audio,
-                ClipTool.Replace,
-                ClipTool.Duplicate,
-                ClipTool.Delete,
-            )
-        is ClipSelection.Video -> {
-            val attached = timeline?.videoLane?.firstOrNull { it.id == selection.clipId }?.attachedAudio == true
-            listOfNotNull(
-                ClipTool.Split,
-                ClipTool.Speed,
-                ClipTool.Audio,
-                ClipTool.Detach.takeIf { attached },
-                ClipTool.Duplicate,
-                ClipTool.Delete,
-            )
-        }
-    }
 
     private companion object {
         const val DEFAULT_FPS = 30

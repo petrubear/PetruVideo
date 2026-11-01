@@ -22,7 +22,13 @@ internal fun speedBadgeText(speedMilli: Int): String =
 private const val MAX_BADGES = 3
 
 /** The badge labels of a clip, in order; speed, volume, reverb, then fade, noise, equalizer, and voice effects. */
-internal fun badgeParts(speedMilli: Int, volumePercent: Int?, reverbOn: Boolean, fx: AudioFx?): List<String> =
+internal fun badgeParts(
+    speedMilli: Int,
+    volumePercent: Int?,
+    reverbOn: Boolean,
+    fx: AudioFx?,
+    filterOn: Boolean = false,
+): List<String> =
     listOfNotNull(
         speedBadgeText(speedMilli).takeIf { speedMilli != SPEED_UNIT },
         "$volumePercent%".takeIf { volumePercent != null && volumePercent != VOLUME_DEFAULT_PERCENT },
@@ -31,6 +37,7 @@ internal fun badgeParts(speedMilli: Int, volumePercent: Int?, reverbOn: Boolean,
         "Nr".takeIf { fx?.noise?.enabled == true },
         "Eq".takeIf { fx?.eq?.isFlat == false },
         "Vx".takeIf { fx?.voice?.anyOn == true },
+        "Fl".takeIf { filterOn },
     )
 
 /** At most [MAX_BADGES] labels; the rest collapse into "+N" so the badge never outgrows a short clip. */
@@ -45,8 +52,9 @@ fun ClipBadge(
     modifier: Modifier = Modifier,
     reverbOn: Boolean = false,
     fx: AudioFx? = null,
+    filterOn: Boolean = false,
 ) {
-    val all = badgeParts(speedMilli, volumePercent, reverbOn, fx)
+    val all = badgeParts(speedMilli, volumePercent, reverbOn, fx, filterOn)
     if (all.isEmpty()) return
     val text = collapseBadges(all).joinToString(" ")
     Text(

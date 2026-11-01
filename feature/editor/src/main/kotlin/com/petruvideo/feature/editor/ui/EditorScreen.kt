@@ -71,7 +71,7 @@ private fun CompactEditor(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
             val panelOpen = state.sheet != null || state.reverbPanel != null || state.audioPanel != null ||
-                state.textPanel != null
+                state.textPanel != null || state.filterPanel != null
             PreviewWithText(state, player, onEvent, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,
@@ -106,12 +106,15 @@ private fun CompactEditor(
                 ReverbPanel(state.reverbPanel, onEvent)
                 AudioPanel(state.audioPanel, onEvent)
                 TextPanel(state.textPanel, onEvent)
+                FilterPanel(state.filterPanel, onEvent)
                 ClipToolBar(
                         state.clipTools,
                         state.selectedAudioMuted,
                         onTool = { onEvent(EditorEvent.UseTool(it)) },
                         disabled = state.disabledTools.keys,
                     )
+            } else if (state.toolbarTab == ToolbarTab.Filters) {
+                FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
             } else if (state.toolbarTab == ToolbarTab.Text) {
                 TextTabBar(
                     onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },

@@ -25,6 +25,7 @@ object TimelineInvariants {
                 ),
             )
             addAll(soundViolations("video", clip.id, clip.reverb, clip.fx))
+            if (!clip.filter.inRange) add("video clip ${clip.id} filter is out of range")
             if (media?.kind == MediaKind.Photo && clip.speedMilli != SPEED_UNIT) {
                 add("photo clip ${clip.id} has a speed")
             }

@@ -95,6 +95,25 @@ internal fun ToolButton(
     }
 }
 
+/** The bar of the Filters tab with no picture clip selected. */
+@Composable
+fun FiltersTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        Text("Select a clip to add a filter", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+    }
+}
+
 /** The bar of the Text tab with nothing selected: back to the Edit tools, and Add text at the playhead. */
 @Composable
 fun TextTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {

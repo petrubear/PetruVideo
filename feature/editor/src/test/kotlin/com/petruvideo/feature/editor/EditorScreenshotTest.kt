@@ -49,6 +49,7 @@ class EditorScreenshotTest {
         texts: List<com.petruvideo.core.model.TextClip> = emptyList(),
         textPanel: TextPanelState? = null,
         tab: ToolbarTab = ToolbarTab.Edit,
+        filterPanel: FilterPanelState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -88,6 +89,7 @@ class EditorScreenshotTest {
             reverbPanel = reverbPanel,
             audioPanel = audioPanel,
             textPanel = textPanel,
+            filterPanel = filterPanel,
             toolbarTab = tab,
             selectedText = texts.firstOrNull { it.id == selection?.clipId },
             clipTools = when (selection) {
@@ -350,6 +352,45 @@ class EditorScreenshotTest {
 
     @Test
     fun textAnimationPanel() = snapshotText(TextToolKind.Animation)
+
+    private fun snapshotFilter(kind: FilterToolKind, filter: com.petruvideo.core.model.ClipFilter) {
+        val media = sampleLoaded().timeline.media["m1"]
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(
+                            selection = ClipSelection.Video("c1"),
+                            tab = ToolbarTab.Filters,
+                            filterPanel = FilterPanelState(kind, "c1", filter, media, 1_000, true),
+                        ),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun filterLooksPanel() = snapshotFilter(
+        FilterToolKind.Looks, com.petruvideo.core.model.ClipFilter(com.petruvideo.core.model.FilterLook.Vintage, 70),
+    )
+
+    @Test
+    fun filterAdjustPanel() = snapshotFilter(
+        FilterToolKind.Adjust, com.petruvideo.core.model.ClipFilter(brightness = 25, saturation = -40, vignette = 60),
+    )
+
+    @Test
+    fun filtersTabWithNothingSelected() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(state(tab = ToolbarTab.Filters), player = null, onEvent = {}, onBack = {})
+            }
+        }
+    }
 
     @Test
     fun missingMediaShowsRelinkAndRemove() {

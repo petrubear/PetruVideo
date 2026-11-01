@@ -167,5 +167,6 @@ private fun BoxScope.ClipDecorations(clip: VideoClip) {
         Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp),
         reverbOn = clip.attachedAudio && clip.reverb.enabled,
         fx = clip.fx.takeIf { clip.attachedAudio },
+        filterOn = !clip.filter.isNeutral,
     )
 }

@@ -39,7 +39,7 @@ private val ENTRIES = listOf(
     RailEntry("Audio", PetruIcons.ToolAudio, false),
     RailEntry("Text", PetruIcons.ToolText, true, ToolbarTab.Text),
     RailEntry("Effects", PetruIcons.ToolEffects, false),
-    RailEntry("Filters", PetruIcons.ToolFilters, false),
+    RailEntry("Filters", PetruIcons.ToolFilters, true, ToolbarTab.Filters),
 )
 
 /** The left rail of the unfolded editor. Media is the only active entry; the rest say "coming soon". */

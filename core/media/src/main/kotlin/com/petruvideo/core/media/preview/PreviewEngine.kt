@@ -4,6 +4,7 @@ import androidx.media3.common.Player
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.TextClip
@@ -47,6 +48,9 @@ interface PreviewEngine {
 
     /** Changes one text clip right away (words, style, place, timing); the current frame is redrawn. */
     fun setTextLive(clip: TextClip)
+
+    /** Changes the look and adjustments of one clip right away; the current frame is redrawn. */
+    fun setClipFilterLive(clipId: String, filter: ClipFilter)
 
     /** Changes the volume of one clip in the loaded composition right away, without a rebuild or an edit. */
     fun setClipVolumeLive(clipId: String, percent: Int)

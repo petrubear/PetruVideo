@@ -35,6 +35,8 @@ import com.petruvideo.core.model.ReverbPresets
 import com.petruvideo.core.model.TextBackground
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextStyle
+import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.FilterLook
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.export.DeviceLimits
@@ -478,6 +480,75 @@ class ExportPipelineTest {
         (r.int(MediaMetadataRetriever.METADATA_KEY_DURATION) in 1_900..2_200) shouldBe true
         r.release()
         (whitePixels(frameAt(uri, 1_000)) > 800) shouldBe true
+    }
+
+    private fun meanLuma(frame: android.graphics.Bitmap, l: Float = 0f, t: Float = 0f, r: Float = 1f, b: Float = 1f): Float {
+        var sum = 0.0
+        var n = 0
+        for (y in (frame.height * t).toInt() until (frame.height * b).toInt() step 2) {
+            for (x in (frame.width * l).toInt() until (frame.width * r).toInt() step 2) {
+                val c = frame.getPixel(x, y)
+                sum += 0.2126 * android.graphics.Color.red(c) + 0.7152 * android.graphics.Color.green(c) +
+                    0.0722 * android.graphics.Color.blue(c)
+                n++
+            }
+        }
+        return (sum / n).toFloat()
+    }
+
+    private fun filtered(filter: ClipFilter, name: String): String {
+        val a = item("video_with_audio.mp4")
+        val timeline = project(VideoClip("c1", a.id, 0, 2_000, true, filter = filter), media = listOf(a))
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        state.shouldBeFinished()
+        return uri!!
+    }
+
+    @Test
+    fun filtersChangeTheExportedPictureAsTheMatrixPredicts() {
+        val plain = frameAt(filtered(ClipFilter(), "pipeline-flt-plain"), 1_000)
+        val bright = frameAt(filtered(ClipFilter(brightness = 100), "pipeline-flt-bright"), 1_000)
+        val mono = frameAt(filtered(ClipFilter(look = FilterLook.BlackAndWhite), "pipeline-flt-bw"), 1_000)
+        val vignette = frameAt(filtered(ClipFilter(vignette = 100), "pipeline-flt-vig"), 1_000)
+        check(meanLuma(bright) > meanLuma(plain) + 25) { "bright ${meanLuma(bright)} vs plain ${meanLuma(plain)}" }
+        var spread = 0
+        for (y in 0 until mono.height step 8) for (x in 0 until mono.width step 8) {
+            val c = mono.getPixel(x, y)
+            spread += maxOf(
+                kotlin.math.abs(android.graphics.Color.red(c) - android.graphics.Color.green(c)),
+                kotlin.math.abs(android.graphics.Color.green(c) - android.graphics.Color.blue(c)),
+            )
+        }
+        val samples = (mono.height / 8) * (mono.width / 8)
+        check(spread / samples < 12) { "black and white keeps color: mean channel spread ${spread / samples}" }
+        val cornersPlain = meanLuma(plain, 0f, 0f, 0.15f, 0.15f) + meanLuma(plain, 0.85f, 0.85f, 1f, 1f)
+        val cornersVignette = meanLuma(vignette, 0f, 0f, 0.15f, 0.15f) + meanLuma(vignette, 0.85f, 0.85f, 1f, 1f)
+        check(cornersVignette < cornersPlain * 0.6f) { "corners $cornersVignette vs $cornersPlain" }
+        val centerPlain = meanLuma(plain, 0.4f, 0.4f, 0.6f, 0.6f)
+        val centerVignette = meanLuma(vignette, 0.4f, 0.4f, 0.6f, 0.6f)
+        check(kotlin.math.abs(centerVignette - centerPlain) < 12f) { "center $centerVignette vs $centerPlain" }
+    }
+
+    @Test
+    fun aNeutralFilterExportsLikeNoFilter() {
+        val a = filtered(ClipFilter(look = FilterLook.Vivid, intensity = 0), "pipeline-flt-neutral")
+        val b = filtered(ClipFilter(), "pipeline-flt-none")
+        check(kotlin.math.abs(meanLuma(frameAt(a, 1_000)) - meanLuma(frameAt(b, 1_000))) < 1.5f)
+    }
+
+    @Test
+    fun aPhotoWithAFilterExports() {
+        val photo = item("photo.jpg")
+        val timeline = project(
+            VideoClip("p1", photo.id, 0, 1_500, false, filter = ClipFilter(brightness = 100)), media = listOf(photo),
+        )
+        val plain = project(VideoClip("p1", photo.id, 0, 1_500, false), media = listOf(photo))
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val (s1, u1) = export(timeline, settings, "pipeline-photo-flt")
+        val (s2, u2) = export(plain, settings, "pipeline-photo-plain")
+        check(s2 is ExportState.Finished) { "plain photo export: $s2" }
+        check(s1 is ExportState.Finished) { "filtered photo export: $s1" }
+        check(meanLuma(frameAt(u1!!, 700)) > meanLuma(frameAt(u2!!, 700)) + 25)
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

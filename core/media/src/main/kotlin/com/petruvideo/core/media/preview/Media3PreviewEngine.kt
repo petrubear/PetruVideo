@@ -13,6 +13,7 @@ import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Timeline
@@ -43,6 +44,7 @@ class Media3PreviewEngine @Inject constructor(
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     private var voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
     private var voiceFxAllowed = true
+    private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var textOverlays: com.petruvideo.core.media.text.TextOverlaySet? = null
     private val refresh = Runnable { refreshFrame() }
     private var reverbAllowed = true
@@ -83,6 +85,7 @@ class Media3PreviewEngine @Inject constructor(
         reverbs = builder.reverbs
         voiceFxs = builder.voiceFxs
         textOverlays = builder.textOverlays
+        filters = builder.filters
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         val player = compositionPlayer ?: CompositionPlayer.Builder(context).build()
@@ -132,6 +135,14 @@ class Media3PreviewEngine @Inject constructor(
 
     /** The loaded clip's gain and fade processor, for tests. */
     internal fun gainOf(clipId: String): GainAudioProcessor? = gains[clipId]
+
+    override fun setClipFilterLive(clipId: String, filter: ClipFilter) {
+        filters[clipId]?.update(filter)
+        if (!polling) {
+            handler.removeCallbacks(refresh)
+            handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
 
     override fun setTextLive(clip: TextClip) {
         textOverlays?.update(clip)

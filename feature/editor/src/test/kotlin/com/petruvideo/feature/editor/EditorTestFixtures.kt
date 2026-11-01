@@ -69,6 +69,10 @@ class FakePreviewEngine : PreviewEngine {
         calls += "reverb $clipId ${reverb.mix} ${reverb.enabled}"
     }
 
+    override fun setClipFilterLive(clipId: String, filter: com.petruvideo.core.model.ClipFilter) {
+        calls += "filter $clipId ${filter.look} ${filter.intensity} ${filter.brightness}"
+    }
+
     override fun setTextLive(clip: com.petruvideo.core.model.TextClip) {
         calls += "text ${clip.id} ${clip.text}"
     }

@@ -236,4 +236,34 @@ class OriginalsUnchangedTest {
         loaded.textLane.single().xPermille shouldBe 250
         checksums() shouldBe before
     }
+
+    /** SC-005, SC-008 of feature 007: filters reload exactly and leave the sources alone. */
+    @Test
+    fun filtersSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip7.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        val clip = session.timeline.value!!.videoLane.first().id
+        session.apply(com.petruvideo.core.model.engine.SetFilterLook(clip, com.petruvideo.core.model.FilterLook.Vintage))
+        session.apply(com.petruvideo.core.model.engine.SetFilterIntensity(clip, 65))
+        session.apply(
+            com.petruvideo.core.model.engine.SetFilterAdjustments(
+                clip, com.petruvideo.core.model.ClipFilter(brightness = 12, contrast = -30, saturation = 44, warmth = -9, vignette = 70),
+            ),
+        )
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.videoLane shouldBe saved.videoLane
+        loaded.videoLane.first().filter.vignette shouldBe 70
+        loaded.videoLane.first().filter.look shouldBe com.petruvideo.core.model.FilterLook.Vintage
+        checksums() shouldBe before
+    }
 }

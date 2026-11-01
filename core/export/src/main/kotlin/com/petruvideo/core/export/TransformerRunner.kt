@@ -72,6 +72,7 @@ class TransformerRunner(private val context: Context) : ExportRunner {
 
                 override fun onError(composition: Composition, exportResult: ExportResult, exception: ExportException) {
                     polling = false
+                    android.util.Log.e("PetruExport", "export failed", exception)
                     if (continuation.isActive) continuation.resume(RunResult.Error(exception.errorCodeName))
                 }
             }

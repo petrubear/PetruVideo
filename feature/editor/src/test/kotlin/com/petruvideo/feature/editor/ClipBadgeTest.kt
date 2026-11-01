@@ -27,6 +27,7 @@ class ClipBadgeTest {
             voice = VoiceFx(echo = Echo(true)),
         )
         badgeParts(2000, 40, true, fx) shouldBe listOf("2x", "40%", "Rv", "Fd", "Nr", "Eq", "Vx")
+        badgeParts(1000, 100, false, null, filterOn = true) shouldBe listOf("Fl")
     }
 
     @Test

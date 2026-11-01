@@ -15,6 +15,7 @@ import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
+import com.petruvideo.core.media.filter.ClipFilterEffects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
 import com.petruvideo.core.media.preview.ReverbAudioProcessor
@@ -25,6 +26,7 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.VideoClip
 
 /**
  * How a composition is sized and timed: output [width] and [height] (null keeps each clip's own size), the [fps]
@@ -88,6 +90,9 @@ class CompositionBuilder(private val spec: BuildSpec) {
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     val voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
 
+    /** The filter effects of each filtered clip after [build], so the preview can change them live. */
+    val filters = mutableMapOf<String, ClipFilterEffects>()
+
     /** The text lane's overlays after [build], so the preview can change a clip live; null without text clips. */
     var textOverlays: TextOverlaySet? = null
         private set
@@ -104,7 +109,13 @@ class CompositionBuilder(private val spec: BuildSpec) {
 
     private fun videoSequence(timeline: Timeline): EditedMediaItemSequence? {
         if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty()) return null
-        val builder = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO))
+        // A sequence with no picture-clip sound (photos only, silent or muted clips) would wait for an audio track
+        // that never comes, which fails the export, so it only asks for video; sound comes from the audio lane.
+        val hasSound = timeline.videoLane.any {
+            it.attachedAudio && !it.muted && timeline.media[it.mediaItemId]?.kind == MediaKind.Video
+        }
+        val tracks = if (hasSound) setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO) else setOf(C.TRACK_TYPE_VIDEO)
+        val builder = EditedMediaItemSequence.Builder(tracks)
         val fps = spec.fps
         val frame = frameEffects()
         timeline.videoLane.forEach { clip ->
@@ -112,11 +123,14 @@ class CompositionBuilder(private val spec: BuildSpec) {
             when {
                 media == null || media.availability == Availability.Missing -> builder.addGap(clip.lengthMs * US_PER_MS)
                 media.kind == MediaKind.Photo -> builder.addItem(
-                    EditedMediaItem.Builder(MediaItem.fromUri(Uri.parse(media.uri)))
+                    EditedMediaItem.Builder(
+                        // Transformer needs the image duration on the media item itself, not only on the edited item.
+                        MediaItem.Builder().setUri(Uri.parse(media.uri)).setImageDurationMs(clip.lengthMs).build(),
+                    )
                         .setDurationUs(clip.lengthMs * US_PER_MS)
                         .setFrameRate(fps)
                         .setRemoveAudio(true)
-                        .setEffects(frame)
+                        .setEffects(withFilter(clip, frame))
                         .build(),
                 )
                 else -> builder.addItem(
@@ -130,7 +144,7 @@ class CompositionBuilder(private val spec: BuildSpec) {
                                     clip.id, clip.reverb, clip.volumePercent, clip.attachedAudio && !clip.muted,
                                     clip.fx, clip.lengthMs,
                                 ),
-                                frame.videoEffects,
+                                withFilter(clip, frame).videoEffects,
                             ),
                         )
                         .build(),
@@ -141,6 +155,13 @@ class CompositionBuilder(private val spec: BuildSpec) {
         val textEndMs = timeline.textLane.maxOfOrNull { it.endMs } ?: 0L
         if (textEndMs > timeline.videoLengthMs) builder.addGap((textEndMs - timeline.videoLengthMs) * US_PER_MS)
         return builder.build()
+    }
+
+    /** [frame] plus the clip's color transform and vignette when it has a filter on. */
+    private fun withFilter(clip: VideoClip, frame: Effects): Effects {
+        if (clip.filter.isNeutral) return frame
+        val handles = ClipFilterEffects(clip.filter).also { filters[clip.id] = it }
+        return Effects(frame.audioProcessors, frame.videoEffects + handles.effects)
     }
 
     /** One overlay effect for every text clip, at the composition level so times are the project's. */

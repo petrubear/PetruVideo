@@ -66,6 +66,7 @@ data class VideoClip(
     val muted: Boolean = false,
     val reverb: Reverb = Reverb(),
     val fx: AudioFx = AudioFx(),
+    val filter: ClipFilter = ClipFilter(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)

@@ -2,6 +2,7 @@ package com.petruvideo.feature.editor
 
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
@@ -24,7 +25,7 @@ enum class ToolbarTab(val label: String, val active: Boolean) {
     Text("Text", true),
     Overlay("Overlay", false),
     Effects("Effects", false),
-    Filters("Filters", false),
+    Filters("Filters", true),
 }
 
 /** Clip tool bar actions. */
@@ -42,6 +43,8 @@ enum class ClipTool(val label: String, val active: Boolean) {
     TextEdit("Edit", true),
     TextStyle("Style", true),
     TextAnim("Animation", true),
+    FilterLooks("Looks", true),
+    FilterAdjust("Adjust", true),
 }
 
 /**
@@ -88,6 +91,20 @@ enum class TextToolKind(val label: String) {
 /** The open text panel with the committed values of the selected text clip. */
 data class TextPanelState(val kind: TextToolKind, val clip: TextClip)
 
+/** The two filter panels. */
+enum class FilterToolKind(val label: String) { Looks("Looks"), Adjust("Adjust") }
+
+/** The open filter panel for the selected picture clip, with what the look tiles need to draw its frame. */
+data class FilterPanelState(
+    val kind: FilterToolKind,
+    val clipId: String,
+    val filter: ClipFilter,
+    val media: MediaItem?,
+    /** Source time of the frame at the playhead, for the look tiles. */
+    val frameTimeMs: Long,
+    val canApplyAll: Boolean,
+)
+
 /** The open reverb panel for one clip. */
 data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
@@ -119,6 +136,10 @@ data class EditorState(
     val audioPanel: AudioPanelState? = null,
     /** Which main tool bar tab is open: Edit (default) or Text, which offers Add text. */
     val toolbarTab: ToolbarTab = ToolbarTab.Edit,
+    /** The open filter panel, if any. */
+    val filterPanel: FilterPanelState? = null,
+    /** The selected picture clip's filter with its look tiles (the inspector shows its controls). */
+    val selectedFilter: FilterPanelState? = null,
     /** The open text panel, if any. */
     val textPanel: TextPanelState? = null,
     /** The selected text clip (the inspector shows its controls). */
@@ -197,6 +218,15 @@ sealed interface EditorEvent {
     data class SelectTab(val tab: ToolbarTab) : EditorEvent
     /** Adds a text clip at the playhead, selects it, and opens its edit panel. */
     data object AddText : EditorEvent
+    data class OpenFilterTool(val kind: FilterToolKind) : EditorEvent
+    /** A look strength or adjustment while dragging: seen live, not yet an edit. */
+    data class FilterPreview(val filter: ClipFilter) : EditorEvent
+    /** The filter on release or a tap: one edit per changed part. */
+    data class FilterCommit(val filter: ClipFilter) : EditorEvent
+    data object FilterResetAdjustments : EditorEvent
+    data object FilterRemove : EditorEvent
+    data object FilterApplyAll : EditorEvent
+    data object FilterDismiss : EditorEvent
     data class OpenTextTool(val kind: TextToolKind) : EditorEvent
     /** A text clip value while typing or dragging: seen live, not yet an edit. */
     data class TextPreview(val clip: TextClip) : EditorEvent

@@ -47,6 +47,7 @@ class AccessibilityTest {
         reverbPanel: ReverbPanelState? = null,
         audioPanel: AudioPanelState? = null,
         textPanel: TextPanelState? = null,
+        filterPanel: FilterPanelState? = null,
         fontScale: Float = 1f,
     ) {
         val state = EditorState(
@@ -60,6 +61,7 @@ class AccessibilityTest {
             reverbPanel = reverbPanel,
             audioPanel = audioPanel,
             textPanel = textPanel,
+            filterPanel = filterPanel,
             selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
@@ -174,5 +176,23 @@ class AccessibilityTest {
     fun textStylePanelWithLargeFont() = check(
         ClipSelection.Text("t1"), listOf(ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim),
         textPanel = TextPanelState(TextToolKind.Style, textClip), fontScale = 2f,
+    )
+
+    private fun filter(kind: FilterToolKind) = check(
+        ClipSelection.Video("c1"), listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust, ClipTool.Duplicate, ClipTool.Delete),
+        filterPanel = FilterPanelState(kind, "c1", com.petruvideo.core.model.ClipFilter(), null, 0, true),
+    )
+
+    @Test
+    fun filterLooksPanel() = filter(FilterToolKind.Looks)
+
+    @Test
+    fun filterAdjustPanel() = filter(FilterToolKind.Adjust)
+
+    @Test
+    fun filterAdjustPanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust),
+        filterPanel = FilterPanelState(FilterToolKind.Adjust, "c1", com.petruvideo.core.model.ClipFilter(), null, 0, true),
+        fontScale = 2f,
     )
 }
