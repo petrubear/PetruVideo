@@ -19,6 +19,8 @@ data class ProjectEntity(
     val formatFps: Int?,
     val thumbnailRef: String?,
     val playheadMs: Long,
+    /** The project's length as last saved (video, audio, text, and overlays); 0 until it is first saved. */
+    @ColumnInfo(defaultValue = "0") val durationMs: Long = 0,
 )
 
 @Entity(

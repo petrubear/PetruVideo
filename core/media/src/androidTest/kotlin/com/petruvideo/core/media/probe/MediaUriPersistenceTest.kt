@@ -25,7 +25,8 @@ class MediaUriPersistenceTest {
     @Test
     fun step1_insertMediaStoreVideoAndRememberItsUri() {
         val values = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, "spike2.mp4")
+            // A name of its own, so a file an earlier run left behind never blocks the insert.
+            put(MediaStore.Video.Media.DISPLAY_NAME, "spike-${System.nanoTime()}.mp4")
             put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
             put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/PetruSpike")
         }

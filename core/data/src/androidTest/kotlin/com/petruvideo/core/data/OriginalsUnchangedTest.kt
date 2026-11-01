@@ -48,6 +48,7 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 import java.security.MessageDigest
 import kotlin.random.Random
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -481,6 +482,27 @@ class OriginalsUnchangedTest {
         val copy = repo.duplicateProject(project.id)!!
         repo.loadProject(copy.id)!!.timeline.textLane.single().caption shouldBe true
         checksums() shouldBe before
+    }
+
+    /** The project list shows the real length, also for speed curves, text, and overlays that run past the video. */
+    @Test
+    fun theListedLengthIsTheSavedTimelineLength() = runBlocking<Unit> {
+        val video = source("clip20.mp4", MediaKind.Video, 10_000)
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        val id = session.timeline.value!!.videoLane.single().id
+        session.apply(
+            com.petruvideo.core.model.engine.ApplySpeedPreset(id, com.petruvideo.core.model.SpeedPreset.Bullet),
+        )
+        session.apply(com.petruvideo.core.model.engine.AddText(atMs = 0, newId = { "tx" }))
+        session.flush()
+        val total = session.timeline.value!!.totalDurationMs
+        session.close()
+        val listed = repo.observeProjects(com.petruvideo.core.data.repo.ProjectFilter.All, "").first().single()
+        listed.durationMs shouldBe total
     }
 
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */

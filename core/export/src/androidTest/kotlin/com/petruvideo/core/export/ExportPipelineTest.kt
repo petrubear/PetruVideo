@@ -413,6 +413,70 @@ class ExportPipelineTest {
         return sums.indices.map { if (counts[it] == 0L) 0f else kotlin.math.sqrt(sums[it] / counts[it]).toFloat() }
     }
 
+    /** Decodes the audio track and returns the zero crossings per second of each [windows] range in milliseconds. */
+    private fun zeroCrossRates(uri: String, windows: List<Pair<Long, Long>>): List<Float> {
+        val extractor = MediaExtractor().apply { setDataSource(context, Uri.parse(uri), null) }
+        val track = (0 until extractor.trackCount).first {
+            extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("audio/")
+        }
+        val format = extractor.getTrackFormat(track)
+        extractor.selectTrack(track)
+        val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
+        codec.configure(format, null, null, 0)
+        codec.start()
+        val sums = DoubleArray(windows.size)
+        val last = DoubleArray(windows.size)
+        val counts = LongArray(windows.size)
+        val info = MediaCodec.BufferInfo()
+        var inputDone = false
+        var outputDone = false
+        var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        var rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        while (!outputDone) {
+            if (!inputDone) {
+                val index = codec.dequeueInputBuffer(10_000)
+                if (index >= 0) {
+                    val size = extractor.readSampleData(codec.getInputBuffer(index)!!, 0)
+                    if (size < 0) {
+                        codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        inputDone = true
+                    } else {
+                        codec.queueInputBuffer(index, 0, size, extractor.sampleTime, 0)
+                        extractor.advance()
+                    }
+                }
+            }
+            val out = codec.dequeueOutputBuffer(info, 10_000)
+            if (out == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                channels = codec.outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                rate = codec.outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+            } else if (out >= 0) {
+                val shorts = codec.getOutputBuffer(out)!!.order(java.nio.ByteOrder.nativeOrder()).asShortBuffer()
+                var frame = 0L
+                while (shorts.remaining() >= channels) {
+                    val timeMs = info.presentationTimeUs / 1000 + frame * 1000 / rate
+                    var sample = 0.0
+                    repeat(channels) { sample += shorts.get() / 32768.0 }
+                    sample /= channels
+                    windows.forEachIndexed { i, (from, to) ->
+                        if (timeMs in from until to) {
+                            if (counts[i] > 0 && (sample < 0) != (last[i] < 0) && kotlin.math.abs(sample) > 0.002) sums[i] += 1.0
+                            last[i] = sample
+                            counts[i]++
+                        }
+                    }
+                    frame++
+                }
+                codec.releaseOutputBuffer(out, false)
+                if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputDone = true
+            }
+        }
+        codec.stop()
+        codec.release()
+        extractor.release()
+        return sums.indices.map { if (counts[it] == 0L) 0f else (sums[it] * rate / counts[it]).toFloat() }
+    }
+
     private fun textClip(id: String, start: Long, duration: Long, x: Int = 500, text: String = "TITLE") = TextClip(
         id, text, start, duration, xPermille = x, yPermille = 500, sizePermille = 200,
         style = TextStyle(
@@ -1090,6 +1154,28 @@ class ExportPipelineTest {
             r.release()
             check(kotlin.math.abs(actual - expected) < 150) { "${preset.label}: exported $actual ms, the editor shows $expected ms" }
         }
+    }
+
+    /** SC-004 of feature 018: slowing the clip down does not lower the pitch of its sound. */
+    @Test
+    fun theSoundOfARampedClipKeepsItsPitch() {
+        val a = item("video_with_audio.mp4")
+        val length = minOf(3_000L, a.durationMs ?: 3_000L)
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val base = project(VideoClip("c1", a.id, 0, length, true), media = listOf(a))
+        val ramped = (com.petruvideo.core.model.engine.ApplySpeedPreset("c1", com.petruvideo.core.model.SpeedPreset.Bullet).apply(base) as
+            com.petruvideo.core.model.engine.CommandResult.Applied).timeline
+        val (s1, plainUri) = export(base, settings, "pipeline-pitch-plain")
+        s1.shouldBeFinished()
+        val (s2, rampUri) = export(ramped, settings, "pipeline-pitch-ramp")
+        s2.shouldBeFinished()
+        val plainRate = zeroCrossRates(plainUri!!, listOf(0L to length))[0]
+        val total = ramped.videoLane.single().lengthMs
+        val windows = (0 until 4).map { (total * it / 4) to (total * (it + 1) / 4) }
+        val rates = zeroCrossRates(rampUri!!, windows).filter { it > 0f }
+        check(plainRate > 0f && rates.isNotEmpty()) { "no sound to measure" }
+        val mean = rates.average().toFloat()
+        check(mean > plainRate * 0.6f && mean < plainRate * 1.6f) { "pitch moved: plain $plainRate, ramped $rates" }
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

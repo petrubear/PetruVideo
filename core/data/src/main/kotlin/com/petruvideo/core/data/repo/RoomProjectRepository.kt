@@ -74,6 +74,7 @@ class RoomProjectRepository @Inject constructor(
                     formatHeight = format?.height,
                     formatFps = format?.fps,
                     playheadMs = timeline.playheadMs,
+                    durationMs = timeline.totalDurationMs,
                 ),
             )
             timelines.deleteVideoClips(projectId)
@@ -154,7 +155,7 @@ class RoomProjectRepository @Inject constructor(
     private fun ProjectSummaryRow.toSummary() = ProjectSummary(
         project = project.toModel(),
         clipCount = clipCount,
-        durationMs = maxOf(videoLengthMs, audioEndMs),
+        durationMs = project.durationMs.takeIf { it > 0 } ?: maxOf(videoLengthMs, audioEndMs),
         playheadMs = project.playheadMs,
     )
 

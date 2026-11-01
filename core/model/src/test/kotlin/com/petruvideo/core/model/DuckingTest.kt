@@ -110,4 +110,18 @@ class DuckingTest {
         SetDucking("voice", Ducking()).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
         SetDucking("zz", Ducking(true)).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.NotFound)
     }
+
+    @Test
+    fun `a reversed or curved video trigger ducks where its sound is actually heard`() {
+        // Source 0..6 s with speech only in 4..6 s. Played backwards, that speech is heard in the first 2 s.
+        val video = VideoClip("v", "vi", 0, 6_000, true, reversed = true)
+        val t = Timeline(
+            "p", media = mapOf("mu" to media("mu"), "vi" to media("vi", MediaKind.Video)),
+            videoLane = listOf(video), audioLane = listOf(music),
+        )
+        val p = mapOf("mu" to FloatArray(400) { 0.6f }, "vi" to speech(4_000, 6_000))
+        val e = DuckingPlanner.envelopeFor(t, "music") { p[it] }!!
+        e.gainAt(1_000) shouldBeLessThan 0.2f
+        e.gainAt(4_000) shouldBeGreaterThan 0.95f
+    }
 }

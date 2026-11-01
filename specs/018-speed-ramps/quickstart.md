@@ -12,3 +12,9 @@
 - Connected suites on the Pixel 7 Pro API 34 emulator: 285 tests, 0 failures (2 skipped, including the real-microphone test).
 - Export length of Bullet and Montage matches the editor within 150 ms.
 - Open: pitch measurement across a ramp, fold and tabletop checks, a feel check of the graph on the phone, designer review (T012).
+
+## Gaps closed (2026-11-01)
+
+- The sound of a ramped clip keeps its pitch: an export test compares the zero-crossing rate of the Bullet ramp with the plain export (within 40%), where an unprotected 0.1x slowdown would drop it by 90%.
+- The project list shows the real length (video, audio, text, overlays, speed curves, transitions): the length is saved with the project (Room v17) instead of being estimated in the list query. Older projects show the estimate until they are saved once.
+- Ducking follows where the sound of a reversed or speed-curved video clip is actually heard.

@@ -48,17 +48,17 @@ object DuckingPlanner {
     private const val THRESHOLD = 0.04f
     private const val MAX_REDUCTION = 0.9f
 
+    /** A sound that can trigger ducking: where it plays on the timeline and where in its source each moment is. */
     private class Trigger(
         val startMs: Long,
         val lengthMs: Long,
-        val sourceStartMs: Long,
-        val speedMilli: Int,
         val volumePercent: Int,
         val peaks: FloatArray,
+        val sourceAt: (offsetMs: Long) -> Long,
     ) {
         fun levelAt(timeMs: Long): Float {
             if (timeMs < startMs || timeMs >= startMs + lengthMs) return 0f
-            val source = sourceStartMs + (timeMs - startMs) * speedMilli / SPEED_UNIT
+            val source = sourceAt(timeMs - startMs)
             val peak = peaks.getOrNull((source * DUCK_PEAKS_PER_SECOND / MS_PER_SECOND).toInt()) ?: return 0f
             return peak * volumePercent / PERCENT
         }
@@ -113,15 +113,15 @@ object DuckingPlanner {
             if (!clip.attachedAudio || !clip.audible) return@mapNotNull null
             val start = timeline.videoStartOf(clip.id) ?: return@mapNotNull null
             peaks(clip.mediaItemId)?.let {
-                Trigger(start, clip.lengthMs, clip.sourceStartMs, clip.speedMilli, clip.volumePercent, it)
+                Trigger(start, clip.lengthMs, clip.volumePercent, it, clip::sourceTimeAt)
             }
         }
         val fromAudio = timeline.audioLane.mapNotNull { clip ->
             if (clip.id == target.id || clip.ducking.enabled || !clip.audible) return@mapNotNull null
             peaks(clip.mediaItemId)?.let {
-                Trigger(
-                    clip.timelineStartMs, clip.lengthMs, clip.sourceStartMs, clip.speedMilli, clip.volumePercent, it,
-                )
+                Trigger(clip.timelineStartMs, clip.lengthMs, clip.volumePercent, it) { offset ->
+                    clip.sourceStartMs + offset * clip.speedMilli / SPEED_UNIT
+                }
             }
         }
         return fromVideo + fromAudio
