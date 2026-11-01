@@ -170,6 +170,13 @@ data class FilterColumns(
     @ColumnInfo(defaultValue = "0") val saturation: Int = 0,
     @ColumnInfo(defaultValue = "0") val warmth: Int = 0,
     @ColumnInfo(defaultValue = "0") val vignette: Int = 0,
+    @ColumnInfo(defaultValue = "0") val exposure: Int = 0,
+    @ColumnInfo(defaultValue = "0") val gamma: Int = 0,
+    @ColumnInfo(defaultValue = "0") val highlights: Int = 0,
+    @ColumnInfo(defaultValue = "0") val shadows: Int = 0,
+    @ColumnInfo(defaultValue = "0") val tint: Int = 0,
+    @ColumnInfo(defaultValue = "0") val hue: Int = 0,
+    @ColumnInfo(defaultValue = "0") val sharpen: Int = 0,
 )
 
 /** The transition into the next clip as `trn_kind` (null when there is none) and `trn_lengthMs`. */

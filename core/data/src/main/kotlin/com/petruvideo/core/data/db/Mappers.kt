@@ -197,9 +197,13 @@ fun TextClip.toEntity(projectId: String) = TextClipEntity(
 fun FilterColumns.toModel() = ClipFilter(
     FilterLook.entries.firstOrNull { it.name == look } ?: FilterLook.None,
     intensity, brightness, contrast, saturation, warmth, vignette,
+    exposure, gamma, highlights, shadows, tint, hue, sharpen,
 )
 
-fun ClipFilter.toColumns() = FilterColumns(look.name, intensity, brightness, contrast, saturation, warmth, vignette)
+fun ClipFilter.toColumns() = FilterColumns(
+    look.name, intensity, brightness, contrast, saturation, warmth, vignette,
+    exposure, gamma, highlights, shadows, tint, hue, sharpen,
+)
 
 fun KeyframeEntity.toModel() = Keyframe(timeMs, Pose(x, y, size, opacity), ease)
 

@@ -1245,6 +1245,28 @@ class ExportPipelineTest {
         check(green[1] > 120 && green[2] < 110) { "a clip without the key changed: ${green.toList()}" }
     }
 
+    private fun adjustedFrame(filter: com.petruvideo.core.model.ClipFilter, name: String): IntArray {
+        val grey = solidPhoto("adjustgrey", 0xFF808080.toInt())
+        val clip = VideoClip("g1", grey.id, 0, 2_000, false, filter = filter)
+        val (state, uri) = export(
+            project(clip, media = listOf(grey)), ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name,
+        )
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return meanRgb(frameAt(uri!!, 800), 0.2f, 0.8f)
+    }
+
+    /** SC-002 of feature 023: exposure raises a mid grey by about a stop; the other new sliders at 0 change nothing. */
+    @Test
+    fun exposureBrightensAndNeutralAdjustmentsChangeNothing() {
+        val plain = adjustedFrame(com.petruvideo.core.model.ClipFilter(), "pipeline-adjust-plain")
+        val neutralLook = adjustedFrame(com.petruvideo.core.model.ClipFilter(brightness = 1), "pipeline-adjust-neutral")
+        check(kotlin.math.abs(neutralLook[0] - plain[0]) <= 4) { "neutral adjustments changed ${plain.toList()} to ${neutralLook.toList()}" }
+        val bright = adjustedFrame(com.petruvideo.core.model.ClipFilter(exposure = 50), "pipeline-adjust-exposure")
+        check(bright[0] > plain[0] + 30) { "exposure did not brighten: ${plain.toList()} to ${bright.toList()}" }
+        val tinted = adjustedFrame(com.petruvideo.core.model.ClipFilter(tint = 100), "pipeline-adjust-tint")
+        check(tinted[1] < plain[1] - 8 && tinted[0] > plain[0]) { "tint did not move green to magenta: ${tinted.toList()}" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

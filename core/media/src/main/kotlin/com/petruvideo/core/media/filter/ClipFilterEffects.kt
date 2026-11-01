@@ -92,13 +92,16 @@ class VignetteOverlay(filter: ClipFilter) : BitmapOverlay() {
 @OptIn(UnstableApi::class)
 class ClipFilterEffects(filter: ClipFilter) {
     private val rgb = LiveRgbMatrix(filter)
+    private val adjust = ClipAdjustEffect(filter)
     private val vignette = VignetteOverlay(filter)
 
-    /** In drawing order: the color transform, then the vignette. */
-    val effects: List<androidx.media3.effect.GlEffect> = listOf(rgb, OverlayEffect(listOf(vignette)))
+    /** In drawing order: the color transform, the seven further adjustments, then the vignette. */
+    val effects: List<androidx.media3.effect.GlEffect> =
+        listOf(rgb, adjust.glEffect, OverlayEffect(listOf(vignette)))
 
     fun update(filter: ClipFilter) {
         rgb.update(filter)
+        adjust.update(filter)
         vignette.update(filter)
     }
 }

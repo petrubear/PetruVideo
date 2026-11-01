@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
+import com.petruvideo.core.designsystem.components.SegmentedControl
 import com.petruvideo.core.designsystem.adaptive.Arrangement as WindowArrangement
 import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.designsystem.components.PillButton
@@ -171,27 +173,60 @@ private fun LookTile(look: FilterLook, media: MediaItem?, frameTimeMs: Long, sel
 private const val TILE_PX = 160
 
 @Composable
-fun AdjustControls(filter: ClipFilter, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
+fun AdjustControls(
+    filter: ClipFilter,
+    onEvent: (EditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
+    startGroup: Int = 0,
+) {
     var shown by remember(filter) { mutableStateOf(filter) }
-    val range = -FILTER_ADJUST_MAX.toFloat()..FILTER_ADJUST_MAX.toFloat()
+    var group by remember { mutableIntStateOf(startGroup) }
     val finish = { onEvent(EditorEvent.FilterCommit(shown)) }
     val change = { next: ClipFilter ->
         shown = next
         onEvent(EditorEvent.FilterPreview(next))
     }
     Column(modifier.fillMaxWidth()) {
-        SettingSlider("Brightness", signed(shown.brightness), shown.brightness.toFloat(), range,
-            { change(shown.copy(brightness = it.roundToInt())) }, finish)
-        SettingSlider("Contrast", signed(shown.contrast), shown.contrast.toFloat(), range,
-            { change(shown.copy(contrast = it.roundToInt())) }, finish)
-        SettingSlider("Saturation", signed(shown.saturation), shown.saturation.toFloat(), range,
-            { change(shown.copy(saturation = it.roundToInt())) }, finish)
-        SettingSlider("Warmth", signed(shown.warmth), shown.warmth.toFloat(), range,
-            { change(shown.copy(warmth = it.roundToInt())) }, finish)
-        SettingSlider("Vignette", "${shown.vignette}", shown.vignette.toFloat(), 0f..FILTER_ADJUST_MAX.toFloat(),
-            { change(shown.copy(vignette = it.roundToInt())) }, finish)
+        SegmentedControl(listOf("Light", "Tone", "Colour", "Detail"), group, { group = it })
+        when (group) {
+            0 -> {
+                AdjustSlider("Brightness", shown.brightness, { change(shown.copy(brightness = it)) }, finish)
+                AdjustSlider("Contrast", shown.contrast, { change(shown.copy(contrast = it)) }, finish)
+                AdjustSlider("Exposure", shown.exposure, { change(shown.copy(exposure = it)) }, finish)
+            }
+            1 -> {
+                AdjustSlider("Gamma", shown.gamma, { change(shown.copy(gamma = it)) }, finish)
+                AdjustSlider("Highlights", shown.highlights, { change(shown.copy(highlights = it)) }, finish)
+                AdjustSlider("Shadows", shown.shadows, { change(shown.copy(shadows = it)) }, finish)
+            }
+            2 -> {
+                AdjustSlider("Saturation", shown.saturation, { change(shown.copy(saturation = it)) }, finish)
+                AdjustSlider("Warmth", shown.warmth, { change(shown.copy(warmth = it)) }, finish)
+                AdjustSlider("Tint", shown.tint, { change(shown.copy(tint = it)) }, finish)
+            }
+            else -> {
+                AdjustSlider("Hue", shown.hue, { change(shown.copy(hue = it)) }, finish)
+                AdjustSlider("Sharpen", shown.sharpen, { change(shown.copy(sharpen = it)) }, finish, signed = false)
+                AdjustSlider("Vignette", shown.vignette, { change(shown.copy(vignette = it)) }, finish, signed = false)
+            }
+        }
         TextAction("Reset") { onEvent(EditorEvent.FilterResetAdjustments) }
     }
+}
+
+@Composable
+private fun AdjustSlider(
+    label: String,
+    value: Int,
+    onChange: (Int) -> Unit,
+    onFinished: () -> Unit,
+    signed: Boolean = true,
+) {
+    val max = FILTER_ADJUST_MAX.toFloat()
+    SettingSlider(
+        label, if (signed) signed(value) else "$value", value.toFloat(), (if (signed) -max else 0f)..max,
+        { onChange(it.roundToInt()) }, onFinished,
+    )
 }
 
 private fun signed(value: Int) = if (value > 0) "+$value" else "$value"

@@ -31,7 +31,7 @@ class SetFilterIntensity(clipId: String, private val intensity: Int) : FilterCom
     override fun next(current: ClipFilter) = current.copy(intensity = intensity)
 }
 
-/** Sets the five adjustments (clamped); the look and its strength stay. */
+/** Sets the twelve adjustments (clamped); the look and its strength stay. */
 class SetFilterAdjustments(clipId: String, private val values: ClipFilter) : FilterCommand(clipId, "Adjust") {
     override fun next(current: ClipFilter) = current.copy(
         brightness = values.brightness,
@@ -39,13 +39,23 @@ class SetFilterAdjustments(clipId: String, private val values: ClipFilter) : Fil
         saturation = values.saturation,
         warmth = values.warmth,
         vignette = values.vignette,
+        exposure = values.exposure,
+        gamma = values.gamma,
+        highlights = values.highlights,
+        shadows = values.shadows,
+        tint = values.tint,
+        hue = values.hue,
+        sharpen = values.sharpen,
     )
 }
 
-/** Puts the five adjustments back to their defaults and keeps the look. */
+/** Puts the twelve adjustments back to their defaults and keeps the look. */
 class ResetFilterAdjustments(clipId: String) : FilterCommand(clipId, "Reset adjustments") {
     override fun next(current: ClipFilter) =
-        current.copy(brightness = 0, contrast = 0, saturation = 0, warmth = 0, vignette = 0)
+        current.copy(
+            brightness = 0, contrast = 0, saturation = 0, warmth = 0, vignette = 0,
+            exposure = 0, gamma = 0, highlights = 0, shadows = 0, tint = 0, hue = 0, sharpen = 0,
+        )
 }
 
 /** Clears the look and the adjustments. */

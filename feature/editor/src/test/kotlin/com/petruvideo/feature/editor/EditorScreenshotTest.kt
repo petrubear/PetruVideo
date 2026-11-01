@@ -765,6 +765,19 @@ class EditorScreenshotTest {
     }
 
     @Test
+    fun adjustColourGroup() = paparazzi.snapshot {
+        PetruTheme {
+            com.petruvideo.core.designsystem.components.SheetSurface(Modifier.fillMaxWidth()) {
+                androidx.compose.foundation.layout.Box(Modifier.padding(16.dp)) {
+                    com.petruvideo.feature.editor.ui.AdjustControls(
+                        com.petruvideo.core.model.ClipFilter(tint = 20, hue = -30), onEvent = {}, startGroup = 2,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
     fun overlayTabOffersAddOverlay() = paparazzi.snapshot {
         CompositionLocalProvider(LocalMediaLoaders provides loaders) {
             PetruTheme { EditorScreen(state(tab = ToolbarTab.Overlay), player = null, onEvent = {}, onBack = {}) }

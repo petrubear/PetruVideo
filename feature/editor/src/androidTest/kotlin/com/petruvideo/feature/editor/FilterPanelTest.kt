@@ -51,10 +51,17 @@ class FilterPanelTest {
     }
 
     @Test
-    fun adjustShowsFiveSlidersAndReset() {
+    fun adjustShowsTwelveSlidersInFourGroupsAndReset() {
         val events = show(FilterToolKind.Adjust, ClipFilter(brightness = 20))
-        for (name in listOf("Brightness", "Contrast", "Saturation", "Warmth", "Vignette")) {
-            compose.onNodeWithContentDescription(name).performScrollTo().assertIsDisplayed()
+        val groups = mapOf(
+            "Light" to listOf("Brightness", "Contrast", "Exposure"),
+            "Tone" to listOf("Gamma", "Highlights", "Shadows"),
+            "Colour" to listOf("Saturation", "Warmth", "Tint"),
+            "Detail" to listOf("Hue", "Sharpen", "Vignette"),
+        )
+        for ((group, names) in groups) {
+            compose.onNodeWithText(group).performScrollTo().performClick()
+            for (name in names) compose.onNodeWithContentDescription(name).performScrollTo().assertIsDisplayed()
         }
         compose.onNodeWithText("Reset").performScrollTo().performClick()
         assertEquals(EditorEvent.FilterResetAdjustments, events.last())
