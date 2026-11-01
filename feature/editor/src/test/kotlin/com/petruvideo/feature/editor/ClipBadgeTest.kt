@@ -35,4 +35,12 @@ class ClipBadgeTest {
         collapseBadges(listOf("2x", "40%", "Rv")) shouldBe listOf("2x", "40%", "Rv")
         collapseBadges(listOf("2x", "40%", "Rv", "Fd", "Nr")) shouldBe listOf("2x", "40%", "+3")
     }
+
+    @Test
+    fun `fade ramps are limited to half the clip each`() {
+        com.petruvideo.feature.editor.ui.fadeRampFractions(Fade(1_000, 1_000), 10_000) shouldBe (0.1f to 0.1f)
+        com.petruvideo.feature.editor.ui.fadeRampFractions(Fade(9_000, 0), 10_000) shouldBe (0.5f to 0f)
+        com.petruvideo.feature.editor.ui.fadeRampFractions(Fade(), 10_000) shouldBe (0f to 0f)
+        com.petruvideo.feature.editor.ui.fadeRampFractions(Fade(100, 100), 0) shouldBe (0f to 0f)
+    }
 }

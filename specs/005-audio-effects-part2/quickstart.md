@@ -25,4 +25,4 @@ Emulator Pixel_7_Pro_API_34 (Android 14), 2026-11-01: all JVM tests, Paparazzi g
 - Spike S1: the seek offset given at flush is honoured, so fades are right after a seek.
 - Noise reduction treats a perfectly steady tone as noise (a pure tone is removed); speech-like bursts and music with dynamics keep their level. The panel says it is for voice.
 - Export of a clip with fade, noise reduction, equalizer and all four voice effects ends with the start and end near silent, the same as the preview chain.
-Not yet done (needs the Fold or listening): T027 and T033 (tuning by ear), T041 (fps and CPU with 5 clips), T053 (manual checks, A/V sync, seek in a fade, fold layouts), T054 (designer review), and the ramp marker on faded clip ends (FR-023 part).
+Not yet done (needs the Fold or listening): T027 and T033 (tuning by ear), T041 (fps and CPU with 5 clips), T053 (manual checks, A/V sync, seek in a fade, fold layouts), and T054 (designer review).

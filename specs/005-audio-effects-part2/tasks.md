@@ -144,7 +144,7 @@
 
 - [X] T046 [US5] Row state hints and back-to-list behaviour in `E/ui/AudioToolList.kt` for all tools (the Audio button and routing exist from T011a)
 - [X] T047 [US5] `E/ui/ClipBadge.kt` badges "Fd", "Nr", "Eq", "Vx" with collapse into "+N"
-- [ ] T047a [US5] Ramp marker drawn at the faded end of a clip in `E/ui/VideoLaneView.kt` and `AudioLaneView.kt` (spec US1 scenario 5; not built yet)
+- [X] T047a [US5] Ramp marker drawn at the faded end of a clip in `E/ui/VideoLaneView.kt` and `AudioLaneView.kt` (spec US1 scenario 5; dimmed triangle with an accent line, golden `fadeRampsAndBadgesOnClips`)
 - [X] T048 [US5] Inspector sections in `E/ui/expanded/InspectorPanel.kt` and tabletop placement in `E/ui/tabletop/TabletopEditorLayout.kt`; open tool and preview value survive fold and rotation
 - [X] T049 [US5] Goldens: list, each panel on compact, expanded and tabletop in `EditorScreenshotTest.kt`, `EditorFoldScreenshotTest.kt`, `CoverScreenshotTest.kt`
 - [X] T050 [US5] Emulator run of all connected suites (core:data, core:media, core:export, feature:editor, feature:projects); stop the emulator afterwards

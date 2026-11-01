@@ -110,6 +110,7 @@ fun VideoLaneView(
                 } else {
                     ClipThumbnails(clip, item, widthDp.value)
                 }
+                if (clip.attachedAudio) FadeRamps(clip.fx.fade, clip.lengthMs)
                 ClipBadge(
                     clip.speedMilli,
                     clip.volumePercent.takeIf { clip.attachedAudio },

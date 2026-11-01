@@ -44,12 +44,17 @@ class EditorScreenshotTest {
         sheet: SheetState? = null,
         reverbPanel: ReverbPanelState? = null,
         audioPanel: AudioPanelState? = null,
+        playheadMs: Long = 6_200,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
             videoLane = if (edited) {
                 loaded.timeline.videoLane.map {
-                    if (it.id == "c1") it.copy(speedMilli = 2000, volumePercent = 40) else it
+                    if (it.id == "c1") {
+                        it.copy(speedMilli = 2000, volumePercent = 40, fx = AudioFx(fade = com.petruvideo.core.model.Fade(800, 600)))
+                    } else {
+                        it
+                    }
                 }
             } else {
                 loaded.timeline.videoLane
@@ -57,13 +62,18 @@ class EditorScreenshotTest {
             media = loaded.timeline.media.mapValues { (id, item) ->
                 if (id in missing) item.copy(availability = Availability.Missing) else item
             },
-            playheadMs = 6_200,
+            playheadMs = playheadMs,
+            audioLane = if (edited) {
+                loaded.timeline.audioLane.map { it.copy(fx = AudioFx(fade = com.petruvideo.core.model.Fade(500, 500))) }
+            } else {
+                loaded.timeline.audioLane
+            },
         )
         return EditorState(
             header = EditorHeader("Coast road, day 3", "1080p · 30 fps", SaveStatus.Saved),
             timeline = timeline,
             selection = selection,
-            playback = PlaybackState(isPlaying = false, positionMs = 6_200, durationMs = timeline.totalDurationMs),
+            playback = PlaybackState(isPlaying = false, positionMs = playheadMs, durationMs = timeline.totalDurationMs),
             canUndo = true,
             canRedo = false,
             projectMedia = timeline.media.values.toList(),
@@ -259,6 +269,22 @@ class EditorScreenshotTest {
 
     @Test
     fun voicePanel() = snapshotAudio(AudioToolKind.Voice, busyFx)
+
+    @Test
+    fun fadeRampsAndBadgesOnClips() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c2"), edited = true, playheadMs = 1_000),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
 
     @Test
     fun missingMediaShowsRelinkAndRemove() {

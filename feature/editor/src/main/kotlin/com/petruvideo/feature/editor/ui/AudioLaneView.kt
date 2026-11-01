@@ -116,6 +116,7 @@ fun AudioClipsRow(
                             .padding(horizontal = 4.dp),
                     )
                 }
+                FadeRamps(clip.fx.fade, clip.lengthMs)
                 ClipBadge(
                     clip.speedMilli,
                     clip.volumePercent,
