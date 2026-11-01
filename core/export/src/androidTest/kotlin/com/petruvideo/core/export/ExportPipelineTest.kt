@@ -1072,6 +1072,26 @@ class ExportPipelineTest {
         check(changedPixels(reversedEnd, early) < changedPixels(reversedEnd, late)) { "reversed end is not the source start" }
     }
 
+    /** SC-002 of feature 018: the exported length follows the curve, for every preset. */
+    @Test
+    fun everySpeedPresetExportsWithTheLengthTheEditorShows() {
+        val a = item("video_with_audio.mp4")
+        val length = minOf(3_000L, a.durationMs ?: 3_000L)
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        for (preset in listOf(com.petruvideo.core.model.SpeedPreset.Bullet, com.petruvideo.core.model.SpeedPreset.Montage)) {
+            val base = project(VideoClip("c1", a.id, 0, length, true), media = listOf(a))
+            val ramped = (com.petruvideo.core.model.engine.ApplySpeedPreset("c1", preset).apply(base) as
+                com.petruvideo.core.model.engine.CommandResult.Applied).timeline
+            val expected = ramped.videoLane.single().lengthMs
+            val (state, uri) = export(ramped, settings, "pipeline-ramp-${preset.name}")
+            state.shouldBeFinished()
+            val r = retriever(uri!!)
+            val actual = r.int(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            r.release()
+            check(kotlin.math.abs(actual - expected) < 150) { "${preset.label}: exported $actual ms, the editor shows $expected ms" }
+        }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

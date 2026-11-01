@@ -76,15 +76,30 @@ data class VideoClip(
     val transform: ClipTransform = ClipTransform(),
     /** Plays the trimmed source range backwards, picture and attached sound (feature 017). */
     val reversed: Boolean = false,
+    /** The speed along the clip when it is not one constant [speedMilli] (feature 018). */
+    val speedCurve: SpeedCurve? = null,
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
 
+    val lengthMs: Long get() = speedCurve?.timelineMs ?: timelineLengthMs(sourceLengthMs, speedMilli)
+
+    /** The clip over the source range [start]..[end], with its speed curve cut to match. */
+    fun withSourceRange(start: Long, end: Long): VideoClip {
+        val curve = speedCurve ?: return copy(sourceStartMs = start, sourceEndMs = end)
+        val from = if (reversed) sourceEndMs - end else start - sourceStartMs
+        return copy(sourceStartMs = start, sourceEndMs = end, speedCurve = curve.windowed(from, from + (end - start)))
+    }
+
+    /** How far into the played source (from the start of playback) the moment [timelineOffsetMs] into the clip is. */
+    fun playedOffsetAt(timelineOffsetMs: Long): Long =
+        speedCurve?.sourceAt(timelineOffsetMs) ?: ((timelineOffsetMs * speedMilli + SPEED_UNIT / 2) / SPEED_UNIT)
+
     /** The source time shown [offsetMs] after the clip's start on the timeline, forwards or backwards. */
     fun sourceTimeAt(offsetMs: Long): Long {
-        val travelled = offsetMs.coerceIn(0, lengthMs) * speedMilli / SPEED_UNIT
+        val clamped = offsetMs.coerceIn(0, lengthMs)
+        val travelled = speedCurve?.sourceAt(clamped) ?: (clamped * speedMilli / SPEED_UNIT)
         return if (reversed) sourceEndMs - travelled else sourceStartMs + travelled
     }
-    val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
 
     /** The shown zoom, pan, and opacity [relMs] after the clip's start, always covering the frame. */
     fun poseAt(relMs: Long): Pose = Framing.clamp(Keyframes.poseAt(FRAMING_NEUTRAL, keyframes, relMs))

@@ -64,6 +64,7 @@ class EditorScreenshotTest {
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
+        curvePanel: SpeedCurvePanelState? = null,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -124,6 +125,7 @@ class EditorScreenshotTest {
             transformPanel = transformPanel,
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
+            curvePanel = curvePanel,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -300,6 +302,22 @@ class EditorScreenshotTest {
                         transformPanel = TransformPanelState(
                             "c1", turnedClip.copy(crop = com.petruvideo.core.model.CropBox(100, 100, 800, 800)),
                         ),
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun speedCurvePanelWithTheHeroPreset() = paparazzi.snapshot {
+        val curve = com.petruvideo.core.model.SpeedCurve.preset(com.petruvideo.core.model.SpeedPreset.Hero, 4_000)
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Video("c1"),
+                        curvePanel = SpeedCurvePanelState("c1", curve, true, curve.timelineMs, 4_000),
                     ),
                     player = null, onEvent = {}, onBack = {},
                 )

@@ -56,6 +56,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Transform("Transform", true),
     Freeze("Freeze", true),
     Reverse("Reverse", true),
+    Curve("Speed curve", true),
 }
 
 /**
@@ -153,6 +154,18 @@ data class KeyframePanelState(
     val framing: com.petruvideo.core.model.Pose? = null,
 )
 
+/**
+ * The open Speed curve panel: the clip's curve (a flat line at its constant speed when it has none), the length it
+ * gives the clip, and the length the clip has at constant speed for comparison.
+ */
+data class SpeedCurvePanelState(
+    val clipId: String,
+    val curve: com.petruvideo.core.model.SpeedCurve,
+    val hasCurve: Boolean,
+    val lengthMs: Long,
+    val constantLengthMs: Long,
+)
+
 /** The open Freeze frame panel: the clip and how long the still will be held (default length in ms). */
 data class FreezePanelState(val clipId: String, val lengthMs: Long)
 
@@ -216,6 +229,8 @@ data class EditorState(
     val transformPanel: TransformPanelState? = null,
     /** The open Freeze frame panel for the selected main-track clip, if any. */
     val freezePanel: FreezePanelState? = null,
+    /** The open Speed curve panel for the selected main-track clip, if any. */
+    val curvePanel: SpeedCurvePanelState? = null,
     /** Progress (0 to 100) of the backwards copy being made for the selected clip, if any. */
     val reverseProgress: Int? = null,
     /** Whether the selected main-track clip plays backwards. */
@@ -362,6 +377,15 @@ sealed interface EditorEvent {
     data object ReverseToggle : EditorEvent
 
     data object ReverseCancel : EditorEvent
+
+    data class SpeedCurvePreset(val preset: com.petruvideo.core.model.SpeedPreset) : EditorEvent
+
+    /** A curve being dragged: only the readout follows until it is committed. */
+    data class SpeedCurveDraft(val curve: com.petruvideo.core.model.SpeedCurve) : EditorEvent
+
+    data class SpeedCurveCommit(val curve: com.petruvideo.core.model.SpeedCurve) : EditorEvent
+    data object SpeedCurveReset : EditorEvent
+    data object SpeedCurveDismiss : EditorEvent
 
     /** Drags [handle] (or the whole box when null) by permille of the picture. */
     data class CropDrag(val handle: com.petruvideo.core.model.CropHandle?, val dx: Int, val dy: Int) : EditorEvent

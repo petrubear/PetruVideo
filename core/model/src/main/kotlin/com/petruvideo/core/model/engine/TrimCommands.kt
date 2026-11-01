@@ -57,7 +57,11 @@ private fun trimFootage(clip: VideoClip, duration: Long?, newSourceMs: Long, sta
     // A reversed clip runs backwards, so its start handle trims the end of the source and the end handle the start.
     val value = if (clip.reversed) mirrored(clip, newSourceMs) else newSourceMs
     val trimsSourceStart = start != clip.reversed
-    val candidate = if (trimsSourceStart) clip.copy(sourceStartMs = value) else clip.copy(sourceEndMs = value)
+    val candidate = if (trimsSourceStart) {
+        clip.withSourceRange(value, clip.sourceEndMs)
+    } else {
+        clip.withSourceRange(clip.sourceStartMs, value)
+    }
     return when {
         candidate.sourceStartMs < 0 || candidate.sourceEndMs > duration -> Trimmed(null)
         candidate.lengthMs < MIN_CLIP_MS -> Trimmed(null, RejectReason.BelowMinimumLength)

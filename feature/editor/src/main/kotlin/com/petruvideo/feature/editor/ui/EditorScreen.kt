@@ -71,10 +71,9 @@ private fun CompactEditor(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
-            val panelOpen = state.sheet != null || state.reverbPanel != null || state.audioPanel != null ||
-                state.textPanel != null || state.filterPanel != null || state.overlayPanel != null ||
-                state.transformPanel != null || state.freezePanel != null || state.reverseProgress != null
-            PreviewWithText(state, player, onEvent, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
+            PreviewWithText(
+                state, player, onEvent, Modifier.fillMaxWidth().height(if (state.hasOpenPanel()) 132.dp else 232.dp),
+            )
             TransportRow(
                 playback = state.playback,
                 canUndo = state.canUndo,
@@ -142,3 +141,8 @@ private fun Banner(state: EditorState, onEvent: (EditorEvent) -> Unit, modifier:
             .padding(horizontal = 16.dp, vertical = 10.dp),
     )
 }
+
+/** Whether a tool panel is open above the tool bar, so the preview gives it room. */
+private fun EditorState.hasOpenPanel() = sheet != null || reverbPanel != null || audioPanel != null ||
+    textPanel != null || filterPanel != null || overlayPanel != null || transformPanel != null ||
+    freezePanel != null || reverseProgress != null || curvePanel != null

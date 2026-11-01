@@ -25,6 +25,7 @@ class SetSpeed(private val clipId: String, private val speedMilli: Int) : Comman
 
     private fun setVideo(timeline: Timeline, index: Int): CommandResult {
         val clip = timeline.videoLane[index]
+        if (clip.speedCurve != null) return CommandResult.Rejected(RejectReason.OutOfRange)
         if (timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo) {
             return CommandResult.Rejected(RejectReason.OutOfRange)
         }

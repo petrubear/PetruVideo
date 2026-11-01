@@ -60,7 +60,7 @@ class RelinkMedia(private val mediaItemId: String, private val replacement: Medi
             val (start, end) = clamp(clip.sourceStartMs, clip.sourceEndMs)
             val attached = clip.attachedAudio && replacement.hasAudio
             val transform = if (sameShape(old, replacement)) clip.transform else clip.transform.copy(crop = CropBox())
-            clip.copy(sourceStartMs = start, sourceEndMs = end, attachedAudio = attached, transform = transform)
+            clip.withSourceRange(start, end).copy(attachedAudio = attached, transform = transform)
         }
         val audio = timeline.audioLane.map { clip ->
             if (clip.mediaItemId != mediaItemId) return@map clip

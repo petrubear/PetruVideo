@@ -55,6 +55,7 @@ class AccessibilityTest {
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
+        curvePanel: SpeedCurvePanelState? = null,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
     ) {
@@ -77,6 +78,7 @@ class AccessibilityTest {
             transformPanel = transformPanel,
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
+            curvePanel = curvePanel,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -144,6 +146,20 @@ class AccessibilityTest {
 
     private fun audio(kind: AudioToolKind) = AudioPanelState(
         kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
+    )
+
+    private val heroCurve = com.petruvideo.core.model.SpeedCurve.preset(com.petruvideo.core.model.SpeedPreset.Hero, 4_000)
+
+    @Test
+    fun speedCurvePanel() = check(
+        ClipSelection.Video("c1"), videoTools,
+        curvePanel = SpeedCurvePanelState("c1", heroCurve, true, heroCurve.timelineMs, 4_000),
+    )
+
+    @Test
+    fun speedCurvePanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools,
+        curvePanel = SpeedCurvePanelState("c1", heroCurve, true, heroCurve.timelineMs, 4_000), fontScale = 2f,
     )
 
     @Test

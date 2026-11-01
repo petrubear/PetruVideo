@@ -8,6 +8,7 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Bass
 import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.ClipTransform
+import com.petruvideo.core.model.SpeedCurve
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.EffectKind
@@ -107,6 +108,7 @@ fun VideoClipEntity.toModel() = VideoClip(
     reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
     transitionOut = transition.toModel(), effect = effect.toModel(), transform = transform.toModel(),
     reversed = reversed,
+    speedCurve = SpeedCurve.decode(speedCurve)?.takeIf { it.sourceLengthMs == sourceEndMs - sourceStartMs },
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
@@ -114,6 +116,7 @@ fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
         muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
         transitionOut.toColumns(), effect.toColumns(), transform.toColumns(), reversed,
+        speedCurve?.let(SpeedCurve::encode),
     )
 
 fun TransformColumns.toModel() =

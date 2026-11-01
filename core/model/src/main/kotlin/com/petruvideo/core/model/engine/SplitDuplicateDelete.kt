@@ -96,20 +96,21 @@ class Split(
             first = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = offset, transitionOut = null)
             second = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = clip.lengthMs - offset)
         } else {
-            if (clip.reversed) {
-                // Played backwards, the earlier part of the timeline is the later part of the source.
-                val cut = clip.sourceEndMs - sourceOffset(offset, clip.speedMilli)
-                first = clip.copy(
-                    id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
-                )
-                second = clip.copy(id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeIn())
+            val played = clip.playedOffsetAt(offset)
+            // Played backwards, the earlier part of the timeline is the later part of the source.
+            val cut = if (clip.reversed) clip.sourceEndMs - played else clip.sourceStartMs + played
+            val earlier = if (clip.reversed) {
+                clip.withSourceRange(cut, clip.sourceEndMs)
             } else {
-                val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
-                first = clip.copy(
-                    id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
-                )
-                second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
+                clip.withSourceRange(clip.sourceStartMs, cut)
             }
+            val later = if (clip.reversed) {
+                clip.withSourceRange(clip.sourceStartMs, cut)
+            } else {
+                clip.withSourceRange(cut, clip.sourceEndMs)
+            }
+            first = earlier.copy(id = newClipId(), fx = clip.fx.withoutFadeOut(), transitionOut = null)
+            second = later.copy(id = newClipId(), fx = clip.fx.withoutFadeIn())
         }
         val parts = listOf(
             first.reframed(clip.keyframes, 0, offset),

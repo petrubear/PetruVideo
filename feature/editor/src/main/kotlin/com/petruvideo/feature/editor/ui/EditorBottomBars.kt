@@ -28,6 +28,7 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             KeyframePanel(state.keyframePanel, onEvent)
             TransformPanel(state.transformPanel, onEvent)
             FreezePanel(state.freezePanel, onEvent)
+            SpeedCurvePanel(state.curvePanel, onEvent)
             OverlayPanel(state.overlayPanel, onEvent)
         }
         ReverseProgress(state.reverseProgress, onCancel = { onEvent(EditorEvent.ReverseCancel) })

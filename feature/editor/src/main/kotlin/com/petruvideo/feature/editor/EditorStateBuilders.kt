@@ -109,6 +109,25 @@ internal fun transformPanelFor(timeline: Timeline?, selection: ClipSelection?, o
     return TransformPanelState(clip.id, clip.transform)
 }
 
+internal fun curvePanelFor(
+    timeline: Timeline?,
+    selection: ClipSelection?,
+    open: Boolean,
+    draft: com.petruvideo.core.model.SpeedCurve?,
+): SpeedCurvePanelState? {
+    if (!open || timeline == null || selection !is ClipSelection.Video) return null
+    val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId } ?: return null
+    val flat = com.petruvideo.core.model.SpeedCurve(
+        listOf(
+            com.petruvideo.core.model.SpeedPoint(0, clip.speedMilli),
+            com.petruvideo.core.model.SpeedPoint(clip.sourceLengthMs, clip.speedMilli),
+        ),
+    )
+    val curve = draft ?: clip.speedCurve ?: flat
+    val constant = com.petruvideo.core.model.timelineLengthMs(clip.sourceLengthMs, SPEED_UNIT)
+    return SpeedCurvePanelState(clip.id, curve, clip.speedCurve != null, curve.timelineMs, constant)
+}
+
 internal fun freezePanelFor(selection: ClipSelection?, open: Boolean): FreezePanelState? =
     (selection as? ClipSelection.Video)?.takeIf { open }?.let { FreezePanelState(it.clipId, FREEZE_DEFAULT_MS) }
 
@@ -194,11 +213,13 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
     } else {
         emptyMap()
     }
-    return noTransition + tooLong + when {
+    val curved = if (clip.speedCurve != null) mapOf(ClipTool.Speed to "This clip uses a speed curve") else emptyMap()
+    return noTransition + tooLong + curved + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
             ClipTool.Speed to "Photos have no speed",
             ClipTool.Freeze to "A photo is already a still",
             ClipTool.Reverse to "Photos cannot be reversed",
+            ClipTool.Curve to "Photos have no speed",
             ClipTool.Volume to "Photos have no sound",
             ClipTool.Mute to "Photos have no sound",
             ClipTool.Reverb to "Photos have no sound",
@@ -280,6 +301,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Transform,
         ClipTool.Freeze,
         ClipTool.Reverse,
+        ClipTool.Curve,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
         ClipTool.Duplicate,

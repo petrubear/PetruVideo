@@ -25,6 +25,8 @@ import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.FreezePanelState
+import com.petruvideo.feature.editor.SpeedCurvePanelState
+import com.petruvideo.feature.editor.ui.SpeedCurveControls
 import com.petruvideo.feature.editor.SheetState
 import com.petruvideo.feature.editor.ui.FreezeControls
 import com.petruvideo.feature.editor.TransformPanelState
@@ -70,6 +72,7 @@ fun InspectorPanel(
     modifier: Modifier = Modifier,
     transform: TransformPanelState? = null,
     freeze: FreezePanelState? = null,
+    curve: SpeedCurvePanelState? = null,
 ) {
     Column(
         modifier.fillMaxHeight().background(PetruColors.Surface).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -117,7 +120,7 @@ fun InspectorPanel(
                 Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 OverlayControls(overlay, onEvent)
             }
-            VideoToolSections(freeze, transform, keyframes, onEvent)
+            VideoToolSections(freeze, transform, keyframes, curve, onEvent)
             if (filter != null) {
                 Text("Filters", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 LooksControls(filter, onEvent)
@@ -165,8 +168,13 @@ private fun VideoToolSections(
     freeze: FreezePanelState?,
     transform: TransformPanelState?,
     keyframes: KeyframePanelState?,
+    curve: SpeedCurvePanelState?,
     onEvent: (EditorEvent) -> Unit,
 ) {
+    if (curve != null) {
+        Text("Speed curve", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        SpeedCurveControls(curve, onEvent)
+    }
     if (freeze != null) {
         Text("Freeze frame", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         FreezeControls(freeze, onEvent)

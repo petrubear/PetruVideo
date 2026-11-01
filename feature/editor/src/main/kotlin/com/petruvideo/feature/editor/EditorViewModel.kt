@@ -59,7 +59,11 @@ import com.petruvideo.core.model.REVERSE_MAX_MS
 import com.petruvideo.core.model.engine.SetReversed
 import kotlinx.coroutines.Job
 import com.petruvideo.core.model.FREEZE_DEFAULT_MS
+import com.petruvideo.core.model.SpeedCurve
+import com.petruvideo.core.model.engine.ApplySpeedPreset
 import com.petruvideo.core.model.engine.FlipClip
+import com.petruvideo.core.model.engine.ResetSpeedCurve
+import com.petruvideo.core.model.engine.SetSpeedCurve
 import com.petruvideo.core.model.engine.FreezeFrame
 import com.petruvideo.core.model.engine.ResetTransform
 import com.petruvideo.core.model.engine.RotateClip
@@ -176,6 +180,9 @@ class EditorViewModel @Inject constructor(
         /** Whether the Transform panel is open, and the crop being edited on its screen. */
         val transformOpen: Boolean = false,
         val freezeOpen: Boolean = false,
+        val curveOpen: Boolean = false,
+        /** The curve being dragged on the graph, shown in the panel until it is committed. */
+        val curveDraft: SpeedCurve? = null,
         val crop: OpenCrop? = null,
     )
 
@@ -398,6 +405,11 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TransformReset -> run(ResetTransform(id))
             EditorEvent.TransformDismiss -> local.update { it.copy(transformOpen = false, crop = null) }
             EditorEvent.CropOpen -> openCrop(id)
+            is EditorEvent.SpeedCurvePreset -> commitCurve(ApplySpeedPreset(id, event.preset))
+            is EditorEvent.SpeedCurveDraft -> local.update { it.copy(curveDraft = event.curve) }
+            is EditorEvent.SpeedCurveCommit -> commitCurve(SetSpeedCurve(id, event.curve))
+            EditorEvent.SpeedCurveReset -> commitCurve(ResetSpeedCurve(id))
+            EditorEvent.SpeedCurveDismiss -> local.update { it.copy(curveOpen = false, curveDraft = null) }
             EditorEvent.ReverseToggle -> toggleReverse(id)
             EditorEvent.ReverseCancel -> reverseJob?.cancel()
             is EditorEvent.FreezeInsert -> insertFreeze(id, event.lengthMs)
@@ -456,7 +468,10 @@ class EditorViewModel @Inject constructor(
         closeOverlay()
         closeKeyframes()
         local.update {
-            it.copy(selection = selection, text = null, transformOpen = false, freezeOpen = false, crop = null)
+            it.copy(
+                selection = selection, text = null, transformOpen = false, freezeOpen = false, curveOpen = false,
+                curveDraft = null, crop = null,
+            )
         }
     }
 
@@ -657,6 +672,33 @@ class EditorViewModel @Inject constructor(
                     say("This clip could not be reversed")
                 }
             }
+        }
+    }
+
+    private fun openCurve() {
+        if (local.value.selection !is ClipSelection.Video) return
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        closeEffect()
+        closeKeyframes()
+        local.update {
+            it.copy(
+                curveOpen = true, curveDraft = null, freezeOpen = false, transformOpen = false, overlayOpen = false,
+                sheet = null, text = null,
+            )
+        }
+    }
+
+    private fun commitCurve(command: Command) {
+        val result = session.apply(command)
+        local.update { it.copy(curveDraft = null) }
+        if (result is CommandResult.Rejected && result.reason == RejectReason.BelowMinimumLength) {
+            say("A clip cannot be shorter than a tenth of a second")
+        } else if (result is CommandResult.Rejected && command is SetSpeedCurve) {
+            say("That speed curve does not fit this clip")
         }
     }
 
@@ -1199,6 +1241,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.Transform -> openTransform()
             ClipTool.Freeze -> openFreeze()
             ClipTool.Reverse -> toggleReverse(id)
+            ClipTool.Curve -> openCurve()
             ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
             ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
@@ -1317,6 +1360,7 @@ class EditorViewModel @Inject constructor(
             textPanel = textPanelFor(timeline, selection, local.text, core.preview.positionMs),
             transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
             freezePanel = freezePanelFor(selection, local.freezeOpen),
+            curvePanel = curvePanelFor(timeline, selection, local.curveOpen, local.curveDraft),
             selectedReversed = timeline?.videoLane?.firstOrNull { it.id == selection?.clipId }?.reversed == true,
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(

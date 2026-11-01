@@ -26,6 +26,7 @@ import com.petruvideo.core.media.preview.ReverbAudioProcessor
 import com.petruvideo.core.media.preview.VoiceFxProcessor
 import com.petruvideo.core.media.text.TextOverlaySet
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.SpeedStep
 import com.petruvideo.core.model.DuckEnvelope
 import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.Availability
@@ -220,7 +221,7 @@ class CompositionBuilder(
                 EditedMediaItem.Builder(videoSource(clip, media))
                     .setDurationUs(videoSourceDurationUs(clip, media))
                     .setRemoveAudio(!clip.attachedAudio || clip.muted)
-                    .setSpeed(speedOf(clip.speedMilli))
+                    .setSpeed(speedOf(clip))
                     .setEffects(
                         Effects(
                             soundEffects(
@@ -353,6 +354,25 @@ class CompositionBuilder(
         return listOf(voice, room, gain)
     }
 
+    /** The speed of a video clip: its curve as short constant-speed pieces, or the one constant speed. */
+    private fun speedOf(clip: VideoClip): SpeedParameters {
+        val curve = clip.speedCurve ?: return speedOf(clip.speedMilli)
+        val steps = curve.steps
+        val provider = object : SpeedProvider {
+            private fun stepAt(timeUs: Long): SpeedStep? {
+                val ms = timeUs / US_PER_MS
+                return steps.firstOrNull { ms < it.endMs }
+            }
+
+            override fun getSpeed(timeUs: Long): Float = (stepAt(timeUs) ?: steps.last()).speed.toFloat()
+
+            override fun getNextSpeedChangeTimeUs(timeUs: Long): Long =
+                stepAt(timeUs)?.let { it.endMs * US_PER_MS } ?: C.TIME_UNSET
+        }
+        return SpeedParameters(provider, true)
+    }
+
+    /** A constant speed for the whole item with the pitch kept (research 1; experimental Media3 API). */
     /** A constant speed for the whole item with the pitch kept (research 1; experimental Media3 API). */
     private fun speedOf(speedMilli: Int): SpeedParameters {
         val speed = speedMilli / SPEED_DIVISOR

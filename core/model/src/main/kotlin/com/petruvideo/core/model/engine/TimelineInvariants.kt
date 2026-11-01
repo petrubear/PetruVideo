@@ -63,7 +63,15 @@ object TimelineInvariants {
         if (clip.effect?.inRange == false) add("video clip ${clip.id} effect is out of range")
         if (clip.transitionOut?.inRange == false) add("video clip ${clip.id} transition is out of range")
         addAll(videoKeyframeViolations(clip))
+        addAll(speedCurveViolations(clip))
         if (!clip.transform.inRange) add("video clip ${clip.id} transform is out of range")
+    }
+
+    /** A speed curve is valid, as long as the clip's source, and keeps the clip between the minimum and 10 minutes. */
+    private fun speedCurveViolations(clip: com.petruvideo.core.model.VideoClip) = buildList {
+        val curve = clip.speedCurve ?: return@buildList
+        if (!curve.isValid) add("video clip ${clip.id} speed curve is not valid")
+        if (curve.sourceLengthMs != clip.sourceLengthMs) add("video clip ${clip.id} speed curve does not fit the clip")
     }
 
     /** Video keyframes are a frame apart, inside the clip, at most [KEYFRAME_MAX], and cover the frame. */
