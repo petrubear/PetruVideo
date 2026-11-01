@@ -70,9 +70,20 @@ data class VideoClip(
     /** The transition into the next clip of the lane; ignored when there is no next clip. */
     val transitionOut: Transition? = null,
     val effect: ClipEffect? = null,
+    /** Zoom, pan, and fade over the clip's time; empty keeps the full-frame look (feature 014). */
+    val keyframes: List<Keyframe> = emptyList(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
+
+    /** The shown zoom, pan, and opacity [relMs] after the clip's start, always covering the frame. */
+    fun poseAt(relMs: Long): Pose = Framing.clamp(Keyframes.poseAt(FRAMING_NEUTRAL, keyframes, relMs))
+
+    /** The clip with [frames] cleaned up to the clip's length and the framing ranges. */
+    fun withKeyframes(frames: List<Keyframe>): VideoClip = copy(
+        keyframes = Keyframes.normalized(frames, lengthMs, FRAMING_ZOOM_MIN..FRAMING_ZOOM_MAX)
+            .map { it.copy(pose = Framing.clamp(it.pose)) },
+    )
 }
 
 data class AudioClip(

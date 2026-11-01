@@ -42,7 +42,7 @@ class RoomProjectRepository @Inject constructor(
             projectId = id,
             format = project.format,
             media = media,
-            videoLane = timelines.videoClips(id).map { it.toModel() },
+            videoLane = timelines.videoClips(id).map { it.toModel().copy(keyframes = frames[it.id].orEmpty()) },
             audioLane = timelines.audioClips(id).map { it.toModel() },
             textLane = timelines.textClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
             overlayLane = timelines.overlayClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
@@ -94,7 +94,8 @@ class RoomProjectRepository @Inject constructor(
             timelines.insertTextClips(timeline.textLane.map { it.toEntity(projectId) })
             timelines.insertOverlayClips(timeline.overlayLane.map { it.toEntity(projectId) })
             timelines.insertKeyframes(
-                timeline.overlayLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } } +
+                timeline.videoLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } } +
+                    timeline.overlayLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } } +
                     timeline.textLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } },
             )
         }

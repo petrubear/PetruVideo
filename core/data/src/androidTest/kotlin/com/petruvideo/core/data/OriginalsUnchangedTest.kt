@@ -338,6 +338,32 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-004 of feature 014: video clip keyframes reload exactly, also in a duplicated project. */
+    @Test
+    fun videoKeyframesSurviveAReloadAndAProjectDuplicate() = runBlocking<Unit> {
+        val video = source("clip14.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        val id = session.timeline.value!!.videoLane.single().id
+        session.apply(com.petruvideo.core.model.engine.SetPoseAt(id, 0, com.petruvideo.core.model.FRAMING_NEUTRAL))
+        session.apply(
+            com.petruvideo.core.model.engine.SetPoseAt(id, 3_000, com.petruvideo.core.model.Pose(700, 400, 2_000, 60)),
+        )
+        session.flush()
+        val saved = session.timeline.value!!.videoLane.single().keyframes
+        session.close()
+
+        saved.size shouldBe 2
+        repo.loadProject(project.id)!!.timeline.videoLane.single().keyframes shouldBe saved
+        val copy = repo.duplicateProject(project.id)!!
+        repo.loadProject(copy.id)!!.timeline.videoLane.single().keyframes shouldBe saved
+        checksums() shouldBe before
+    }
+
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
     @Test
     fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {

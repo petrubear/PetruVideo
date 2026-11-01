@@ -7,6 +7,7 @@ import com.petruvideo.core.model.PHOTO_MAX_MS
 import com.petruvideo.core.model.PHOTO_MIN_MS
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.reframed
 
 /**
  * Moves the start handle of a video or audio clip to [newSourceMs] (a position in the source). Footage trimmed
@@ -42,7 +43,10 @@ private fun trimVideo(timeline: Timeline, index: Int, newSourceMs: Long, start: 
         candidate
     }
     if (trimmed == null) return CommandResult.Rejected(RejectReason.OutOfRange)
-    val lane = timeline.videoLane.toMutableList().also { it[index] = trimmed }
+    // The part of the old clip that is kept starts at the start trim and is as long as the new clip.
+    val from = if (start) clip.lengthMs - trimmed.lengthMs else 0L
+    val kept = trimmed.reframed(clip.keyframes, from, from + trimmed.lengthMs)
+    val lane = timeline.videoLane.toMutableList().also { it[index] = kept }
     return CommandResult.Applied(timeline.copy(videoLane = lane), "Trim clip")
 }
 

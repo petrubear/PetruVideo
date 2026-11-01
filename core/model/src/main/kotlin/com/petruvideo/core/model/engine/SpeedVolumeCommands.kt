@@ -2,6 +2,7 @@ package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.rescaled
 import com.petruvideo.core.model.SPEED_MAX_MILLI
 import com.petruvideo.core.model.SPEED_MIN_MILLI
 import com.petruvideo.core.model.SPEED_UNIT
@@ -29,7 +30,8 @@ class SetSpeed(private val clipId: String, private val speedMilli: Int) : Comman
         }
         val applied = limit(clip.sourceLengthMs, minSpeed = SPEED_MIN_MILLI)
         if (applied == null || applied == clip.speedMilli) return CommandResult.Rejected(RejectReason.OutOfRange)
-        val lane = timeline.videoLane.toMutableList().also { it[index] = clip.copy(speedMilli = applied) }
+        val faster = clip.copy(speedMilli = applied).rescaled(clip.keyframes, clip.lengthMs)
+        val lane = timeline.videoLane.toMutableList().also { it[index] = faster }
         return applied(timeline.copy(videoLane = lane), applied)
     }
 

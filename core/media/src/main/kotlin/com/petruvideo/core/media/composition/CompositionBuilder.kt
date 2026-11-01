@@ -16,6 +16,7 @@ import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.effects.ClipEffectHandle
+import com.petruvideo.core.media.effects.ClipFramingHandle
 import com.petruvideo.core.media.filter.ClipFilterEffects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
@@ -87,7 +88,7 @@ data class BuildSpec(
  * for each clip are kept in [gains] and [reverbs] so the preview can change them live.
  */
 @OptIn(UnstableApi::class, ExperimentalApi::class)
-class CompositionBuilder(private val spec: BuildSpec) {
+class CompositionBuilder(private val spec: BuildSpec, private val framingIds: Set<String> = emptySet()) {
     val gains = mutableMapOf<String, GainAudioProcessor>()
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     val voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
@@ -97,6 +98,9 @@ class CompositionBuilder(private val spec: BuildSpec) {
 
     /** The picture effect of each clip that has one after [build], so the preview can change its strength live. */
     val clipEffects = mutableMapOf<String, ClipEffectHandle>()
+
+    /** The framing (zoom, pan, fade) of each clip with keyframes after [build], so the preview can change it live. */
+    val framings = mutableMapOf<String, ClipFramingHandle>()
 
     /** The placement of the overlay clips after [build], so the preview can change one live; null without overlays. */
     var overlayLayout: OverlayLayout? = null
@@ -261,13 +265,16 @@ class CompositionBuilder(private val spec: BuildSpec) {
     /** [frame] plus the clip's color transform and vignette when it has a filter on. */
     private fun withFilter(clip: VideoClip, frame: Effects): Effects {
         val effect = clip.effect?.let { ClipEffectHandle(it).also { handle -> clipEffects[clip.id] = handle } }
-        if (clip.filter.isNeutral && effect == null) return frame
+        val framing = clip.takeIf { it.keyframes.isNotEmpty() || it.id in framingIds }
+            ?.let { ClipFramingHandle(clip).also { handle -> framings[clip.id] = handle } }
+        if (clip.filter.isNeutral && effect == null && framing == null) return frame
         val filter = if (clip.filter.isNeutral) {
             emptyList()
         } else {
             ClipFilterEffects(clip.filter).also { filters[clip.id] = it }.effects
         }
-        return Effects(frame.audioProcessors, frame.videoEffects + filter + listOfNotNull(effect?.glEffect))
+        val picture = listOfNotNull(effect?.glEffect, framing?.glEffect)
+        return Effects(frame.audioProcessors, frame.videoEffects + filter + picture)
     }
 
     /** One overlay effect for every text clip, at the composition level so times are the project's. */

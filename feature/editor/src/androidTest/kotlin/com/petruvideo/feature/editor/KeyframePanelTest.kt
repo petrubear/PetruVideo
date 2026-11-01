@@ -42,6 +42,17 @@ class KeyframePanelTest {
     }
 
     @Test
+    fun aVideoClipPanelShowsZoomAndOpacityAndSendsFramingChanges() {
+        val events = mutableListOf<EditorEvent>()
+        val panel = KeyframePanelState("c1", frames, null, 500, 3_000, Pose(500, 500, 1_500, 90))
+        compose.setContent { PetruTheme { KeyframePanel(panel, onEvent = { events += it }) } }
+        compose.onNodeWithText("Zoom").assertIsDisplayed()
+        compose.onNodeWithText("150%").assertIsDisplayed()
+        compose.onNodeWithText("Opacity").assertIsDisplayed()
+        compose.onNodeWithText("90%").assertIsDisplayed()
+    }
+
+    @Test
     fun aSelectedKeyframeOffersMotionCopyAndDelete() {
         val events = show(1_500)
         compose.onNodeWithText("Keyframe 2 of 2").assertIsDisplayed()

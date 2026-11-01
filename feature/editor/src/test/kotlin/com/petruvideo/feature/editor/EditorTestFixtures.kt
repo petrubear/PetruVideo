@@ -73,6 +73,14 @@ class FakePreviewEngine : PreviewEngine {
         calls += "filter $clipId ${filter.look} ${filter.intensity} ${filter.brightness}"
     }
 
+    override fun armClipFraming(clipId: String) {
+        calls += "arm $clipId"
+    }
+
+    override fun setClipFramingLive(clip: com.petruvideo.core.model.VideoClip) {
+        calls += "framing ${clip.id} ${clip.keyframes.size}"
+    }
+
     override fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect) {
         calls += "effect $clipId ${effect.kind} ${effect.strength}"
     }

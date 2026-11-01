@@ -1,5 +1,6 @@
 package com.petruvideo.core.model.engine
 
+import com.petruvideo.core.model.FRAMING_NEUTRAL
 import com.petruvideo.core.model.KEYFRAME_MAX
 import com.petruvideo.core.model.KEYFRAME_MIN_GAP_MS
 import com.petruvideo.core.model.Keyframe
@@ -25,7 +26,20 @@ abstract class KeyframeCommand internal constructor(
         if (overlayIndex >= 0) return applyToOverlay(timeline, overlayIndex)
         val textIndex = timeline.textLane.indexOfFirst { it.id == clipId }
         if (textIndex >= 0) return applyToText(timeline, textIndex)
+        val videoIndex = timeline.videoLane.indexOfFirst { it.id == clipId }
+        if (videoIndex >= 0) return applyToVideo(timeline, videoIndex)
         return CommandResult.Rejected(RejectReason.NotFound)
+    }
+
+    private fun applyToVideo(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.videoLane[index]
+        val start = timeline.videoStartOf(clip.id) ?: return CommandResult.Rejected(RejectReason.NotFound)
+        val target = KeyframeTarget(FRAMING_NEUTRAL, clip.keyframes, start, clip.lengthMs, seedsStart = true)
+        val edit = edit(target) ?: return CommandResult.Rejected(rejection(target))
+        val changed = clip.withKeyframes(edit.frames)
+        if (changed == clip) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.videoLane.toMutableList().also { it[index] = changed }
+        return CommandResult.Applied(timeline.copy(videoLane = lane), label)
     }
 
     private fun applyToOverlay(timeline: Timeline, index: Int): CommandResult {
@@ -55,11 +69,17 @@ class KeyframeTarget internal constructor(
     val frames: List<Keyframe>,
     val startMs: Long,
     val durationMs: Long,
+    /** A video clip's first keyframe made away from its start is preceded by one holding the plain look. */
+    val seedsStart: Boolean = false,
 ) {
     fun rel(timelineMs: Long) = (timelineMs - startMs).coerceIn(0, durationMs)
 
     fun poseAtRel(relMs: Long) = Keyframes.poseAt(base, frames, relMs)
 }
+
+/** [frames] to build on for a change at [relMs]: a video clip with none gets a start keyframe holding the look. */
+private fun KeyframeTarget.seeded(relMs: Long): List<Keyframe>? =
+    if (seedsStart && frames.isEmpty() && relMs >= KEYFRAME_MIN_GAP_MS) listOf(Keyframe(0, base)) else frames
 
 private fun KeyframeTarget.indexAt(relMs: Long) = frames.indexOfFirst { it.timeMs == relMs }
 
@@ -80,7 +100,9 @@ class AddKeyframe(clipId: String, private val atMs: Long) : KeyframeCommand(clip
 class SetPoseAt(clipId: String, private val atMs: Long, private val pose: Pose) :
     KeyframeCommand(clipId, "Animate") {
     override fun edit(clip: KeyframeTarget): KeyframeEdit? =
-        Keyframes.withPoseAt(clip.frames, clip.rel(atMs), pose)?.let { KeyframeEdit(it) }
+        clip.seeded(clip.rel(atMs))?.let { frames ->
+            Keyframes.withPoseAt(frames, clip.rel(atMs), pose)?.let { KeyframeEdit(it) }
+        }
 
     override fun rejection(clip: KeyframeTarget) =
         if (clip.frames.size >= KEYFRAME_MAX) RejectReason.LimitReached else RejectReason.OutOfRange

@@ -49,6 +49,10 @@ class Media3PreviewEngine @Inject constructor(
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
+    private val armedFraming = mutableSetOf<String>()
+    private var lastTimeline: Timeline? = null
+    private var lastQuality: PreviewQuality? = null
+    private var framings = mutableMapOf<String, com.petruvideo.core.media.effects.ClipFramingHandle>()
     private var textOverlays: com.petruvideo.core.media.text.TextOverlaySet? = null
     private val refresh = Runnable { refreshFrame() }
     private var reverbAllowed = true
@@ -100,7 +104,9 @@ class Media3PreviewEngine @Inject constructor(
 
     override fun load(timeline: Timeline, quality: PreviewQuality) {
         totalMs = timeline.totalDurationMs
-        val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality))
+        lastTimeline = timeline
+        lastQuality = quality
+        val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality), armedFraming)
         val composition = builder.build(timeline)
         gains = builder.gains
         reverbs = builder.reverbs
@@ -109,6 +115,7 @@ class Media3PreviewEngine @Inject constructor(
         overlayLayout = builder.overlayLayout
         filters = builder.filters
         clipEffects = builder.clipEffects
+        framings = builder.framings
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         // Overlays and transitions are separate video inputs, which needs the multiple-input video graph. That player
@@ -181,6 +188,19 @@ class Media3PreviewEngine @Inject constructor(
 
     override fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect) {
         clipEffects[clipId]?.update(effect)
+        if (!polling) {
+            handler.removeCallbacks(refresh)
+            handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
+
+    override fun armClipFraming(clipId: String) {
+        val loaded = lastTimeline ?: return
+        if (armedFraming.add(clipId)) load(loaded, lastQuality ?: return)
+    }
+
+    override fun setClipFramingLive(clip: com.petruvideo.core.model.VideoClip) {
+        framings[clip.id]?.update(clip)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)

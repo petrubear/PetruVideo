@@ -28,7 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.media.text.TextRenderer
+import com.petruvideo.core.model.FRAMING_ZOOM_MIN
+import com.petruvideo.core.model.Framing
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.TEXT_PERMILLE
 import com.petruvideo.core.model.TEXT_SIZE_MAX
 import com.petruvideo.core.model.TEXT_SIZE_MIN
@@ -37,6 +40,7 @@ import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private val SNAP_DP = 8.dp
 private val MIN_HIT = 96.dp
@@ -57,6 +61,10 @@ fun PreviewWithText(
         val playhead = state.playback.positionMs
         if (clip != null && format != null && playhead in clip.startMs until clip.endMs) {
             TextPreviewLayer(clip, format.width.toFloat() / format.height, onEvent)
+        }
+        val framing = state.keyframePanel?.framing
+        if (framing != null && format != null) {
+            FramingGestureLayer(framing, format.width.toFloat() / format.height, onEvent)
         }
         if (overlay != null && format != null && playhead in overlay.startMs until overlay.endMs) {
             OverlayPreviewLayer(overlay, state.selectedOverlayAspect, format.width.toFloat() / format.height, onEvent)
@@ -189,4 +197,58 @@ internal fun dragStep(
         sizePermille = size,
     )
     return DragStep(rawX, rawY, guideX, guideY, moved)
+}
+
+/** Drag pans and pinch zooms the selected video clip at the playhead; the frame is fitted inside this layer. */
+@Composable
+private fun FramingGestureLayer(pose: Pose, aspect: Float, onEvent: (EditorEvent) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val frameWidth: Dp = min(maxWidth.value, maxHeight.value * aspect).dp
+        val frameHeight: Dp = frameWidth / aspect
+        val density = LocalDensity.current
+        val frameW = with(density) { frameWidth.toPx() }.coerceAtLeast(1f)
+        val frameH = with(density) { frameHeight.toPx() }.coerceAtLeast(1f)
+        var live by remember(pose) { mutableStateOf(pose) }
+        Box(
+            Modifier
+                .align(androidx.compose.ui.Alignment.Center)
+                .width(frameWidth)
+                .height(frameHeight)
+                .pointerInput(pose.sizePermille > 0) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        var current = live
+                        do {
+                            val event = awaitPointerEvent()
+                            val pan = event.calculatePan()
+                            val zoom = event.calculateZoom()
+                            if (pan.x != 0f || pan.y != 0f || zoom != 1f) {
+                                current = framingStep(current, pan.x / frameW, pan.y / frameH, zoom)
+                                live = current
+                                onEvent(EditorEvent.FramingPreview(current))
+                                event.changes.forEach { it.consume() }
+                            }
+                        } while (event.changes.any { it.pressed })
+                        if (current != pose) onEvent(EditorEvent.FramingCommit(current))
+                    }
+                }
+                .semantics { contentDescription = "Video picture, drag to move, pinch to zoom" },
+        )
+    }
+}
+
+/**
+ * [pose] after the finger moved by ([dx], [dy]) frame widths and heights and pinched by [zoom]. Dragging the picture
+ * right shows more of its left side, so the pan runs the other way, and a zoomed picture moves less per finger move.
+ */
+internal fun framingStep(pose: Pose, dx: Float, dy: Float, zoom: Float): Pose {
+    val size = (pose.sizePermille * zoom).roundToInt()
+    val level = pose.sizePermille.toFloat() / FRAMING_ZOOM_MIN
+    return Framing.clamp(
+        pose.copy(
+            xPermille = pose.xPermille - (dx * TEXT_PERMILLE / level).roundToInt(),
+            yPermille = pose.yPermille - (dy * TEXT_PERMILLE / level).roundToInt(),
+            sizePermille = size,
+        ),
+    )
 }

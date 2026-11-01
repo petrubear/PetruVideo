@@ -116,6 +116,7 @@ fun TimelineView(
                         onMoveClip = onMoveClip,
                         onTrim = onTrim,
                         onTransitionTap = { onSelect(ClipSelection.Video(it)) },
+                        keyframes = keyframes,
                     )
                     AttachedAudioRow(timeline.videoLane, timeline.media, geometry)
                     if (timeline.overlayLane.isNotEmpty()) {

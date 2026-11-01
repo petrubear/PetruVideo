@@ -69,6 +69,7 @@ fun VideoLaneView(
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     modifier: Modifier = Modifier,
     onTransitionTap: (clipId: String) -> Unit = {},
+    keyframes: KeyframeLaneState = KeyframeLaneState(),
 ) {
     val density = LocalDensity.current.density
     var draggingId by remember { mutableStateOf<String?>(null) }
@@ -121,6 +122,10 @@ fun VideoLaneView(
                     MutedBadge(Modifier.align(Alignment.BottomEnd).padding(4.dp))
                 }
                 if (clip.id == selectedClipId) {
+                    KeyframeDiamonds(
+                        clip.id, geometry.pxToTime(startDp), clip.lengthMs, clip.keyframes, geometry, keyframes,
+                        Alignment.BottomStart,
+                    )
                     TrimHandles(
                         geometry = geometry,
                         currentLengthMs = clip.lengthMs,

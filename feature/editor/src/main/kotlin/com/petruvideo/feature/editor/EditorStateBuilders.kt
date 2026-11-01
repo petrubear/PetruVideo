@@ -76,9 +76,11 @@ internal fun keyframePanelFor(
 ): KeyframePanelState? {
     if (!open || timeline == null || selection == null) return null
     val target = keyframeTarget(timeline, selection) ?: return null
+    val rel = (playheadMs - target.startMs).coerceIn(0, target.durationMs)
+    val framing = timeline.videoLane.firstOrNull { it.id == selection.clipId }?.poseAt(rel)
     return KeyframePanelState(
-        selection.clipId, target.frames, selectedRel?.takeIf { rel -> target.frames.any { it.timeMs == rel } },
-        (playheadMs - target.startMs).coerceIn(0, target.durationMs), target.durationMs,
+        selection.clipId, target.frames, selectedRel?.takeIf { r -> target.frames.any { it.timeMs == r } },
+        rel, target.durationMs, framing,
     )
 }
 
@@ -94,6 +96,9 @@ internal fun keyframeTarget(timeline: Timeline, selection: ClipSelection): Keyfr
         ?.let { KeyframeSubject(it.keyframes, it.startMs, it.durationMs) }
         ?: timeline.textLane.firstOrNull { it.id == selection.clipId }
             ?.let { KeyframeSubject(it.keyframes, it.startMs, it.durationMs) }
+        ?: timeline.videoLane.firstOrNull { it.id == selection.clipId }?.let { clip ->
+            timeline.videoStartOf(clip.id)?.let { KeyframeSubject(clip.keyframes, it, clip.lengthMs) }
+        }
 
 internal fun textPanelFor(
     timeline: Timeline?,
@@ -233,6 +238,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
     return listOfNotNull(
         ClipTool.Split,
         ClipTool.Speed,
+        ClipTool.Keyframes,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
         ClipTool.Duplicate,

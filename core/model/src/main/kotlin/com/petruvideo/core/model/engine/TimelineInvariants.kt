@@ -3,6 +3,7 @@ package com.petruvideo.core.model.engine
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.KEYFRAME_MAX
 import com.petruvideo.core.model.KEYFRAME_MIN_GAP_MS
+import com.petruvideo.core.model.Framing
 import com.petruvideo.core.model.Keyframe
 import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.MIN_CLIP_MS
@@ -61,6 +62,22 @@ object TimelineInvariants {
     private fun effectViolations(clip: com.petruvideo.core.model.VideoClip) = buildList {
         if (clip.effect?.inRange == false) add("video clip ${clip.id} effect is out of range")
         if (clip.transitionOut?.inRange == false) add("video clip ${clip.id} transition is out of range")
+        addAll(videoKeyframeViolations(clip))
+    }
+
+    /** Video keyframes are a frame apart, inside the clip, at most [KEYFRAME_MAX], and cover the frame. */
+    private fun videoKeyframeViolations(clip: com.petruvideo.core.model.VideoClip) = buildList {
+        val frames = clip.keyframes
+        if (frames.size > KEYFRAME_MAX) add("video clip ${clip.id} has too many keyframes")
+        frames.zipWithNext().forEach { (a, b) ->
+            if (b.timeMs - a.timeMs < KEYFRAME_MIN_GAP_MS) {
+                add("video clip ${clip.id} has keyframes less than a frame apart")
+            }
+        }
+        if (frames.any { it.timeMs !in 0..clip.lengthMs }) add("video clip ${clip.id} has a keyframe outside the clip")
+        if (frames.any { Framing.clamp(it.pose) != it.pose }) {
+            add("video clip ${clip.id} has a keyframe that shows an edge")
+        }
     }
 
     private fun extraLaneViolations(timeline: Timeline) = buildList {

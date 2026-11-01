@@ -529,6 +529,28 @@ class EditorScreenshotTest {
     }
 
     @Test
+    fun keyframesPanelOnAVideoClip() = paparazzi.snapshot {
+        val frames = listOf(
+            com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.FRAMING_NEUTRAL),
+            com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(600, 500, 2_000, 80)),
+        )
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Video("c2"), playheadMs = 1_000,
+                        keyframePanel = KeyframePanelState(
+                            "c2", frames, 2_000, 1_000, 3_000, com.petruvideo.core.model.Pose(550, 500, 1_500, 90),
+                        ),
+                        selectedKeyframeMs = 2_000,
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
     fun overlayPanel() = paparazzi.snapshot {
         CompositionLocalProvider(LocalMediaLoaders provides loaders) {
             PetruTheme {

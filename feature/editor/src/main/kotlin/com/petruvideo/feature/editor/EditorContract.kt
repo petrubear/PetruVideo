@@ -141,6 +141,8 @@ data class KeyframePanelState(
     val selectedRelMs: Long?,
     val playheadRelMs: Long,
     val durationMs: Long,
+    /** For a video clip: the zoom, pan, and opacity shown at the playhead; null for overlay and text clips. */
+    val framing: com.petruvideo.core.model.Pose? = null,
 )
 
 /** The open reverb panel for one clip. */
@@ -305,6 +307,12 @@ sealed interface EditorEvent {
     data object KeyframeDelete : EditorEvent
     data class KeyframeMotion(val ease: Boolean) : EditorEvent
     data object KeyframeDismiss : EditorEvent
+
+    /** A zoom, pan, or fade of the selected video clip at the playhead, live while it is dragged. */
+    data class FramingPreview(val pose: com.petruvideo.core.model.Pose) : EditorEvent
+
+    /** The same change when the gesture or slider is released: one undo step. */
+    data class FramingCommit(val pose: com.petruvideo.core.model.Pose) : EditorEvent
     data class OpenEffectTool(val kind: EffectToolKind) : EditorEvent
     /** Sets the transition after the selected clip: one edit. */
     data class TransitionSet(val kind: com.petruvideo.core.model.TransitionKind, val lengthMs: Long) : EditorEvent

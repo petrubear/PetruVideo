@@ -913,6 +913,83 @@ class ExportPipelineTest {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }
 
+    private fun halvesPhoto(): MediaItem {
+        val file = File(context.cacheDir, "halves.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 300, android.graphics.Bitmap.Config.ARGB_8888)
+        for (x in 0 until 400) for (y in 0 until 300) bitmap.setPixel(x, y, if (x < 200) 0xFF804000.toInt() else 0xFF0040C0.toInt())
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        return runBlocking { MediaProbe(context).probe(Uri.fromFile(file), "halves.jpg").getOrThrow() }
+    }
+
+    /** Share of the width where the brown half ends, along the middle row. */
+    private fun brownEdge(frame: android.graphics.Bitmap): Float {
+        val y = frame.height / 2
+        var edge = 0
+        for (x in 0 until frame.width) {
+            val c = frame.getPixel(x, y)
+            if (android.graphics.Color.red(c) > android.graphics.Color.blue(c)) edge = x else if (edge > 0) break
+        }
+        return edge.toFloat() / frame.width
+    }
+
+    /** SC-003 of feature 014: zoom and pan of a video clip in the export follow the pose function at each moment. */
+    @Test
+    fun aVideoClipIsZoomedAndPannedWhereItsKeyframesPutIt() {
+        val photo = halvesPhoto()
+        val clip = VideoClip("z1", photo.id, 0, 3_000, false).withKeyframes(
+            listOf(
+                com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.FRAMING_NEUTRAL),
+                com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(400, 500, 2_000, 100)),
+            ),
+        )
+        val (state, uri) = export(project(clip, media = listOf(photo)), ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-vkf")
+        check(state is ExportState.Finished) { "video keyframe export: $state" }
+        for (time in listOf(200L, 1_000L, 1_800L, 2_600L)) {
+            val pose = clip.poseAt(time)
+            val zoom = pose.sizePermille / 1000f
+            val expected = ((0.5f - (pose.xPermille / 1000f - 0.5f / zoom)) * zoom).coerceIn(0f, 1f)
+            val edge = brownEdge(frameAt(uri!!, time))
+            check(kotlin.math.abs(edge - expected) < 0.05f) { "at $time ms the edge is $edge, the pose says $expected" }
+        }
+    }
+
+    /** FR-012 of feature 014: an animated clip still crosses over into the next clip through its transition. */
+    @Test
+    fun anAnimatedClipTransitionsIntoTheNextClip() {
+        val (plain, _, _) = twoPhotos(TransitionKind.Dissolve)
+        val first = plain.videoLane[0].withKeyframes(
+            listOf(
+                com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.FRAMING_NEUTRAL),
+                com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(500, 500, 2_000, 100)),
+            ),
+        )
+        val timeline = plain.copy(videoLane = listOf(first, plain.videoLane[1]))
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-vkf-tr")
+        check(state is ExportState.Finished) { "animated transition export: $state" }
+        val brown = meanRgb(frameAt(uri!!, 500), 0.2f, 0.8f)
+        val blue = meanRgb(frameAt(uri, 4_200), 0.2f, 0.8f)
+        val mid = meanRgb(frameAt(uri, 2_500), 0.2f, 0.8f)
+        check(brown[0] > brown[2] + 40 && blue[2] > blue[0] + 40) { "ends ${brown.toList()} ${blue.toList()}" }
+        check(mid[0] in (blue[0] + 5)..(brown[0] - 5)) { "mid ${mid.toList()} is not between the clips" }
+    }
+
+    @Test
+    fun aVideoClipFadesToBlackWhereItsKeyframesFadeIt() {
+        val photo = solidPhoto("fademe", 0xFFC0C0C0.toInt())
+        val clip = VideoClip("f1", photo.id, 0, 3_000, false).withKeyframes(
+            listOf(
+                com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.FRAMING_NEUTRAL),
+                com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.FRAMING_NEUTRAL.copy(opacityPercent = 0)),
+            ),
+        )
+        val (state, uri) = export(project(clip, media = listOf(photo)), ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-vfade")
+        check(state is ExportState.Finished) { "video fade export: $state" }
+        val start = meanLuma(frameAt(uri!!, 100))
+        val middle = meanLuma(frameAt(uri, 1_000))
+        val end = meanLuma(frameAt(uri, 2_600))
+        check(start > 100f && middle in (start * 0.3f)..(start * 0.7f) && end < 25f) { "luma $start $middle $end" }
+    }
+
     private fun ExportState.shouldBeFinished() {
         (this is ExportState.Finished) shouldBe true
     }

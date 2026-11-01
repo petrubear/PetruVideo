@@ -12,6 +12,7 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.withoutFadeIn
 import com.petruvideo.core.model.withoutFadeOut
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.reframed
 import java.util.UUID
 
 private fun newId() = UUID.randomUUID().toString()
@@ -101,7 +102,11 @@ class Split(
             )
             second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
         }
-        val lane = timeline.videoLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
+        val parts = listOf(
+            first.reframed(clip.keyframes, 0, offset),
+            second.reframed(clip.keyframes, offset, clip.lengthMs),
+        )
+        val lane = timeline.videoLane.toMutableList().apply { removeAt(index); addAll(index, parts) }
         return CommandResult.Applied(timeline.copy(videoLane = lane), "Split clip")
     }
 

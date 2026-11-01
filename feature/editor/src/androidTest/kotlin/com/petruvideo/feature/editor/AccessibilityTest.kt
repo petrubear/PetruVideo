@@ -246,6 +246,14 @@ class AccessibilityTest {
         keyframePanel = KeyframePanelState("o1", keyframes, 0, 0, 3_000), fontScale = 2f,
     )
 
+    @Test
+    fun keyframesPanelOnAVideoClip() = check(
+        ClipSelection.Video("c2"), listOf(ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes),
+        keyframePanel = KeyframePanelState(
+            "c2", keyframes, 1_500, 1_000, 3_000, com.petruvideo.core.model.Pose(550, 500, 1_500, 90),
+        ),
+    )
+
     private val overlayClip = com.petruvideo.core.model.OverlayClip("o1", "m", 0, 3_000, 0)
 
     @Test

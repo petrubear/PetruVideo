@@ -51,6 +51,7 @@ import com.petruvideo.core.model.engine.DeleteKeyframe
 import com.petruvideo.core.model.engine.MoveKeyframe
 import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.engine.SetKeyframeMotion
+import com.petruvideo.core.model.engine.SetPoseAt
 import com.petruvideo.core.model.engine.AddOverlay
 import com.petruvideo.core.model.engine.AddText
 import com.petruvideo.core.model.engine.AddVideoClips
@@ -319,15 +320,6 @@ class EditorViewModel @Inject constructor(
             EditorEvent.FilterRemove -> selectedPictureId()?.let { run(RemoveFilter(it)) }
             EditorEvent.FilterApplyAll -> selectedPictureId()?.let { run(ApplyFilterToAll(it)) }
             EditorEvent.FilterDismiss -> closeFilter()
-            EditorEvent.OpenKeyframes -> openKeyframes()
-            EditorEvent.KeyframeAdd -> addKeyframe()
-            is EditorEvent.KeyframeJump -> jumpKeyframe(event.forward)
-            is EditorEvent.KeyframeSelect -> selectKeyframe(event.relMs)
-            is EditorEvent.KeyframeMove -> moveKeyframe(event.clipId, event.fromRelMs, event.toRelMs)
-            EditorEvent.KeyframeCopyHere -> copyKeyframeHere()
-            EditorEvent.KeyframeDelete -> deleteKeyframe()
-            is EditorEvent.KeyframeMotion -> setKeyframeMotion(event.ease)
-            EditorEvent.KeyframeDismiss -> closeKeyframes()
             is EditorEvent.OpenEffectTool -> openEffect(event.kind)
             is EditorEvent.TransitionSet ->
                 selectedPictureId()?.let { run(SetTransition(it, event.kind, event.lengthMs)) }
@@ -345,6 +337,24 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TextDismiss -> closeText()
             is EditorEvent.MoveTextClip -> run(MoveText(event.clipId, event.startMs))
             is EditorEvent.TrimTextClip -> run(TrimText(event.clipId, event.startMs, event.endMs))
+            else -> onKeyframeEvent(event)
+        }
+    }
+
+    /** The events of the Keyframes panel and the video framing gestures. */
+    private fun onKeyframeEvent(event: EditorEvent) {
+        when (event) {
+            EditorEvent.OpenKeyframes -> openKeyframes()
+            EditorEvent.KeyframeAdd -> addKeyframe()
+            is EditorEvent.KeyframeJump -> jumpKeyframe(event.forward)
+            is EditorEvent.KeyframeSelect -> selectKeyframe(event.relMs)
+            is EditorEvent.KeyframeMove -> moveKeyframe(event.clipId, event.fromRelMs, event.toRelMs)
+            EditorEvent.KeyframeCopyHere -> copyKeyframeHere()
+            EditorEvent.KeyframeDelete -> deleteKeyframe()
+            is EditorEvent.KeyframeMotion -> setKeyframeMotion(event.ease)
+            EditorEvent.KeyframeDismiss -> closeKeyframes()
+            is EditorEvent.FramingPreview -> previewFraming(event.pose)
+            is EditorEvent.FramingCommit -> commitFraming(event.pose)
             else -> Unit
         }
     }
@@ -551,7 +561,9 @@ class EditorViewModel @Inject constructor(
 
     private fun openKeyframes() {
         val selection = local.value.selection
-        if (selection !is ClipSelection.Overlay && selection !is ClipSelection.Text) return
+        if (selection == null || selection is ClipSelection.Audio) return
+        // A video clip draws through its framing effect only once it exists, so ask the preview to build it now.
+        if (selection is ClipSelection.Video) engine.armClipFraming(selection.clipId)
         flushText()
         closeSheet()
         closeReverb()
@@ -565,6 +577,28 @@ class EditorViewModel @Inject constructor(
         if (local.value.keyframesOpen || local.value.keyframeRel != null) {
             local.update { it.copy(keyframesOpen = false, keyframeRel = null) }
         }
+    }
+
+    /** The selected video clip with a keyframe at the playhead holding [pose], or null when that is not possible. */
+    private fun framedClip(pose: Pose): Pair<String, com.petruvideo.core.model.VideoClip>? {
+        val id = (local.value.selection as? ClipSelection.Video)?.clipId ?: return null
+        val timeline = session.timeline.value ?: return null
+        val result = SetPoseAt(id, engine.state.value.positionMs, pose).apply(timeline) as? CommandResult.Applied
+        return result?.timeline?.videoLane?.firstOrNull { it.id == id }?.let { id to it }
+    }
+
+    private fun previewFraming(pose: Pose) {
+        framedClip(pose)?.let { engine.setClipFramingLive(it.second) }
+    }
+
+    private fun commitFraming(pose: Pose) {
+        val id = (local.value.selection as? ClipSelection.Video)?.clipId ?: return
+        val result = session.apply(SetPoseAt(id, engine.state.value.positionMs, pose))
+        if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
+            say("A clip can have 50 keyframes at most")
+        }
+        // A drag that did not become an edit must not leave its live values behind.
+        session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.let { engine.setClipFramingLive(it) }
     }
 
     private fun addKeyframe() {

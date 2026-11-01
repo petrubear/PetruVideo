@@ -50,6 +50,12 @@ interface PreviewEngine {
     /** Changes the strength of one clip's picture effect right away; the current frame is redrawn. */
     fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect)
 
+    /** Makes the preview draw [clipId] through its framing effect now, so a first zoom or pan shows live. */
+    fun armClipFraming(clipId: String)
+
+    /** Changes the keyframes of one video clip right away; the current frame is redrawn. */
+    fun setClipFramingLive(clip: com.petruvideo.core.model.VideoClip)
+
     /** Changes the place or opacity of one overlay clip right away; the current frame is redrawn. */
     fun setOverlayLive(clip: OverlayClip)
 

@@ -62,9 +62,10 @@ fun BoxScope.KeyframeDiamonds(
     frames: List<Keyframe>,
     geometry: TimelineGeometry,
     state: KeyframeLaneState,
+    alignment: Alignment = Alignment.CenterStart,
 ) {
     frames.forEach { frame ->
-        Diamond(clipId, clipStartMs, durationMs, frame.timeMs, geometry, state)
+        Diamond(clipId, clipStartMs, durationMs, frame.timeMs, geometry, state, alignment)
     }
 }
 
@@ -76,6 +77,7 @@ private fun BoxScope.Diamond(
     timeMs: Long,
     geometry: TimelineGeometry,
     state: KeyframeLaneState,
+    alignment: Alignment,
 ) {
     val density = LocalDensity.current.density
     var dx by remember(timeMs) { mutableFloatStateOf(0f) }
@@ -84,7 +86,7 @@ private fun BoxScope.Diamond(
     val description = "Keyframe at ${"%.1f".format(timeMs / MS)} seconds" + if (isSelected) ", selected" else ""
     Box(
         Modifier
-            .align(Alignment.CenterStart)
+            .align(alignment)
             .offset(x = x.dp - TARGET / 2)
             .size(TARGET)
             .clickable(role = Role.Button) { state.onTap(clipId, timeMs) }
