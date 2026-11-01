@@ -46,6 +46,10 @@ class FakePreviewEngine : PreviewEngine {
     private val _state = MutableStateFlow(PreviewState())
     override val state: StateFlow<PreviewState> = _state
     override val player: Player? = null
+
+    fun fail(message: String) {
+        _state.value = _state.value.copy(error = message)
+    }
     val loads = mutableListOf<Pair<Timeline, PreviewQuality>>()
     val calls = mutableListOf<String>()
     var released = false

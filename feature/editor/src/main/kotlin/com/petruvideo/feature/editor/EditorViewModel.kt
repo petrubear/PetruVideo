@@ -312,6 +312,9 @@ class EditorViewModel @Inject constructor(
                 .collect { filters -> filters.forEach { (id, filter) -> engine.setClipFilterLive(id, filter) } }
         }
         viewModelScope.launch { pressure.notices.collect(::onPressureNotice) }
+        viewModelScope.launch {
+            engine.state.map { it.error }.filterNotNull().distinctUntilChanged().collect { onPlaybackError() }
+        }
     }
 
     fun open(projectId: String) {
@@ -1493,6 +1496,17 @@ class EditorViewModel @Inject constructor(
         val unchecked = timeline.media.values.filter { checkedMedia.add(it.id) }
         if (unchecked.isNotEmpty()) session.setAvailability(availability.check(unchecked))
         thumbnails.refresh(timeline.projectId, timeline)
+    }
+
+    /** Playback stopped: a source file that went away since the project opened is the usual reason, so look again. */
+    private suspend fun onPlaybackError() {
+        val timeline = session.timeline.value ?: return
+        session.setAvailability(availability.check(timeline.media.values.toList()))
+        val missing = session.timeline.value?.media?.values?.firstOrNull { it.availability == Availability.Missing }
+        say(
+            if (missing != null) "${missing.displayName} is missing from your phone. Relink it to keep editing."
+            else "Playback stopped",
+        )
     }
 
     private fun onPressureNotice(notice: PressureNotice) {

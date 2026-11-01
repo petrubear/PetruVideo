@@ -207,6 +207,23 @@ class EditorViewModelTest {
     }
 
     @Test
+    fun `a playback error looks for a source that went away and says which one`() = runTest {
+        val e = env()
+        e.state.missingMedia shouldBe emptySet()
+        e.availability.missing = setOf("m2")
+        e.engine.fail("Playback stopped: ERROR_CODE_IO_FILE_NOT_FOUND")
+        e.state.missingMedia shouldBe setOf("m2")
+        e.state.message?.endsWith("is missing from your phone. Relink it to keep editing.") shouldBe true
+    }
+
+    @Test
+    fun `a playback error with every source present says playback stopped`() = runTest {
+        val e = env()
+        e.engine.fail("Playback stopped: ERROR_CODE_DECODING_FAILED")
+        e.state.message shouldBe "Playback stopped"
+    }
+
+    @Test
     fun `removing a missing clip deletes its clips and clears the flag`() = runTest {
         val e = env(missing = setOf("m2"))
         e.vm.onEvent(EditorEvent.RemoveMissing("m2"))
