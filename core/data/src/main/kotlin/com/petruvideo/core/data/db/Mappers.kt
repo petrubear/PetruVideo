@@ -180,6 +180,7 @@ fun TextClipEntity.toModel() = TextClip(
     ),
     animIn = TextAnimation(AnimKind.entries.firstOrNull { it.name == inKind } ?: AnimKind.None, inMs),
     animOut = TextAnimation(AnimKind.entries.firstOrNull { it.name == outKind } ?: AnimKind.None, outMs),
+    caption = caption,
 )
 
 fun TextClip.toEntity(projectId: String) = TextClipEntity(
@@ -187,7 +188,7 @@ fun TextClip.toEntity(projectId: String) = TextClipEntity(
     style.font.name, style.colorArgb, style.align.name,
     style.background.enabled, style.background.colorArgb, style.background.opacityPercent,
     style.outline.enabled, style.outline.colorArgb, style.outline.widthPermille,
-    animIn.kind.name, animIn.lengthMs, animOut.kind.name, animOut.lengthMs,
+    animIn.kind.name, animIn.lengthMs, animOut.kind.name, animOut.lengthMs, caption,
 )
 
 fun FilterColumns.toModel() = ClipFilter(

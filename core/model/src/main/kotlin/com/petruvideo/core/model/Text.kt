@@ -80,6 +80,8 @@ data class TextClip(
     val animIn: TextAnimation = TextAnimation(),
     val animOut: TextAnimation = TextAnimation(),
     val keyframes: List<Keyframe> = emptyList(),
+    /** Made by Auto captions (feature 019); typed text is false. */
+    val caption: Boolean = false,
 ) {
     val endMs: Long get() = startMs + durationMs
 

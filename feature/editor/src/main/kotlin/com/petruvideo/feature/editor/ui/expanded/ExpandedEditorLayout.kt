@@ -30,6 +30,7 @@ import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ui.ClipToolBar
 import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
+import com.petruvideo.feature.editor.ui.CaptionsPanel
 import com.petruvideo.feature.editor.ui.TextTabBar
 import com.petruvideo.feature.editor.ui.FilterPanel
 import com.petruvideo.feature.editor.ui.OverlayPanel
@@ -164,9 +165,11 @@ fun ExpandedEditorLayout(
         } else if (state.toolbarTab == ToolbarTab.Filters) {
             FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
         } else if (state.toolbarTab == ToolbarTab.Text) {
+            CaptionsPanel(state.captionsPanel, onEvent)
             TextTabBar(
                 onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
                 onAdd = { onEvent(EditorEvent.AddText) },
+                onCaptions = { onEvent(EditorEvent.OpenCaptions) },
             )
         }
     }

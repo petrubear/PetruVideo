@@ -53,7 +53,15 @@ import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.CropShape
 import com.petruvideo.core.media.freeze.FreezeStillMaker
+import com.petruvideo.core.media.captions.CaptionMaker
+import com.petruvideo.core.media.captions.CaptionResult
+import com.petruvideo.core.media.captions.NoCaptionMaker
+import com.petruvideo.core.media.captions.RecognitionAvailability
 import com.petruvideo.core.media.reverse.NoReversePreparer
+import com.petruvideo.core.model.CAPTION_MAX
+import com.petruvideo.core.model.engine.AddCaptions
+import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import com.petruvideo.core.media.reverse.ReversePreparer
 import com.petruvideo.core.model.REVERSE_MAX_MS
 import com.petruvideo.core.model.engine.SetReversed
@@ -150,6 +158,7 @@ class EditorViewModel @Inject constructor(
     private val voiceOver: VoiceOverController,
     private val freezeStills: FreezeStillMaker = FreezeStillMaker { _, _ -> null },
     private val reverse: ReversePreparer = NoReversePreparer,
+    private val captions: CaptionMaker = NoCaptionMaker,
 ) : ViewModel() {
 
     private data class Local(
@@ -181,10 +190,24 @@ class EditorViewModel @Inject constructor(
         val transformOpen: Boolean = false,
         val freezeOpen: Boolean = false,
         val curveOpen: Boolean = false,
+        val captions: CaptionsLocal? = null,
         /** The curve being dragged on the graph, shown in the panel until it is committed. */
         val curveDraft: SpeedCurve? = null,
         val crop: OpenCrop? = null,
     )
+
+    /** The Auto captions panel: what was checked on this phone and what the user chose. */
+    private data class CaptionsLocal(
+        val availability: RecognitionAvailability? = null,
+        val languages: List<String> = emptyList(),
+        val language: String = Locale.getDefault().toLanguageTag(),
+        val replace: Boolean = true,
+        val progress: Int? = null,
+        val note: String? = null,
+    )
+
+    private fun CaptionsLocal.toPanel() =
+        CaptionsPanelState(availability, languages, language, replace, progress, note)
 
     private data class OpenCrop(val clipId: String, val box: CropBox, val shape: CropShape)
 
@@ -225,6 +248,7 @@ class EditorViewModel @Inject constructor(
     private val checkedMedia = mutableSetOf<String>()
     private var loadedProjectId: String? = null
     private var reverseJob: Job? = null
+    private var captionsJob: Job? = null
 
     val effects = effectChannel.receiveAsFlow()
 
@@ -372,6 +396,26 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TextDismiss -> closeText()
             is EditorEvent.MoveTextClip -> run(MoveText(event.clipId, event.startMs))
             is EditorEvent.TrimTextClip -> run(TrimText(event.clipId, event.startMs, event.endMs))
+            else -> onCaptionsEvent(event)
+        }
+    }
+
+    /** The events of the Auto captions panel on the Text tab. */
+    private fun onCaptionsEvent(event: EditorEvent) {
+        when (event) {
+            EditorEvent.OpenCaptions -> openCaptions()
+            is EditorEvent.CaptionsLanguage -> {
+                updateCaptions { it.copy(language = event.tag, availability = null) }
+                viewModelScope.launch { refreshCaptionAvailability() }
+            }
+            is EditorEvent.CaptionsReplace -> updateCaptions { it.copy(replace = event.on) }
+            EditorEvent.CaptionsStart -> startCaptions()
+            EditorEvent.CaptionsCancel -> captionsJob?.cancel()
+            EditorEvent.CaptionsDismiss -> {
+                captionsJob?.cancel()
+                local.update { it.copy(captions = null) }
+            }
+            EditorEvent.CaptionsOpenSettings -> effectChannel.trySend(EditorEffect.OpenSpeechSettings)
             else -> onKeyframeEvent(event)
         }
     }
@@ -653,6 +697,54 @@ class EditorViewModel @Inject constructor(
         closeEffect()
         closeKeyframes()
         local.update { it.copy(transformOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun updateCaptions(change: (CaptionsLocal) -> CaptionsLocal) {
+        local.update { s -> s.captions?.let { s.copy(captions = change(it)) } ?: s }
+    }
+
+    private fun openCaptions() {
+        flushText()
+        local.update { it.copy(captions = CaptionsLocal()) }
+        viewModelScope.launch { refreshCaptionAvailability() }
+    }
+
+    private suspend fun refreshCaptionAvailability() {
+        val language = local.value.captions?.language ?: return
+        val availability = captions.availability(language)
+        val installed = captions.languages()
+        updateCaptions { it.copy(availability = availability, languages = installed) }
+    }
+
+    private fun startCaptions() {
+        val panel = local.value.captions ?: return
+        val timeline = session.timeline.value ?: return
+        if (panel.availability != RecognitionAvailability.Available || captionsJob?.isActive == true) return
+        pause()
+        captionsJob = viewModelScope.launch {
+            updateCaptions { it.copy(progress = 0, note = null) }
+            try {
+                val result = captions.make(timeline, panel.language) { percent ->
+                    updateCaptions { it.copy(progress = percent) }
+                }
+                val applied = session.apply(AddCaptions(result.lines, panel.replace))
+                val note = captionNote(result, applied is CommandResult.Applied)
+                updateCaptions { it.copy(progress = null, note = note) }
+            } catch (e: CancellationException) {
+                updateCaptions { it.copy(progress = null) }
+                throw e
+            }
+        }
+    }
+
+    private fun captionNote(result: CaptionResult, applied: Boolean): String = when {
+        !applied -> "There was no speech to caption"
+        else -> listOfNotNull(
+            "Added ${result.lines.size} captions",
+            "${result.skippedPhrases} phrases could not be recognised".takeIf { result.skippedPhrases > 0 },
+            "${result.skippedClips} clips were skipped (reversed or curved)".takeIf { result.skippedClips > 0 },
+            "Only the first $CAPTION_MAX were made".takeIf { result.truncated },
+        ).joinToString(". ")
     }
 
     private fun toggleReverse(id: String) {
@@ -1361,6 +1453,7 @@ class EditorViewModel @Inject constructor(
             transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
             freezePanel = freezePanelFor(selection, local.freezeOpen),
             curvePanel = curvePanelFor(timeline, selection, local.curveOpen, local.curveDraft),
+            captionsPanel = local.captions?.toPanel(),
             selectedReversed = timeline?.videoLane?.firstOrNull { it.id == selection?.clipId }?.reversed == true,
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(

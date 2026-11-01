@@ -45,3 +45,11 @@ fun openAppSettings(context: Context) {
     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(intent)
 }
+
+/** Opens the phone's speech and voice input settings, where an on-device recognition language can be installed. */
+fun openSpeechSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }.onFailure {
+        context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}

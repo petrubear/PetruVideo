@@ -135,7 +135,12 @@ fun FiltersTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
 /** The bar of the Text tab with nothing selected: back to the Edit tools, and Add text at the playhead. */
 @Composable
-fun TextTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+fun TextTabBar(
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+    onCaptions: () -> Unit = {},
+) {
     Row(
         modifier
             .fillMaxWidth()
@@ -149,6 +154,7 @@ fun TextTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modif
     ) {
         ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
         ToolButton(label = "Add text", icon = PetruIcons.Add, active = true, onClick = onAdd)
+        ToolButton(label = "Auto captions", icon = PetruIcons.ToolText, active = true, onClick = onCaptions)
     }
 }
 

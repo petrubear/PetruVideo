@@ -166,6 +166,20 @@ data class SpeedCurvePanelState(
     val constantLengthMs: Long,
 )
 
+/**
+ * The open Auto captions panel: whether recognition works here ([availability] is null while it is being checked), the
+ * installed [languages], the chosen [language], the Replace switch, progress while it runs, and a note about the
+ * last run.
+ */
+data class CaptionsPanelState(
+    val availability: com.petruvideo.core.media.captions.RecognitionAvailability?,
+    val languages: List<String>,
+    val language: String,
+    val replace: Boolean,
+    val progress: Int?,
+    val note: String?,
+)
+
 /** The open Freeze frame panel: the clip and how long the still will be held (default length in ms). */
 data class FreezePanelState(val clipId: String, val lengthMs: Long)
 
@@ -229,6 +243,8 @@ data class EditorState(
     val transformPanel: TransformPanelState? = null,
     /** The open Freeze frame panel for the selected main-track clip, if any. */
     val freezePanel: FreezePanelState? = null,
+    /** The open Auto captions panel (Text tab), if any. */
+    val captionsPanel: CaptionsPanelState? = null,
     /** The open Speed curve panel for the selected main-track clip, if any. */
     val curvePanel: SpeedCurvePanelState? = null,
     /** Progress (0 to 100) of the backwards copy being made for the selected clip, if any. */
@@ -378,6 +394,14 @@ sealed interface EditorEvent {
 
     data object ReverseCancel : EditorEvent
 
+    data object OpenCaptions : EditorEvent
+    data class CaptionsLanguage(val tag: String) : EditorEvent
+    data class CaptionsReplace(val on: Boolean) : EditorEvent
+    data object CaptionsStart : EditorEvent
+    data object CaptionsCancel : EditorEvent
+    data object CaptionsDismiss : EditorEvent
+    data object CaptionsOpenSettings : EditorEvent
+
     data class SpeedCurvePreset(val preset: com.petruvideo.core.model.SpeedPreset) : EditorEvent
 
     /** A curve being dragged: only the readout follows until it is committed. */
@@ -434,5 +458,6 @@ sealed interface EditorEffect {
     data object PickOverlayMedia : EditorEffect
     data object PickMusic : EditorEffect
     data object RequestMicrophone : EditorEffect
+    data object OpenSpeechSettings : EditorEffect
     data object OpenAppSettings : EditorEffect
 }

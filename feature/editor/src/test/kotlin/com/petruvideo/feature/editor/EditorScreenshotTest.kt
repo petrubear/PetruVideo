@@ -65,6 +65,7 @@ class EditorScreenshotTest {
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
+        captionsPanel: CaptionsPanelState? = null,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -126,6 +127,7 @@ class EditorScreenshotTest {
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
             curvePanel = curvePanel,
+            captionsPanel = captionsPanel,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -308,6 +310,41 @@ class EditorScreenshotTest {
             }
         }
     }
+
+    private fun captionsSnapshot(panel: CaptionsPanelState) = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(tab = ToolbarTab.Text, captionsPanel = panel),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun captionsPanelReady() = captionsSnapshot(
+        CaptionsPanelState(
+            com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US", "es-ES"),
+            "en-US", true, null, null,
+        ),
+    )
+
+    @Test
+    fun captionsPanelWithALanguageMissing() = captionsSnapshot(
+        CaptionsPanelState(
+            com.petruvideo.core.media.captions.RecognitionAvailability.LanguageMissing("fr-FR", listOf("en-US")),
+            listOf("en-US"), "fr-FR", true, null, null,
+        ),
+    )
+
+    @Test
+    fun captionsPanelRunning() = captionsSnapshot(
+        CaptionsPanelState(
+            com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US"), "en-US", true,
+            40, null,
+        ),
+    )
 
     @Test
     fun speedCurvePanelWithTheHeroPreset() = paparazzi.snapshot {

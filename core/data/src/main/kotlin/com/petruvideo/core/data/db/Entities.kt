@@ -285,6 +285,7 @@ data class TextClipEntity(
     val inMs: Int,
     val outKind: String,
     val outMs: Int,
+    @ColumnInfo(defaultValue = "0") val caption: Boolean = false,
 )
 
 @Entity(tableName = "export_settings")

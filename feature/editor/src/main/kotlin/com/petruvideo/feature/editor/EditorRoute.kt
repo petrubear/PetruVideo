@@ -70,6 +70,7 @@ fun EditorRoute(
                 EditorEffect.PickMusic -> pickMusic()
                 EditorEffect.RequestMicrophone -> askMicrophone()
                 EditorEffect.OpenAppSettings -> openAppSettings(context)
+                EditorEffect.OpenSpeechSettings -> openSpeechSettings(context)
                 is EditorEffect.PickRelinkFile -> {
                     relinkTarget = effect.mediaItemId
                     relinkPicker.launch(arrayOf("video/*", "image/*", "audio/*"))

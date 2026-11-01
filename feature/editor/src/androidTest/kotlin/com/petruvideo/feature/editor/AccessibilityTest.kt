@@ -56,6 +56,8 @@ class AccessibilityTest {
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
+        captionsPanel: CaptionsPanelState? = null,
+        tab: ToolbarTab = ToolbarTab.Edit,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
     ) {
@@ -79,6 +81,8 @@ class AccessibilityTest {
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
             curvePanel = curvePanel,
+            captionsPanel = captionsPanel,
+            toolbarTab = tab,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -146,6 +150,27 @@ class AccessibilityTest {
 
     private fun audio(kind: AudioToolKind) = AudioPanelState(
         kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
+    )
+
+    private val readyCaptions = CaptionsPanelState(
+        com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US", "es-ES"),
+        "en-US", true, null, "Added 12 captions",
+    )
+
+    @Test
+    fun captionsPanel() = check(null, emptyList(), captionsPanel = readyCaptions, tab = ToolbarTab.Text)
+
+    @Test
+    fun captionsPanelWithLargeFont() =
+        check(null, emptyList(), captionsPanel = readyCaptions, tab = ToolbarTab.Text, fontScale = 2f)
+
+    @Test
+    fun captionsPanelWithALanguageMissing() = check(
+        null, emptyList(), tab = ToolbarTab.Text,
+        captionsPanel = CaptionsPanelState(
+            com.petruvideo.core.media.captions.RecognitionAvailability.LanguageMissing("fr-FR", listOf("en-US")),
+            listOf("en-US"), "fr-FR", true, null, null,
+        ),
     )
 
     private val heroCurve = com.petruvideo.core.model.SpeedCurve.preset(com.petruvideo.core.model.SpeedPreset.Hero, 4_000)

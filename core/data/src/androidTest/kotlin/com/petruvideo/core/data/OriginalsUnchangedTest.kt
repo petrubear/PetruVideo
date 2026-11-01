@@ -456,6 +456,33 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-005 of feature 019: auto captions reload as auto captions, also in a duplicated project. */
+    @Test
+    fun captionsSurviveAReloadAndAProjectDuplicate() = runBlocking<Unit> {
+        val video = source("clip19.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(
+            com.petruvideo.core.model.engine.AddCaptions(
+                listOf(com.petruvideo.core.model.CaptionLine(1_000, 2_500, "Hello there")), replace = true,
+            ),
+        )
+        session.flush()
+        val saved = session.timeline.value!!.textLane
+        session.close()
+
+        saved.single().caption shouldBe true
+        repo.loadProject(project.id)!!.timeline.textLane.map { it.caption to it.text } shouldBe
+            listOf(true to "Hello there")
+        val copy = repo.duplicateProject(project.id)!!
+        repo.loadProject(copy.id)!!.timeline.textLane.single().caption shouldBe true
+        checksums() shouldBe before
+    }
+
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
     @Test
     fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {

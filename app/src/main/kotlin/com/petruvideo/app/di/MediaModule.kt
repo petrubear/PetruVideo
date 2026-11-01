@@ -1,5 +1,7 @@
 package com.petruvideo.app.di
 
+import com.petruvideo.core.media.captions.CaptionMaker
+import com.petruvideo.core.media.captions.CaptionService
 import com.petruvideo.core.media.freeze.FreezeStillMaker
 import com.petruvideo.core.media.freeze.FreezeStills
 import com.petruvideo.core.media.library.MediaLibrary
@@ -40,6 +42,9 @@ abstract class MediaModule {
 
     @Binds
     abstract fun previewEngine(impl: Media3PreviewEngine): PreviewEngine
+
+    @Binds
+    abstract fun captionMaker(impl: CaptionService): CaptionMaker
 
     @Binds
     abstract fun reversePreparer(impl: ReverseService): ReversePreparer

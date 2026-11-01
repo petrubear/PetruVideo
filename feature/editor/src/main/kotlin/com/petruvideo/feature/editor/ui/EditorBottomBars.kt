@@ -47,7 +47,12 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             ToolbarTab.Audio -> AudioTabBar(
                 back, onAdd = { onEvent(EditorEvent.AddMusic) }, onRecord = { onEvent(EditorEvent.RecordVoiceOver) },
             )
-            ToolbarTab.Text -> TextTabBar(back, onAdd = { onEvent(EditorEvent.AddText) })
+            ToolbarTab.Text -> {
+                CaptionsPanel(state.captionsPanel, onEvent)
+                TextTabBar(
+                    back, onAdd = { onEvent(EditorEvent.AddText) }, onCaptions = { onEvent(EditorEvent.OpenCaptions) },
+                )
+            }
             else -> MainToolBar(
                 onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },
                 onTab = { onEvent(EditorEvent.SelectTab(it)) },
