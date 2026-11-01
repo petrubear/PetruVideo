@@ -51,7 +51,9 @@ class EditorViewModelOverlayTest {
         e.overlays.single().durationMs shouldBe 6_000
         e.state.selection shouldBe ClipSelection.Overlay(e.overlays.single().id)
         e.state.selectedOverlay?.mediaItemId shouldBe "ov"
-        e.state.clipTools shouldBe listOf(ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete)
+        e.state.clipTools shouldBe listOf(
+            ClipTool.OverlayOpacity, ClipTool.Keyframes, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
+        )
         e.vm.onEvent(EditorEvent.Undo)
         e.overlays shouldBe emptyList()
     }

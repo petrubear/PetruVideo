@@ -40,6 +40,7 @@ import com.petruvideo.feature.editor.ui.PreviewWithText
 import com.petruvideo.feature.editor.ui.ReverbPanel
 import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ui.TimelineView
+import com.petruvideo.feature.editor.ui.keyframeLaneState
 import com.petruvideo.feature.editor.ui.clock
 
 /** The area above the hinge: the top bar and the preview, which gets the whole upper half. */
@@ -123,6 +124,7 @@ fun TabletopControlsHalf(
                     onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
                     onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
                     onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
+                    keyframes = keyframeLaneState(state, onEvent),
                 )
             }
         }

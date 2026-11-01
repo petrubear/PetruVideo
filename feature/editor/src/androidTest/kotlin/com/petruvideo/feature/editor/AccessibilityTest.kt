@@ -49,6 +49,7 @@ class AccessibilityTest {
         textPanel: TextPanelState? = null,
         filterPanel: FilterPanelState? = null,
         effectPanel: EffectPanelState? = null,
+        keyframePanel: KeyframePanelState? = null,
         overlayPanel: OverlayPanelState? = null,
         fontScale: Float = 1f,
     ) {
@@ -65,6 +66,7 @@ class AccessibilityTest {
             textPanel = textPanel,
             filterPanel = filterPanel,
             effectPanel = effectPanel,
+            keyframePanel = keyframePanel,
             overlayPanel = overlayPanel,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -216,6 +218,23 @@ class AccessibilityTest {
             com.petruvideo.core.model.ClipEffect(com.petruvideo.core.model.EffectKind.Blur, 50), 1_500,
         ),
         fontScale = 2f,
+    )
+
+    private val keyframes = listOf(
+        com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(250, 300, 300, 100)),
+        com.petruvideo.core.model.Keyframe(1_500, com.petruvideo.core.model.Pose(750, 700, 400, 50), ease = true),
+    )
+
+    @Test
+    fun keyframesPanel() = check(
+        ClipSelection.Overlay("o1"), listOf(ClipTool.OverlayOpacity, ClipTool.Keyframes, ClipTool.Split),
+        keyframePanel = KeyframePanelState("o1", keyframes, 1_500, 1_000, 3_000),
+    )
+
+    @Test
+    fun keyframesPanelWithLargeFont() = check(
+        ClipSelection.Overlay("o1"), listOf(ClipTool.OverlayOpacity, ClipTool.Keyframes),
+        keyframePanel = KeyframePanelState("o1", keyframes, 0, 0, 3_000), fontScale = 2f,
     )
 
     private val overlayClip = com.petruvideo.core.model.OverlayClip("o1", "m", 0, 3_000, 0)

@@ -39,14 +39,16 @@ class OverlayLayout(
     override fun getOverlaySettings(inputId: Int, presentationTimeUs: Long): OverlaySettings {
         if (plan != null && inputId >= plan.firstInput) return mainSettings(inputId, presentationTimeUs, plan)
         val clip = byInput[inputId] ?: return StaticOverlaySettings.Builder().build()
-        val x = clip.xPermille.toFloat() / TEXT_PERMILLE * 2f - 1f
-        val y = 1f - clip.yPermille.toFloat() / TEXT_PERMILLE * 2f
+        val timeMs = presentationTimeUs / MICROS_PER_MS
+        // The shown values come from the clip's keyframes (or its plain values) at this moment of the clip.
+        val pose = clip.poseAt(timeMs - clip.startMs)
+        val x = pose.xPermille.toFloat() / TEXT_PERMILLE * 2f - 1f
+        val y = 1f - pose.yPermille.toFloat() / TEXT_PERMILLE * 2f
         // An overlay is drawn at its own pixel size relative to the frame, so the scale also corrects for that.
         val own = inputSizes.getOrNull(inputId)?.width?.takeIf { it > 0 } ?: frameWidth
-        val scale = clip.widthPermille.toFloat() / TEXT_PERMILLE * frameWidth / own
+        val scale = pose.sizePermille.toFloat() / TEXT_PERMILLE * frameWidth / own
         // Outside its own time the input is a gap (a 16 by 16 placeholder), which must not be drawn.
-        val timeMs = presentationTimeUs / MICROS_PER_MS
-        val alpha = if (timeMs in clip.startMs until clip.endMs) clip.opacityPercent / PERCENT else 0f
+        val alpha = if (timeMs in clip.startMs until clip.endMs) pose.opacityPercent / PERCENT else 0f
         return object : OverlaySettings {
             override fun getAlphaScale() = alpha
             override fun getBackgroundFrameAnchor(): Pair<Float, Float> = Pair(x, y)

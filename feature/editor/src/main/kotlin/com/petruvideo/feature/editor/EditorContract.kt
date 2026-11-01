@@ -52,6 +52,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     EffectTransition("Transition", true),
     EffectFx("Effect", true),
     OverlayOpacity("Opacity", true),
+    Keyframes("Keyframes", true),
 }
 
 /**
@@ -130,6 +131,18 @@ data class EffectPanelState(
     val limitMs: Long,
 )
 
+/**
+ * The open Keyframes panel for the selected overlay or text clip: its keyframes (times relative to the clip), the
+ * selected one, and where the playhead is inside the clip.
+ */
+data class KeyframePanelState(
+    val clipId: String,
+    val keyframes: List<com.petruvideo.core.model.Keyframe>,
+    val selectedRelMs: Long?,
+    val playheadRelMs: Long,
+    val durationMs: Long,
+)
+
 /** The open reverb panel for one clip. */
 data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
@@ -166,6 +179,10 @@ data class EditorState(
     /** The selected overlay clip and the shape of its picture (width over height), for the preview box. */
     val selectedOverlay: OverlayClip? = null,
     val selectedOverlayAspect: Float = 1.78f,
+    /** The open Keyframes panel, if any. */
+    val keyframePanel: KeyframePanelState? = null,
+    /** Time of the selected keyframe inside the selected clip, if one is selected. */
+    val selectedKeyframeMs: Long? = null,
     /** The open Effects panel, if any. */
     val effectPanel: EffectPanelState? = null,
     /** The open filter panel, if any. */
@@ -270,6 +287,15 @@ sealed interface EditorEvent {
     data object FilterRemove : EditorEvent
     data object FilterApplyAll : EditorEvent
     data object FilterDismiss : EditorEvent
+    data object OpenKeyframes : EditorEvent
+    data object KeyframeAdd : EditorEvent
+    data class KeyframeJump(val forward: Boolean) : EditorEvent
+    data class KeyframeSelect(val relMs: Long) : EditorEvent
+    data class KeyframeMove(val clipId: String, val fromRelMs: Long, val toRelMs: Long) : EditorEvent
+    data object KeyframeCopyHere : EditorEvent
+    data object KeyframeDelete : EditorEvent
+    data class KeyframeMotion(val ease: Boolean) : EditorEvent
+    data object KeyframeDismiss : EditorEvent
     data class OpenEffectTool(val kind: EffectToolKind) : EditorEvent
     /** Sets the transition after the selected clip: one edit. */
     data class TransitionSet(val kind: com.petruvideo.core.model.TransitionKind, val lengthMs: Long) : EditorEvent

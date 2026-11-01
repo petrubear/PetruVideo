@@ -209,6 +209,31 @@ data class OverlayClipEntity(
     val opacity: Int,
 )
 
+/** One keyframe of an overlay or text clip; [ownerId] is the clip's id (the two lanes live in two tables). */
+@Entity(
+    tableName = "keyframe",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProjectEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["projectId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["projectId", "ownerId"])],
+)
+data class KeyframeEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val projectId: String,
+    val ownerId: String,
+    val timeMs: Long,
+    val x: Int,
+    val y: Int,
+    val size: Int,
+    val opacity: Int,
+    val ease: Boolean,
+)
+
 @Entity(
     tableName = "text_clip",
     foreignKeys = [

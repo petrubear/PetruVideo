@@ -1,5 +1,6 @@
 package com.petruvideo.core.model.engine
 
+import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.TEXT_ADD_MIN_MS
 import com.petruvideo.core.model.TEXT_DEFAULT_MS
 import com.petruvideo.core.model.TEXT_MAX_CHARS
@@ -66,9 +67,18 @@ class SetTextPlacement(
     private val xPermille: Int,
     private val yPermille: Int,
     private val sizePermille: Int,
+    private val atMs: Long? = null,
 ) : TextClipCommand(clipId, "Move text") {
-    override fun next(clip: TextClip) =
-        clip.copy(xPermille = xPermille, yPermille = yPermille, sizePermille = sizePermille)
+    override fun next(clip: TextClip): TextClip? {
+        if (clip.keyframes.isEmpty()) {
+            return clip.copy(xPermille = xPermille, yPermille = yPermille, sizePermille = sizePermille)
+        }
+        // With keyframes the change is a keyframe at the time given; without a time it cannot be placed.
+        val time = atMs ?: return null
+        val rel = (time - clip.startMs).coerceIn(0, clip.durationMs)
+        val pose = clip.poseAt(rel).copy(xPermille = xPermille, yPermille = yPermille, sizePermille = sizePermille)
+        return Keyframes.withPoseAt(clip.keyframes, rel, pose)?.let { clip.withKeyframes(it) }
+    }
 }
 
 class SetTextAnimation(clipId: String, private val animIn: TextAnimation, private val animOut: TextAnimation) :
@@ -88,6 +98,8 @@ class TrimText(clipId: String, private val startMs: Long, private val endMs: Lon
         val start = startMs.coerceAtLeast(0)
         val length = endMs - start
         if (length < TEXT_MIN_MS || length > TEXT_MAX_MS) return null
-        return clip.copy(startMs = start, durationMs = length)
+        val shift = start - clip.startMs
+        val frames = Keyframes.window(clip.basePose, clip.keyframes, shift, shift + length)
+        return clip.copy(startMs = start, durationMs = length).withKeyframes(frames)
     }
 }

@@ -1,11 +1,13 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.OVERLAY_DEFAULT_MS
 import com.petruvideo.core.model.OVERLAY_MIN_MS
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.Timeline
 import java.util.UUID
 
@@ -58,14 +60,33 @@ class AddOverlay(
 }
 
 /** Sets the center (permille of the frame) and the width (permille of the frame width). */
-class SetOverlayPlacement(clipId: String, private val x: Int, private val y: Int, private val width: Int) :
-    OverlayCommand(clipId, "Move overlay") {
-    override fun next(clip: OverlayClip, media: MediaItem?) =
-        clip.copy(xPermille = x, yPermille = y, widthPermille = width)
+class SetOverlayPlacement(
+    clipId: String,
+    private val x: Int,
+    private val y: Int,
+    private val width: Int,
+    private val atMs: Long? = null,
+) : OverlayCommand(clipId, "Move overlay") {
+    override fun next(clip: OverlayClip, media: MediaItem?) = clip.editPose(atMs) {
+        it.copy(xPermille = x, yPermille = y, sizePermille = width)
+    } ?: clip.takeIf { it.keyframes.isEmpty() }?.copy(xPermille = x, yPermille = y, widthPermille = width)
 }
 
-class SetOverlayOpacity(clipId: String, private val percent: Int) : OverlayCommand(clipId, "Overlay opacity") {
-    override fun next(clip: OverlayClip, media: MediaItem?) = clip.copy(opacityPercent = percent)
+class SetOverlayOpacity(clipId: String, private val percent: Int, private val atMs: Long? = null) :
+    OverlayCommand(clipId, "Overlay opacity") {
+    override fun next(clip: OverlayClip, media: MediaItem?) = clip.editPose(atMs) {
+        it.copy(opacityPercent = percent)
+    } ?: clip.takeIf { it.keyframes.isEmpty() }?.copy(opacityPercent = percent)
+}
+
+/**
+ * The clip with its pose at timeline time [atMs] changed by [change], as a keyframe at that time; null when the clip
+ * has no keyframes (the plain values are edited instead), when [atMs] is missing, or at the keyframe limit.
+ */
+private fun OverlayClip.editPose(atMs: Long?, change: (Pose) -> Pose): OverlayClip? {
+    if (keyframes.isEmpty() || atMs == null) return null
+    val rel = (atMs - startMs).coerceIn(0, durationMs)
+    return Keyframes.withPoseAt(keyframes, rel, change(poseAt(rel)))?.let { withKeyframes(it) }
 }
 
 /** Moves the overlay in time (never below 0); the length is kept. */
@@ -88,6 +109,8 @@ class TrimOverlay(clipId: String, private val startMs: Long, private val endMs: 
         val limit = media?.durationMs
         if (!photo && sourceStart < 0) return null
         if (!photo && limit != null && sourceEnd > limit) return null
-        return clip.copy(startMs = start, sourceStartMs = sourceStart, sourceEndMs = sourceEnd)
+        val shift = start - clip.startMs
+        val frames = Keyframes.window(clip.basePose, clip.keyframes, shift, shift + (endMs - start))
+        return clip.copy(startMs = start, sourceStartMs = sourceStart, sourceEndMs = sourceEnd).withKeyframes(frames)
     }
 }

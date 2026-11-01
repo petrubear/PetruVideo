@@ -66,11 +66,45 @@ internal fun transitionLimit(timeline: Timeline, index: Int): Long {
     return if (limit < TRANSITION_MIN_MS) 0L else limit
 }
 
-internal fun textPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenText?): TextPanelState? {
+/** The keyframes of the selected overlay or text clip as the panel and the lane diamonds need them. */
+internal fun keyframePanelFor(
+    timeline: Timeline?,
+    selection: ClipSelection?,
+    open: Boolean,
+    selectedRel: Long?,
+    playheadMs: Long,
+): KeyframePanelState? {
+    if (!open || timeline == null || selection == null) return null
+    val target = keyframeTarget(timeline, selection) ?: return null
+    return KeyframePanelState(
+        selection.clipId, target.frames, selectedRel?.takeIf { rel -> target.frames.any { it.timeMs == rel } },
+        (playheadMs - target.startMs).coerceIn(0, target.durationMs), target.durationMs,
+    )
+}
+
+/** What the keyframe tools work on: the selected overlay or text clip's keyframes, start, and length. */
+internal data class KeyframeSubject(
+    val frames: List<com.petruvideo.core.model.Keyframe>,
+    val startMs: Long,
+    val durationMs: Long,
+)
+
+internal fun keyframeTarget(timeline: Timeline, selection: ClipSelection): KeyframeSubject? =
+    timeline.overlayLane.firstOrNull { it.id == selection.clipId }
+        ?.let { KeyframeSubject(it.keyframes, it.startMs, it.durationMs) }
+        ?: timeline.textLane.firstOrNull { it.id == selection.clipId }
+            ?.let { KeyframeSubject(it.keyframes, it.startMs, it.durationMs) }
+
+internal fun textPanelFor(
+    timeline: Timeline?,
+    selection: ClipSelection?,
+    open: OpenText?,
+    playheadMs: Long = 0,
+): TextPanelState? {
     if (timeline == null || selection == null || open == null) return null
     if (open.clipId != selection.clipId) return null
     val clip = timeline.textLane.firstOrNull { it.id == open.clipId } ?: return null
-    return TextPanelState(open.kind, clip)
+    return TextPanelState(open.kind, clip.shownAt(playheadMs))
 }
 
 internal fun soundClip(timeline: Timeline, id: String): Pair<AudioFx, Long>? =
@@ -176,10 +210,12 @@ internal fun clipToolsFor(
         ToolbarTab.Audio -> audioTabTools(timeline, selection)
         else -> videoTools(timeline, selection)
     }
-    is ClipSelection.Overlay -> listOf(ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete)
+    is ClipSelection.Overlay -> listOf(
+        ClipTool.OverlayOpacity, ClipTool.Keyframes, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
+    )
     is ClipSelection.Text -> listOf(
-        ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate,
-        ClipTool.Delete,
+        ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Keyframes, ClipTool.Split,
+        ClipTool.Duplicate, ClipTool.Delete,
     )
     is ClipSelection.Audio -> if (tab == ToolbarTab.Audio) listOf(ClipTool.Audio, ClipTool.Delete) else
         listOf(

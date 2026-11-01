@@ -830,6 +830,61 @@ class ExportPipelineTest {
         check(kotlin.math.abs(duration - clipsMs) < 300) { "template length $duration, expected $clipsMs" }
     }
 
+    @Test
+    fun anAnimatedOverlayIsDrawnWhereItsKeyframesPutItAtEachMoment() {
+        val base = item("video_silent.mp4")
+        val photo = magentaPhoto()
+        val frames = listOf(
+            com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(250, 300, 300, 100)),
+            com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(750, 700, 500, 100)),
+        )
+        val overlay = OverlayClip("o1", photo.id, 0, 3_000, 0).withKeyframes(frames)
+        val timeline = project(VideoClip("c1", base.id, 0, 3_000, false), media = listOf(base)).let {
+            it.copy(media = it.media + (photo.id to photo), overlayLane = listOf(overlay))
+        }
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-kf")
+        check(state is ExportState.Finished) { "keyframe export: $state" }
+        for (time in listOf(300L, 1_000L, 1_700L, 2_600L)) {
+            val box = magentaBox(frameAt(uri!!, time))
+            check(box != null) { "overlay not visible at $time ms" }
+            val pose = overlay.poseAt(time)
+            val cx = (box[0] + box[2]) / 2
+            val cy = (box[1] + box[3]) / 2
+            val width = box[2] - box[0]
+            check(kotlin.math.abs(cx - pose.xPermille / 1000f) < 0.05f && kotlin.math.abs(cy - pose.yPermille / 1000f) < 0.07f) {
+                "at $time ms the center is $cx,$cy, the pose says ${pose.xPermille / 1000f},${pose.yPermille / 1000f}"
+            }
+            check(kotlin.math.abs(width - pose.sizePermille / 1000f) < 0.07f) {
+                "at $time ms the width is $width, the pose says ${pose.sizePermille / 1000f}"
+            }
+        }
+    }
+
+    @Test
+    fun animatedTextMovesAcrossTheFrameAndFadesWithItsOpacityKeyframes() {
+        val a = item("video_silent.mp4")
+        val frames = listOf(
+            com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(250, 500, 200, 100)),
+            com.petruvideo.core.model.Keyframe(1_500, com.petruvideo.core.model.Pose(750, 500, 200, 100)),
+            com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(750, 500, 200, 0)),
+        )
+        val title = textClip("t1", 0, 2_500, x = 250).withKeyframes(frames)
+        val timeline = project(VideoClip("c1", a.id, 0, 3_000, false), media = listOf(a)).copy(textLane = listOf(title))
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val (state, uri) = export(timeline, settings, "pipeline-kf-text")
+        val (plainState, plain) = export(timeline.copy(textLane = emptyList()), settings, "pipeline-kf-text-plain")
+        check(state is ExportState.Finished && plainState is ExportState.Finished) { "text exports: $state, $plainState" }
+        fun diff(ms: Long, l: Float = 0f, r: Float = 1f) = changedPixels(frameAt(plain!!, ms), frameAt(uri!!, ms), l, r)
+        val earlyLeft = diff(200, 0f, 0.5f)
+        val earlyRight = diff(200, 0.5f, 1f)
+        check(earlyLeft > earlyRight * 3) { "text should start on the left: $earlyLeft left, $earlyRight right" }
+        val lateLeft = diff(1_450, 0f, 0.5f)
+        val lateRight = diff(1_450, 0.5f, 1f)
+        check(lateRight > lateLeft * 3) { "text should be on the right by 1.5 s: $lateLeft left, $lateRight right" }
+        val faded = diff(2_200)
+        check(faded < diff(200) / 4) { "text should have faded out: $faded changed pixels against ${diff(200)}" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

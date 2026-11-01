@@ -35,14 +35,15 @@ class RoomProjectRepository @Inject constructor(
         val entity = projects.get(id) ?: return null
         val media = timelines.mediaItems(id).map { it.toModel() }.associateBy { it.id }
         val project = entity.toModel()
+        val frames = timelines.keyframes(id).groupBy({ it.ownerId }, { it.toModel() })
         val timeline = Timeline(
             projectId = id,
             format = project.format,
             media = media,
             videoLane = timelines.videoClips(id).map { it.toModel() },
             audioLane = timelines.audioClips(id).map { it.toModel() },
-            textLane = timelines.textClips(id).map { it.toModel() },
-            overlayLane = timelines.overlayClips(id).map { it.toModel() },
+            textLane = timelines.textClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
+            overlayLane = timelines.overlayClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
             playheadMs = entity.playheadMs,
         )
         return LoadedProject(project, timeline)
@@ -77,6 +78,7 @@ class RoomProjectRepository @Inject constructor(
             timelines.deleteAudioClips(projectId)
             timelines.deleteTextClips(projectId)
             timelines.deleteOverlayClips(projectId)
+            timelines.deleteKeyframes(projectId)
             timelines.deleteMedia(projectId)
             val referenced = (
                 timeline.videoLane.map { it.mediaItemId } + timeline.audioLane.map { it.mediaItemId } +
@@ -89,6 +91,10 @@ class RoomProjectRepository @Inject constructor(
             timelines.insertAudioClips(timeline.audioLane.map { it.toEntity(projectId) })
             timelines.insertTextClips(timeline.textLane.map { it.toEntity(projectId) })
             timelines.insertOverlayClips(timeline.overlayLane.map { it.toEntity(projectId) })
+            timelines.insertKeyframes(
+                timeline.overlayLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } } +
+                    timeline.textLane.flatMap { c -> c.keyframes.map { it.toEntity(projectId, c.id) } },
+            )
         }
     }
 

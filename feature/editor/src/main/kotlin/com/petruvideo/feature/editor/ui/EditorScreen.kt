@@ -97,6 +97,7 @@ private fun CompactEditor(
                     onTrimOverlay = { id, start, end -> onEvent(EditorEvent.TrimOverlayClip(id, start, end)) },
                     onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
                     onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
+                    keyframes = keyframeLaneState(state, onEvent),
                     modifier = Modifier.weight(1f),
                 )
                 MissingBar(state, onEvent)

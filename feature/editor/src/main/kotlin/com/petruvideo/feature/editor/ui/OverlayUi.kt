@@ -123,6 +123,7 @@ fun OverlayLaneView(
     onMove: (clipId: String, startMs: Long) -> Unit,
     onTrim: (clipId: String, startMs: Long, endMs: Long) -> Unit,
     modifier: Modifier = Modifier,
+    keyframes: KeyframeLaneState = KeyframeLaneState(),
 ) {
     val rows = TextRows.assign(clips.map { TextClip(it.id, "", it.startMs, it.durationMs) })
     val rowCount = (rows.values.maxOrNull() ?: -1) + 1
@@ -131,7 +132,7 @@ fun OverlayLaneView(
         clips.forEach { clip ->
             OverlayClipBox(
                 clip, media[clip.mediaItemId]?.displayName.orEmpty(), rows.getValue(clip.id), geometry,
-                clip.id == selectedClipId, onSelect, onMove, onTrim,
+                clip.id == selectedClipId, onSelect, onMove, onTrim, keyframes,
             )
         }
     }
@@ -147,6 +148,7 @@ private fun OverlayClipBox(
     onSelect: (String) -> Unit,
     onMove: (String, Long) -> Unit,
     onTrim: (String, Long, Long) -> Unit,
+    keyframes: KeyframeLaneState,
 ) {
     val density = LocalDensity.current.density
     var moveDx by remember { mutableFloatStateOf(0f) }
@@ -192,6 +194,7 @@ private fun OverlayClipBox(
             modifier = Modifier.align(Alignment.CenterStart).padding(horizontal = 8.dp),
         )
         if (selected) {
+            KeyframeDiamonds(clip.id, clip.startMs, clip.durationMs, clip.keyframes, geometry, keyframes)
             OverlayHandle(Alignment.CenterStart, "Trim overlay start", { trimStartDx += it }) {
                 val start = (clip.startMs + geometry.pxToTime(trimStartDx / density)).coerceAtLeast(0)
                 trimStartDx = 0f

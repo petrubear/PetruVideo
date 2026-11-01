@@ -1,6 +1,7 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.MIN_CLIP_MS
+import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.AnimKind
 import com.petruvideo.core.model.OVERLAY_MIN_MS
@@ -50,11 +51,12 @@ class Split(
         val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
         val cut = clip.sourceStartMs + offset
         val first = clip.copy(id = newClipId(), sourceEndMs = if (photo) offset else cut)
+            .withKeyframes(Keyframes.window(clip.basePose, clip.keyframes, 0, offset))
         val second = clip.copy(
             id = newClipId(), startMs = atMs,
             sourceStartMs = if (photo) 0 else cut,
             sourceEndMs = if (photo) clip.durationMs - offset else clip.sourceEndMs,
-        )
+        ).withKeyframes(Keyframes.window(clip.basePose, clip.keyframes, offset, clip.durationMs))
         val lane = timeline.overlayLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
         return CommandResult.Applied(timeline.copy(overlayLane = lane), "Split overlay")
     }
@@ -68,11 +70,11 @@ class Split(
         }
         val first = clip.copy(
             id = newClipId(), durationMs = offset, animOut = clip.animOut.copy(kind = AnimKind.None),
-        )
+        ).withKeyframes(Keyframes.window(clip.basePose, clip.keyframes, 0, offset))
         val second = clip.copy(
             id = newClipId(), startMs = atMs, durationMs = clip.durationMs - offset,
             animIn = clip.animIn.copy(kind = AnimKind.None),
-        )
+        ).withKeyframes(Keyframes.window(clip.basePose, clip.keyframes, offset, clip.durationMs))
         val lane = timeline.textLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
         return CommandResult.Applied(timeline.copy(textLane = lane), "Split text")
     }

@@ -79,6 +79,7 @@ data class TextClip(
     val style: TextStyle = TextStyle(),
     val animIn: TextAnimation = TextAnimation(),
     val animOut: TextAnimation = TextAnimation(),
+    val keyframes: List<Keyframe> = emptyList(),
 ) {
     val endMs: Long get() = startMs + durationMs
 
@@ -88,6 +89,30 @@ data class TextClip(
         val inMs = if (animIn.kind == AnimKind.None) 0L else minOf(animIn.lengthMs.toLong(), half)
         val outMs = if (animOut.kind == AnimKind.None) 0L else minOf(animOut.lengthMs.toLong(), half)
         return inMs to outMs
+    }
+
+    /** The plain place and size as a pose (full opacity); used when there are no keyframes. */
+    val basePose: Pose get() = Pose(xPermille, yPermille, sizePermille, 100)
+
+    /** The shown values [relMs] after the clip's start. */
+    fun poseAt(relMs: Long): Pose = Keyframes.poseAt(basePose, keyframes, relMs)
+
+    /** The clip as the preview box and panels show it at [timeMs]: plain values set to the pose there. */
+    fun shownAt(timeMs: Long): TextClip {
+        if (keyframes.isEmpty()) return this
+        val pose = poseAt((timeMs - startMs).coerceIn(0, durationMs))
+        return copy(xPermille = pose.xPermille, yPermille = pose.yPermille, sizePermille = pose.sizePermille)
+    }
+
+    /** The clip with [frames]; the plain values follow the first keyframe, or [plain] when the list is empty. */
+    fun withKeyframes(frames: List<Keyframe>, plain: Pose? = null): TextClip {
+        val pose = frames.firstOrNull()?.pose ?: plain ?: basePose
+        return copy(
+            keyframes = frames,
+            xPermille = pose.xPermille,
+            yPermille = pose.yPermille,
+            sizePermille = pose.sizePermille,
+        )
     }
 
     fun normalized() = copy(
@@ -100,6 +125,9 @@ data class TextClip(
         style = style.normalized(),
         animIn = animIn.normalized(),
         animOut = animOut.normalized(),
+        keyframes = Keyframes.normalized(
+            keyframes, durationMs.coerceIn(TEXT_MIN_MS, TEXT_MAX_MS), TEXT_SIZE_MIN..TEXT_SIZE_MAX,
+        ),
     )
 
     val inRange: Boolean get() = normalized() == this

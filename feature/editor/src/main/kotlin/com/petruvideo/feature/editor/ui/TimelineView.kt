@@ -58,6 +58,7 @@ fun TimelineView(
     onMoveText: (clipId: String, startMs: Long) -> Unit = { _, _ -> },
     onTrimText: (clipId: String, startMs: Long, endMs: Long) -> Unit = { _, _, _ -> },
     onDropMedia: (mediaItemId: String, atMs: Long) -> Unit = { _, _ -> },
+    keyframes: KeyframeLaneState = KeyframeLaneState(),
     modifier: Modifier = Modifier,
     geometry: TimelineGeometry = remember { TimelineGeometry() },
 ) {
@@ -126,6 +127,7 @@ fun TimelineView(
                             onSelect = { onSelect(ClipSelection.Overlay(it)) },
                             onMove = onMoveOverlay,
                             onTrim = onTrimOverlay,
+                            keyframes = keyframes,
                         )
                     }
                     if (timeline.textLane.isNotEmpty()) {
@@ -136,6 +138,7 @@ fun TimelineView(
                             onSelect = { onSelect(ClipSelection.Text(it)) },
                             onMove = onMoveText,
                             onTrim = onTrimText,
+                            keyframes = keyframes,
                         )
                     }
                     AudioClipsRow(

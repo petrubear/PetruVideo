@@ -30,6 +30,8 @@ import com.petruvideo.feature.editor.ui.AdjustControls
 import com.petruvideo.feature.editor.ui.EqualizerControls
 import com.petruvideo.feature.editor.ui.FadeControls
 import com.petruvideo.feature.editor.ui.LooksControls
+import com.petruvideo.feature.editor.KeyframePanelState
+import com.petruvideo.feature.editor.ui.KeyframeControls
 import com.petruvideo.feature.editor.ui.OverlayControls
 import com.petruvideo.feature.editor.ui.NoiseControls
 import com.petruvideo.feature.editor.ui.ReverbControls
@@ -59,6 +61,7 @@ fun InspectorPanel(
     text: TextClip?,
     filter: FilterPanelState?,
     overlay: OverlayClip?,
+    keyframes: KeyframePanelState?,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -107,6 +110,10 @@ fun InspectorPanel(
             if (overlay != null) {
                 Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 OverlayControls(overlay, onEvent)
+            }
+            if (keyframes != null) {
+                Text("Keyframes", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                KeyframeControls(keyframes, onEvent)
             }
             if (filter != null) {
                 Text("Filters", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)

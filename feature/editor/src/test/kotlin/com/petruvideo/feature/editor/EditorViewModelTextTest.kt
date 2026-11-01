@@ -52,7 +52,7 @@ class EditorViewModelTextTest {
         e.state.selection shouldBe ClipSelection.Text(clip.id)
         e.state.textPanel?.kind shouldBe TextToolKind.Edit
         e.state.clipTools shouldBe listOf(
-            ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim,
+            ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Keyframes,
             ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
         )
         e.vm.onEvent(EditorEvent.Undo)

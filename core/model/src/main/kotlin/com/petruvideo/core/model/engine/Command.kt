@@ -2,7 +2,7 @@ package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.Timeline
 
-enum class RejectReason { OutOfRange, BelowMinimumLength, NoAttachedAudio, NotFound, MissingMedia }
+enum class RejectReason { OutOfRange, BelowMinimumLength, NoAttachedAudio, NotFound, MissingMedia, LimitReached }
 
 enum class Notice { Snapped, LengthChanged, SpeedLimited, FadeLimited, TransitionLimited }
 

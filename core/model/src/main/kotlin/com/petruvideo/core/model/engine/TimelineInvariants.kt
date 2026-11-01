@@ -1,6 +1,10 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.KEYFRAME_MAX
+import com.petruvideo.core.model.KEYFRAME_MIN_GAP_MS
+import com.petruvideo.core.model.Keyframe
+import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.SPEED_MAX_MILLI
 import com.petruvideo.core.model.SPEED_MIN_MILLI
@@ -63,10 +67,24 @@ object TimelineInvariants {
         for (clip in timeline.overlayLane) {
             if (!clip.inRange) add("overlay clip ${clip.id} is out of range")
             if (clip.mediaItemId !in timeline.media) add("overlay clip ${clip.id} refers to unknown media")
+            addAll(keyframeViolations("overlay", clip.id, clip.keyframes, clip.basePose))
         }
         for (clip in timeline.textLane) {
             if (!clip.inRange) add("text clip ${clip.id} is out of range")
+            addAll(keyframeViolations("text", clip.id, clip.keyframes, clip.basePose))
         }
+    }
+
+    /** Keyframes are sorted, a frame apart, at most [KEYFRAME_MAX], and the plain values follow the first. */
+    private fun keyframeViolations(kind: String, id: String, frames: List<Keyframe>, base: Pose) = buildList {
+        if (frames.size > KEYFRAME_MAX) add("$kind clip $id has too many keyframes")
+        frames.zipWithNext().forEach { (a, b) ->
+            if (b.timeMs - a.timeMs < KEYFRAME_MIN_GAP_MS) add("$kind clip $id has keyframes less than a frame apart")
+        }
+        val first = frames.firstOrNull() ?: return@buildList
+        // A text clip has no opacity of its own, so only place and size are compared for it.
+        val expected = if (kind == "text") first.pose.copy(opacityPercent = base.opacityPercent) else first.pose
+        if (expected != base) add("$kind clip $id plain values do not follow its first keyframe")
     }
 
     private fun clipViolations(

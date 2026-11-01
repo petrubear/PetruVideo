@@ -38,7 +38,15 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
+import com.petruvideo.core.model.Keyframes
+import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.AddKeyframe
+import com.petruvideo.core.model.engine.CopyKeyframe
+import com.petruvideo.core.model.engine.DeleteKeyframe
+import com.petruvideo.core.model.engine.MoveKeyframe
+import com.petruvideo.core.model.engine.RejectReason
+import com.petruvideo.core.model.engine.SetKeyframeMotion
 import com.petruvideo.core.model.engine.AddOverlay
 import com.petruvideo.core.model.engine.AddText
 import com.petruvideo.core.model.engine.AddVideoClips
@@ -135,6 +143,9 @@ class EditorViewModel @Inject constructor(
         val filter: OpenFilter? = null,
         /** The open Effects panel: which tool and which clip. */
         val effect: OpenEffect? = null,
+        /** Whether the Keyframes panel is open, and the selected keyframe's time inside the clip. */
+        val keyframesOpen: Boolean = false,
+        val keyframeRel: Long? = null,
         /** Whether the overlay panel is open (for the selected overlay clip). */
         val overlayOpen: Boolean = false,
     )
@@ -165,7 +176,8 @@ class EditorViewModel @Inject constructor(
         private fun VideoClip.structural() =
             copy(filter = filter.structural(), effect = effect?.copy(strength = 0))
 
-        private fun OverlayClip.structural() = copy(xPermille = 0, yPermille = 0, widthPermille = 0, opacityPercent = 0)
+        private fun OverlayClip.structural() =
+            copy(xPermille = 0, yPermille = 0, widthPermille = 0, opacityPercent = 0, keyframes = emptyList())
 
         override fun hashCode() = timeline.videoLane.hashCode() * HASH_MIX + timeline.media.hashCode()
     }
@@ -277,7 +289,7 @@ class EditorViewModel @Inject constructor(
             EditorEvent.AddOverlay -> { pause(); effectChannel.trySend(EditorEffect.PickOverlayMedia) }
             is EditorEvent.AddOverlayMedia -> addOverlay(event.media)
             EditorEvent.OpenOverlayPanel -> openOverlay()
-            is EditorEvent.OverlayPreview -> engine.setOverlayLive(event.clip)
+            is EditorEvent.OverlayPreview -> previewOverlay(event.clip)
             is EditorEvent.OverlayCommit -> commitOverlay(event.clip)
             EditorEvent.OverlayDismiss -> closeOverlay()
             is EditorEvent.MoveOverlayClip -> run(MoveOverlay(event.clipId, event.startMs))
@@ -289,6 +301,15 @@ class EditorViewModel @Inject constructor(
             EditorEvent.FilterRemove -> selectedPictureId()?.let { run(RemoveFilter(it)) }
             EditorEvent.FilterApplyAll -> selectedPictureId()?.let { run(ApplyFilterToAll(it)) }
             EditorEvent.FilterDismiss -> closeFilter()
+            EditorEvent.OpenKeyframes -> openKeyframes()
+            EditorEvent.KeyframeAdd -> addKeyframe()
+            is EditorEvent.KeyframeJump -> jumpKeyframe(event.forward)
+            is EditorEvent.KeyframeSelect -> selectKeyframe(event.relMs)
+            is EditorEvent.KeyframeMove -> moveKeyframe(event.clipId, event.fromRelMs, event.toRelMs)
+            EditorEvent.KeyframeCopyHere -> copyKeyframeHere()
+            EditorEvent.KeyframeDelete -> deleteKeyframe()
+            is EditorEvent.KeyframeMotion -> setKeyframeMotion(event.ease)
+            EditorEvent.KeyframeDismiss -> closeKeyframes()
             is EditorEvent.OpenEffectTool -> openEffect(event.kind)
             is EditorEvent.TransitionSet ->
                 selectedPictureId()?.let { run(SetTransition(it, event.kind, event.lengthMs)) }
@@ -352,6 +373,7 @@ class EditorViewModel @Inject constructor(
         closeFilter()
         closeEffect()
         closeOverlay()
+        closeKeyframes()
         local.update { it.copy(selection = selection, text = null) }
     }
 
@@ -409,6 +431,95 @@ class EditorViewModel @Inject constructor(
         closeAudio()
         closeEffect()
         local.update { it.copy(filter = OpenFilter(kind, id), sheet = null, text = null) }
+    }
+
+    private fun keyframeSubject(): KeyframeSubject? {
+        val timeline = session.timeline.value ?: return null
+        val selection = local.value.selection ?: return null
+        return keyframeTarget(timeline, selection)
+    }
+
+    private fun openKeyframes() {
+        val selection = local.value.selection
+        if (selection !is ClipSelection.Overlay && selection !is ClipSelection.Text) return
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        closeEffect()
+        local.update { it.copy(keyframesOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun closeKeyframes() {
+        if (local.value.keyframesOpen || local.value.keyframeRel != null) {
+            local.update { it.copy(keyframesOpen = false, keyframeRel = null) }
+        }
+    }
+
+    private fun addKeyframe() {
+        val id = selectedClipId() ?: return
+        val subject = keyframeSubject() ?: return
+        val at = engine.state.value.positionMs
+        val result = session.apply(AddKeyframe(id, at))
+        if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
+            say("A clip can have 50 keyframes at most")
+            return
+        }
+        val rel = (at - subject.startMs).coerceIn(0, subject.durationMs)
+        val frames = keyframeSubject()?.frames.orEmpty()
+        val near = frames.minByOrNull { kotlin.math.abs(it.timeMs - rel) } ?: return
+        local.update { it.copy(keyframeRel = near.timeMs) }
+    }
+
+    private fun jumpKeyframe(forward: Boolean) {
+        val subject = keyframeSubject() ?: return
+        val rel = engine.state.value.positionMs - subject.startMs
+        val target = if (forward) {
+            subject.frames.firstOrNull { it.timeMs > rel }
+        } else {
+            subject.frames.lastOrNull { it.timeMs < rel }
+        } ?: return
+        selectKeyframe(target.timeMs)
+    }
+
+    private fun selectKeyframe(relMs: Long) {
+        val subject = keyframeSubject() ?: return
+        local.update { it.copy(keyframeRel = relMs) }
+        seek(subject.startMs + relMs)
+    }
+
+    private fun moveKeyframe(clipId: String, from: Long, to: Long) {
+        if (session.apply(MoveKeyframe(clipId, from, to)) is CommandResult.Applied) {
+            local.update { it.copy(keyframeRel = to) }
+        }
+    }
+
+    private fun copyKeyframeHere() {
+        val id = selectedClipId() ?: return
+        val rel = local.value.keyframeRel ?: return
+        val subject = keyframeSubject() ?: return
+        val at = engine.state.value.positionMs
+        val result = session.apply(CopyKeyframe(id, rel, at))
+        if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
+            say("A clip can have 50 keyframes at most")
+        } else if (result is CommandResult.Applied) {
+            local.update { it.copy(keyframeRel = (at - subject.startMs).coerceIn(0, subject.durationMs)) }
+        }
+    }
+
+    private fun deleteKeyframe() {
+        val id = selectedClipId() ?: return
+        val rel = local.value.keyframeRel ?: return
+        if (session.apply(DeleteKeyframe(id, rel)) is CommandResult.Applied) {
+            local.update { it.copy(keyframeRel = null) }
+        }
+    }
+
+    private fun setKeyframeMotion(ease: Boolean) {
+        val id = selectedClipId() ?: return
+        val rel = local.value.keyframeRel ?: return
+        run(SetKeyframeMotion(id, rel, ease))
     }
 
     private fun openEffect(kind: EffectToolKind) {
@@ -515,22 +626,40 @@ class EditorViewModel @Inject constructor(
 
     /** Applies the placement and opacity of [clip] as separate edits; one gesture changes one of them. */
     private fun commitOverlay(clip: OverlayClip) {
-        val current = session.timeline.value?.overlayLane?.firstOrNull { it.id == clip.id } ?: return
+        val stored = session.timeline.value?.overlayLane?.firstOrNull { it.id == clip.id } ?: return
+        // The clip comes from the preview box as shown at the playhead, so it is compared with what is shown there.
+        val at = engine.state.value.positionMs
+        val current = stored.shownAt(at)
         val commands = listOfNotNull(
-            SetOverlayPlacement(clip.id, clip.xPermille, clip.yPermille, clip.widthPermille).takeIf {
+            SetOverlayPlacement(clip.id, clip.xPermille, clip.yPermille, clip.widthPermille, at).takeIf {
                 clip.xPermille != current.xPermille || clip.yPermille != current.yPermille ||
                     clip.widthPermille != current.widthPermille
             },
-            SetOverlayOpacity(clip.id, clip.opacityPercent).takeIf { clip.opacityPercent != current.opacityPercent },
+            SetOverlayOpacity(clip.id, clip.opacityPercent, at)
+                .takeIf { clip.opacityPercent != current.opacityPercent },
         )
         val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
-        if (!applied) engine.setOverlayLive(current)
+        if (!applied) engine.setOverlayLive(stored)
     }
 
-    private fun overlayPanelFor(timeline: Timeline?, selection: ClipSelection?, open: Boolean): OverlayPanelState? {
+    /** A drag or slider on an animated clip shows live as a keyframe at the playhead; nothing is stored yet. */
+    private fun previewOverlay(clip: OverlayClip) {
+        val stored = session.timeline.value?.overlayLane?.firstOrNull { it.id == clip.id }
+        if (stored == null || stored.keyframes.isEmpty()) return engine.setOverlayLive(clip)
+        val rel = (engine.state.value.positionMs - stored.startMs).coerceIn(0, stored.durationMs)
+        val pose = Pose(clip.xPermille, clip.yPermille, clip.widthPermille, clip.opacityPercent)
+        Keyframes.withPoseAt(stored.keyframes, rel, pose)?.let { engine.setOverlayLive(stored.withKeyframes(it)) }
+    }
+
+    private fun overlayPanelFor(
+        timeline: Timeline?,
+        selection: ClipSelection?,
+        open: Boolean,
+        playheadMs: Long,
+    ): OverlayPanelState? {
         if (!open || timeline == null || selection == null) return null
         val clip = timeline.overlayLane.firstOrNull { it.id == selection.clipId } ?: return null
-        return OverlayPanelState(clip, timeline.media[clip.mediaItemId]?.displayName.orEmpty())
+        return OverlayPanelState(clip.shownAt(playheadMs), timeline.media[clip.mediaItemId]?.displayName.orEmpty())
     }
 
     private fun overlayAspect(timeline: Timeline?, id: String?): Float {
@@ -572,7 +701,12 @@ class EditorViewModel @Inject constructor(
 
     private fun previewText(clip: TextClip) {
         pendingText = clip
-        engine.setTextLive(clip)
+        val stored = session.timeline.value?.textLane?.firstOrNull { it.id == clip.id }
+        if (stored == null || stored.keyframes.isEmpty()) return engine.setTextLive(clip)
+        val rel = (engine.state.value.positionMs - stored.startMs).coerceIn(0, stored.durationMs)
+        val pose = Pose(clip.xPermille, clip.yPermille, clip.sizePermille, stored.poseAt(rel).opacityPercent)
+        Keyframes.withPoseAt(stored.keyframes, rel, pose)
+            ?.let { engine.setTextLive(stored.copy(text = clip.text, style = clip.style).withKeyframes(it)) }
     }
 
     /** Commits typing or a drag that was only previewed, so nothing is lost when the panel or selection changes. */
@@ -585,12 +719,14 @@ class EditorViewModel @Inject constructor(
     /** Applies each changed part of [clip] to the stored clip; a gesture changes one part, so it is one undo step. */
     private fun commitText(clip: TextClip) {
         pendingText = null
-        val current = session.timeline.value?.textLane?.firstOrNull { it.id == clip.id } ?: return
+        val stored = session.timeline.value?.textLane?.firstOrNull { it.id == clip.id } ?: return
+        val at = engine.state.value.positionMs
+        val current = stored.shownAt(at)
         val id = clip.id
         val commands = listOfNotNull(
             SetTextContent(id, clip.text).takeIf { clip.text != current.text },
             SetTextStyle(id, clip.style).takeIf { clip.style != current.style },
-            SetTextPlacement(id, clip.xPermille, clip.yPermille, clip.sizePermille).takeIf {
+            SetTextPlacement(id, clip.xPermille, clip.yPermille, clip.sizePermille, at).takeIf {
                 clip.xPermille != current.xPermille || clip.yPermille != current.yPermille ||
                     clip.sizePermille != current.sizePermille
             },
@@ -602,7 +738,7 @@ class EditorViewModel @Inject constructor(
             },
         )
         val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
-        if (!applied) engine.setTextLive(current)
+        if (!applied) engine.setTextLive(stored)
     }
 
     private fun resetText(kind: TextToolKind) {
@@ -761,6 +897,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.FilterLooks -> openFilter(FilterToolKind.Looks)
             ClipTool.OverlayOpacity -> openOverlay()
             ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
+            ClipTool.Keyframes -> openKeyframes()
             ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
             ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
@@ -872,16 +1009,22 @@ class EditorViewModel @Inject constructor(
             reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
             audioPanel = audioPanelFor(timeline, selection, local.audio),
             toolbarTab = local.tab,
-            overlayPanel = overlayPanelFor(timeline, selection, local.overlayOpen),
-            selectedOverlay = timeline?.overlayLane?.firstOrNull { it.id == selection?.clipId },
+            overlayPanel = overlayPanelFor(timeline, selection, local.overlayOpen, core.preview.positionMs),
+            selectedOverlay = timeline?.overlayLane?.firstOrNull { it.id == selection?.clipId }
+                ?.shownAt(core.preview.positionMs),
             selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),
-            textPanel = textPanelFor(timeline, selection, local.text),
+            textPanel = textPanelFor(timeline, selection, local.text, core.preview.positionMs),
+            keyframePanel = keyframePanelFor(
+                timeline, selection, local.keyframesOpen, local.keyframeRel, core.preview.positionMs,
+            ),
+            selectedKeyframeMs = local.keyframeRel,
             effectPanel = effectPanelFor(timeline, selection, local.effect),
             filterPanel = filterPanelFor(timeline, selection, local.filter, core.preview.positionMs),
             selectedFilter = selection?.let {
                 filterPanelFor(timeline, it, OpenFilter(FilterToolKind.Looks, it.clipId), core.preview.positionMs)
             },
-            selectedText = timeline?.textLane?.firstOrNull { it.id == selection?.clipId },
+            selectedText = timeline?.textLane?.firstOrNull { it.id == selection?.clipId }
+                ?.shownAt(core.preview.positionMs),
             selectedReverb = selection?.let { sel -> timeline?.let { soundClipReverb(it, sel.clipId) } },
             selectedFx = sound?.first,
             selectedClipLengthMs = sound?.second ?: 0,

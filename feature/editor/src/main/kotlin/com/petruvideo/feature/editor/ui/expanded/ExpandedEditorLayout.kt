@@ -44,6 +44,7 @@ import com.petruvideo.feature.editor.SheetState
 import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
 import com.petruvideo.feature.editor.ui.TimelineView
+import com.petruvideo.feature.editor.ui.keyframeLaneState
 import com.petruvideo.feature.editor.ui.TransportRow
 
 private const val LANE_LABEL_TOP_DP = 30
@@ -96,6 +97,7 @@ fun ExpandedEditorLayout(
                         state.selectedText,
                         state.selectedFilter,
                         state.selectedOverlay,
+                        state.keyframePanel,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                     )
@@ -106,7 +108,10 @@ fun ExpandedEditorLayout(
             BoxWithConstraints(Modifier.weight(1f)) {
                 val showInspector = maxWidth.value >= ArrangementResolver.INSPECTOR_MIN_DP
                 Row(Modifier.fillMaxSize()) {
-                    ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
+                    ToolRail(
+                        { onEvent(EditorEvent.TapInactiveTool(it)) },
+                        onTab = { onEvent(EditorEvent.SelectTab(it)) },
+                    )
                     MediaColumn(state, onEvent, Modifier.width(MEDIA_WIDTH))
                     PreviewColumn(state, player, onEvent, Modifier.weight(1f).fillMaxHeight())
                     if (showInspector) {
@@ -121,6 +126,7 @@ fun ExpandedEditorLayout(
                             state.selectedText,
                             state.selectedFilter,
                             state.selectedOverlay,
+                            state.keyframePanel,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                         )
@@ -216,6 +222,7 @@ private fun TimelineWithLabels(state: EditorState, onEvent: (EditorEvent) -> Uni
             onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
             onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
             onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
+            keyframes = keyframeLaneState(state, onEvent),
             modifier = Modifier.weight(1f),
         )
     }

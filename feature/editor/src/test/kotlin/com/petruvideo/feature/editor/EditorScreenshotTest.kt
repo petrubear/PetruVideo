@@ -54,6 +54,8 @@ class EditorScreenshotTest {
         tab: ToolbarTab = ToolbarTab.Edit,
         filterPanel: FilterPanelState? = null,
         effectPanel: EffectPanelState? = null,
+        keyframePanel: KeyframePanelState? = null,
+        selectedKeyframeMs: Long? = null,
         joined: Boolean = false,
         overlays: List<com.petruvideo.core.model.OverlayClip> = emptyList(),
         overlayPanel: OverlayPanelState? = null,
@@ -109,6 +111,8 @@ class EditorScreenshotTest {
             textPanel = textPanel,
             filterPanel = filterPanel,
             effectPanel = effectPanel,
+            keyframePanel = keyframePanel,
+            selectedKeyframeMs = selectedKeyframeMs,
             overlayPanel = overlayPanel,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -476,6 +480,32 @@ class EditorScreenshotTest {
             PetruTheme {
                 EditorScreen(
                     state(selection = ClipSelection.Overlay("v1"), overlays = overlays, playheadMs = 3_000),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    private val animatedOverlays = listOf(
+        com.petruvideo.core.model.OverlayClip("v1", "m1", 0, 4_000, 1_000).withKeyframes(
+            listOf(
+                com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(250, 300, 300, 100), ease = true),
+                com.petruvideo.core.model.Keyframe(1_500, com.petruvideo.core.model.Pose(750, 700, 400, 50)),
+                com.petruvideo.core.model.Keyframe(3_000, com.petruvideo.core.model.Pose(500, 500, 350, 100)),
+            ),
+        ),
+    )
+
+    @Test
+    fun keyframesPanelWithDiamondsOnTheSelectedOverlay() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Overlay("v1"), overlays = animatedOverlays, playheadMs = 2_500,
+                        keyframePanel = KeyframePanelState("v1", animatedOverlays[0].keyframes, 1_500, 1_500, 4_000),
+                        selectedKeyframeMs = 1_500,
+                    ),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

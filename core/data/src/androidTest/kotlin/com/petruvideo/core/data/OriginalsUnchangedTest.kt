@@ -295,6 +295,49 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-004 of feature 012: keyframes of overlay and text clips reload exactly and leave the sources alone. */
+    @Test
+    fun keyframesSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip12.mp4", MediaKind.Video, 10_000)
+        val pip = source("pip12.mp4", MediaKind.Video, 8_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(com.petruvideo.core.model.engine.AddOverlay(pip, 0, { "ov" }))
+        session.apply(com.petruvideo.core.model.engine.AddText(0, { "tx" }))
+        val frames = listOf(
+            com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(100, 200, 300, 100)),
+            com.petruvideo.core.model.Keyframe(1_500, com.petruvideo.core.model.Pose(800, 700, 400, 40), ease = true),
+        )
+        val textFrames = listOf(
+            com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(500, 500, 60, 100)),
+            com.petruvideo.core.model.Keyframe(2_000, com.petruvideo.core.model.Pose(400, 300, 120, 100)),
+        )
+        val overlay = session.timeline.value!!.overlayLane.single().withKeyframes(frames)
+        val text = session.timeline.value!!.textLane.single().withKeyframes(textFrames)
+        session.apply(
+            com.petruvideo.core.model.engine.Command {
+                com.petruvideo.core.model.engine.CommandResult.Applied(
+                    it.copy(overlayLane = listOf(overlay), textLane = listOf(text)), "Keyframes",
+                )
+            },
+        )
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.overlayLane shouldBe saved.overlayLane
+        loaded.textLane shouldBe saved.textLane
+        loaded.overlayLane.single().keyframes shouldBe frames
+        loaded.textLane.single().keyframes shouldBe textFrames
+        checksums() shouldBe before
+    }
+
     /** SC-005, SC-007 of feature 010: overlays reload exactly with their media and leave the sources alone. */
     @Test
     fun overlaysSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
