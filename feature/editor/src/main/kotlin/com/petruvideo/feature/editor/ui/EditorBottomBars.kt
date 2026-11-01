@@ -29,6 +29,7 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             TransformPanel(state.transformPanel, onEvent)
             FreezePanel(state.freezePanel, onEvent)
             SpeedCurvePanel(state.curvePanel, onEvent)
+            StickersPanel(state.stickersOpen, onEvent)
             OverlayPanel(state.overlayPanel, onEvent)
         }
         ReverseProgress(state.reverseProgress, onCancel = { onEvent(EditorEvent.ReverseCancel) })
@@ -49,8 +50,10 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             )
             ToolbarTab.Text -> {
                 CaptionsPanel(state.captionsPanel, onEvent)
+                StickersPanel(state.stickersOpen, onEvent)
                 TextTabBar(
                     back, onAdd = { onEvent(EditorEvent.AddText) }, onCaptions = { onEvent(EditorEvent.OpenCaptions) },
+                    onStickers = { onEvent(EditorEvent.OpenStickers) },
                 )
             }
             else -> MainToolBar(

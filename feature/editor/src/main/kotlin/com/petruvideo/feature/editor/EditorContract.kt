@@ -243,6 +243,8 @@ data class EditorState(
     val transformPanel: TransformPanelState? = null,
     /** The open Freeze frame panel for the selected main-track clip, if any. */
     val freezePanel: FreezePanelState? = null,
+    /** Whether the Stickers gallery is open (Text tab). */
+    val stickersOpen: Boolean = false,
     /** The open Auto captions panel (Text tab), if any. */
     val captionsPanel: CaptionsPanelState? = null,
     /** The open Speed curve panel for the selected main-track clip, if any. */
@@ -395,6 +397,9 @@ sealed interface EditorEvent {
     data object ReverseCancel : EditorEvent
 
     data object OpenCaptions : EditorEvent
+    data object OpenStickers : EditorEvent
+    data object StickersDismiss : EditorEvent
+    data class AddStickerLayer(val sticker: com.petruvideo.core.model.Sticker) : EditorEvent
     data class CaptionsLanguage(val tag: String) : EditorEvent
     data class CaptionsReplace(val on: Boolean) : EditorEvent
     data object CaptionsStart : EditorEvent

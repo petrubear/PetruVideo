@@ -57,6 +57,7 @@ class AccessibilityTest {
         reverseProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
+        stickersOpen: Boolean = false,
         tab: ToolbarTab = ToolbarTab.Edit,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
@@ -82,6 +83,7 @@ class AccessibilityTest {
             reverseProgress = reverseProgress,
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
+            stickersOpen = stickersOpen,
             toolbarTab = tab,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
@@ -156,6 +158,13 @@ class AccessibilityTest {
         com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US", "es-ES"),
         "en-US", true, null, "Added 12 captions",
     )
+
+    @Test
+    fun stickersGallery() = check(null, emptyList(), stickersOpen = true, tab = ToolbarTab.Text)
+
+    @Test
+    fun stickersGalleryWithLargeFont() =
+        check(null, emptyList(), stickersOpen = true, tab = ToolbarTab.Text, fontScale = 2f)
 
     @Test
     fun captionsPanel() = check(null, emptyList(), captionsPanel = readyCaptions, tab = ToolbarTab.Text)

@@ -66,6 +66,7 @@ class EditorScreenshotTest {
         reverseProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
+        stickersOpen: Boolean = false,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -128,6 +129,7 @@ class EditorScreenshotTest {
             reverseProgress = reverseProgress,
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
+            stickersOpen = stickersOpen,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -316,6 +318,18 @@ class EditorScreenshotTest {
             PetruTheme {
                 EditorScreen(
                     state(tab = ToolbarTab.Text, captionsPanel = panel),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun stickersGallery() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(tab = ToolbarTab.Text, stickersOpen = true),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

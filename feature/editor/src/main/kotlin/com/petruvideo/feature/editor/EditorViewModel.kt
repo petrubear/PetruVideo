@@ -59,7 +59,9 @@ import com.petruvideo.core.media.captions.NoCaptionMaker
 import com.petruvideo.core.media.captions.RecognitionAvailability
 import com.petruvideo.core.media.reverse.NoReversePreparer
 import com.petruvideo.core.model.CAPTION_MAX
+import com.petruvideo.core.model.Sticker
 import com.petruvideo.core.model.engine.AddCaptions
+import com.petruvideo.core.model.engine.AddSticker
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import com.petruvideo.core.media.reverse.ReversePreparer
@@ -191,6 +193,7 @@ class EditorViewModel @Inject constructor(
         val freezeOpen: Boolean = false,
         val curveOpen: Boolean = false,
         val captions: CaptionsLocal? = null,
+        val stickersOpen: Boolean = false,
         /** The curve being dragged on the graph, shown in the panel until it is committed. */
         val curveDraft: SpeedCurve? = null,
         val crop: OpenCrop? = null,
@@ -404,6 +407,9 @@ class EditorViewModel @Inject constructor(
     private fun onCaptionsEvent(event: EditorEvent) {
         when (event) {
             EditorEvent.OpenCaptions -> openCaptions()
+            EditorEvent.OpenStickers -> local.update { it.copy(stickersOpen = true, captions = null) }
+            EditorEvent.StickersDismiss -> local.update { it.copy(stickersOpen = false) }
+            is EditorEvent.AddStickerLayer -> addSticker(event.sticker)
             is EditorEvent.CaptionsLanguage -> {
                 updateCaptions { it.copy(language = event.tag, availability = null) }
                 viewModelScope.launch { refreshCaptionAvailability() }
@@ -1120,6 +1126,17 @@ class EditorViewModel @Inject constructor(
         local.update { it.copy(selection = ClipSelection.Text(id), text = OpenText(TextToolKind.Edit, id)) }
     }
 
+    private fun addSticker(sticker: Sticker) {
+        flushText()
+        val id = UUID.randomUUID().toString()
+        val at = engine.state.value.positionMs
+        if (session.apply(AddSticker(at, sticker) { id }) !is CommandResult.Applied) return
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        local.update { it.copy(selection = ClipSelection.Text(id), text = null) }
+    }
+
     private fun openText(kind: TextToolKind) {
         val selection = local.value.selection as? ClipSelection.Text ?: return
         flushText()
@@ -1454,6 +1471,7 @@ class EditorViewModel @Inject constructor(
             freezePanel = freezePanelFor(selection, local.freezeOpen),
             curvePanel = curvePanelFor(timeline, selection, local.curveOpen, local.curveDraft),
             captionsPanel = local.captions?.toPanel(),
+            stickersOpen = local.stickersOpen,
             selectedReversed = timeline?.videoLane?.firstOrNull { it.id == selection?.clipId }?.reversed == true,
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(

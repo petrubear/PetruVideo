@@ -145,4 +145,4 @@ private fun Banner(state: EditorState, onEvent: (EditorEvent) -> Unit, modifier:
 /** Whether a tool panel is open above the tool bar, so the preview gives it room. */
 private fun EditorState.hasOpenPanel() = sheet != null || reverbPanel != null || audioPanel != null ||
     textPanel != null || filterPanel != null || overlayPanel != null || transformPanel != null ||
-    freezePanel != null || reverseProgress != null || curvePanel != null || captionsPanel != null
+    freezePanel != null || reverseProgress != null || curvePanel != null || captionsPanel != null || stickersOpen

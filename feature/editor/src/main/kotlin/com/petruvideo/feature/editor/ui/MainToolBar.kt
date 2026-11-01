@@ -140,6 +140,7 @@ fun TextTabBar(
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
     onCaptions: () -> Unit = {},
+    onStickers: () -> Unit = {},
 ) {
     Row(
         modifier
@@ -154,6 +155,7 @@ fun TextTabBar(
     ) {
         ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
         ToolButton(label = "Add text", icon = PetruIcons.Add, active = true, onClick = onAdd)
+        ToolButton(label = "Stickers", icon = PetruIcons.ToolOverlay, active = true, onClick = onStickers)
         ToolButton(label = "Auto captions", icon = PetruIcons.ToolText, active = true, onClick = onCaptions)
     }
 }
