@@ -20,6 +20,9 @@ class MoveVideoClip(private val clipId: String, private val newIndex: Int) : Com
             else -> {
                 val lane = timeline.videoLane.toMutableList()
                 lane.add(newIndex, lane.removeAt(from))
+                // Transitions that touched the moved clip or its old or new neighbours no longer join the same clips.
+                val cleared = setOfNotNull(from - 1, from, newIndex - 1, newIndex).filter { it in lane.indices }
+                cleared.forEach { lane[it] = lane[it].copy(transitionOut = null) }
                 CommandResult.Applied(timeline.copy(videoLane = lane), "Move clip")
             }
         }

@@ -26,6 +26,7 @@ object TimelineInvariants {
             )
             addAll(soundViolations("video", clip.id, clip.reverb, clip.fx))
             if (!clip.filter.inRange) add("video clip ${clip.id} filter is out of range")
+            addAll(effectViolations(clip))
             if (media?.kind == MediaKind.Photo && clip.speedMilli != SPEED_UNIT) {
                 add("photo clip ${clip.id} has a speed")
             }
@@ -33,6 +34,7 @@ object TimelineInvariants {
                 add("video clip ${clip.id} trim is outside its source")
             }
         }
+        if (timeline.videoLane.lastOrNull()?.transitionOut != null) add("the last video clip has a transition")
         for (clip in timeline.audioLane) {
             val media = timeline.media[clip.mediaItemId]
             addAll(
@@ -50,6 +52,11 @@ object TimelineInvariants {
         sorted.zipWithNext().forEach { (a, b) ->
             if (a.timelineEndMs > b.timelineStartMs) add("audio clips ${a.id} and ${b.id} overlap")
         }
+    }
+
+    private fun effectViolations(clip: com.petruvideo.core.model.VideoClip) = buildList {
+        if (clip.effect?.inRange == false) add("video clip ${clip.id} effect is out of range")
+        if (clip.transitionOut?.inRange == false) add("video clip ${clip.id} transition is out of range")
     }
 
     private fun extraLaneViolations(timeline: Timeline) = buildList {

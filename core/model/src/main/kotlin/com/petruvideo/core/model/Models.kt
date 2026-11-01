@@ -67,6 +67,9 @@ data class VideoClip(
     val reverb: Reverb = Reverb(),
     val fx: AudioFx = AudioFx(),
     val filter: ClipFilter = ClipFilter(),
+    /** The transition into the next clip of the lane; ignored when there is no next clip. */
+    val transitionOut: Transition? = null,
+    val effect: ClipEffect? = null,
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
@@ -104,7 +107,14 @@ data class Timeline(
     val overlayLane: List<OverlayClip> = emptyList(),
     val playheadMs: Long = 0,
 ) {
-    val videoLengthMs: Long get() = videoLane.sumOf { it.lengthMs }
+    val videoLengthMs: Long
+        get() = videoLane.sumOf { it.lengthMs } - videoLane.indices.sumOf { transitionLengthAfter(it) }
+
+    /**
+     * The length of the transition after the clip at [index], limited to half of the shorter neighbour and rounded
+     * down to the step; 0 when there is none or it would be below the minimum.
+     */
+    fun transitionLengthAfter(index: Int): Long = transitionLengthAfter(videoLane, index)
 
     val totalDurationMs: Long
         get() = maxOf(
@@ -114,12 +124,12 @@ data class Timeline(
             overlayLane.maxOfOrNull { it.endMs } ?: 0L,
         )
 
-    /** Start of each video clip on the timeline, derived from order (the lane is gapless). */
+    /** Start of a video clip on the timeline, derived from order and the transitions before it. */
     fun videoStartOf(clipId: String): Long? {
         var start = 0L
-        for (clip in videoLane) {
+        for ((index, clip) in videoLane.withIndex()) {
             if (clip.id == clipId) return start
-            start += clip.lengthMs
+            start += clip.lengthMs - transitionLengthAfter(index)
         }
         return null
     }

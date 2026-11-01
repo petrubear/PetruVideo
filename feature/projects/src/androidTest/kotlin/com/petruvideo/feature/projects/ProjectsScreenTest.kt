@@ -75,10 +75,10 @@ class ProjectsScreenTest {
     }
 
     @Test
-    fun inactiveNavigationEntriesShowComingSoon() {
+    fun theTemplatesEntryOpensTemplates() {
         val events = show(populated)
         compose.onNodeWithText("Templates").performClick()
-        assertEquals(listOf<ProjectsEvent>(ProjectsEvent.TapInactive("Templates")), events)
+        assertEquals(listOf<ProjectsEvent>(ProjectsEvent.OpenTemplates), events)
     }
 
     @Test

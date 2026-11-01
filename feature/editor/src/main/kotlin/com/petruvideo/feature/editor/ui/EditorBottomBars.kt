@@ -19,6 +19,7 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             AudioPanel(state.audioPanel, onEvent)
             TextPanel(state.textPanel, onEvent)
             FilterPanel(state.filterPanel, onEvent)
+            EffectPanel(state.effectPanel, onEvent)
             OverlayPanel(state.overlayPanel, onEvent)
         }
         ClipToolBar(
@@ -31,6 +32,8 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
         when (state.toolbarTab) {
             ToolbarTab.Overlay -> OverlayTabBar(back, onAdd = { onEvent(EditorEvent.AddOverlay) })
             ToolbarTab.Filters -> FiltersTabBar(back)
+            ToolbarTab.Effects -> EffectsTabBar(back)
+            ToolbarTab.Audio -> AudioTabBar(back, onAdd = { onEvent(EditorEvent.AddMusic) })
             ToolbarTab.Text -> TextTabBar(back, onAdd = { onEvent(EditorEvent.AddText) })
             else -> MainToolBar(
                 onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },

@@ -140,10 +140,13 @@ class TimelineFlowTest {
     }
 
     @Test
-    fun inactiveToolsShowComingSoon() {
+    fun everyMainToolIsActive() {
         val events = show(state())
-        compose.onNodeWithContentDescription("Effects, coming soon").performClick()
-        assertEquals(EditorEvent.TapInactiveTool("Effects"), events.last())
+        compose.onNodeWithContentDescription("Effects, coming soon").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Effects").performClick()
+        assertEquals(EditorEvent.SelectTab(ToolbarTab.Effects), events.last())
+        compose.onNodeWithContentDescription("Audio").performClick()
+        assertEquals(EditorEvent.SelectTab(ToolbarTab.Audio), events.last())
     }
 
     @Test

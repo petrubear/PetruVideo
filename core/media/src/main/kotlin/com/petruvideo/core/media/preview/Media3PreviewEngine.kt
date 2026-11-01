@@ -11,6 +11,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.CompositionPlayer
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
+import com.petruvideo.core.media.composition.usesMultipleInputs
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipFilter
@@ -47,6 +48,7 @@ class Media3PreviewEngine @Inject constructor(
     private var voiceFxAllowed = true
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
+    private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
     private var textOverlays: com.petruvideo.core.media.text.TextOverlaySet? = null
     private val refresh = Runnable { refreshFrame() }
     private var reverbAllowed = true
@@ -106,12 +108,17 @@ class Media3PreviewEngine @Inject constructor(
         textOverlays = builder.textOverlays
         overlayLayout = builder.overlayLayout
         filters = builder.filters
+        clipEffects = builder.clipEffects
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
-        // Overlay clips are separate video inputs, which needs the multiple-input video graph; the player is made again
-        // when that need changes.
-        val multi = timeline.overlayLane.isNotEmpty()
-        if (compositionPlayer != null && multi != multipleInputs) discardPlayer()
+        // Overlays and transitions are separate video inputs, which needs the multiple-input video graph. That player
+        // does not take a second composition, so it is made again for every load (keeping position and play state);
+        // it is also made again when the need itself changes.
+        val previous = compositionPlayer
+        val resumeBefore = previous?.isPlaying == true
+        val positionBefore = previous?.currentPosition ?: 0L
+        val multi = usesMultipleInputs(timeline)
+        if (previous != null && (multi || multi != multipleInputs)) discardPlayer()
         multipleInputs = multi
         val player = compositionPlayer ?: playerBuilder(multi).build()
             .also {
@@ -129,8 +136,9 @@ class Media3PreviewEngine @Inject constructor(
             publish()
             return
         }
-        val resume = player.isPlaying
-        val position = player.currentPosition.coerceIn(0, totalMs)
+        val reused = previous != null && player === previous
+        val resume = if (reused) player.isPlaying else resumeBefore
+        val position = (if (reused) player.currentPosition else positionBefore).coerceIn(0, totalMs)
         player.setComposition(composition, position)
         player.prepare()
         if (resume) player.play()
@@ -165,6 +173,14 @@ class Media3PreviewEngine @Inject constructor(
 
     override fun setClipFilterLive(clipId: String, filter: ClipFilter) {
         filters[clipId]?.update(filter)
+        if (!polling) {
+            handler.removeCallbacks(refresh)
+            handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
+
+    override fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect) {
+        clipEffects[clipId]?.update(effect)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)

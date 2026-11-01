@@ -3,6 +3,8 @@ package com.petruvideo.feature.editor
 import com.petruvideo.core.model.AudioClip
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.Transition
+import com.petruvideo.core.model.TransitionKind
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.floats.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -43,6 +45,15 @@ class TimelineGeometryTest {
             Triple("b", 200f, 300f),
             Triple("c", 500f, 100f),
         )
+    }
+
+    @Test
+    fun `a transition makes the next clip start earlier by its length`() {
+        val joined = lane.mapIndexed { i, c ->
+            val dissolve = Transition(TransitionKind.Dissolve, 1_000)
+            if (i == 0) c.copy(transitionOut = dissolve) else c
+        }
+        geometry.videoRects(joined).map { it.startPx } shouldContainExactly listOf(0f, 100f, 400f)
     }
 
     @Test

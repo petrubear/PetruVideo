@@ -38,6 +38,10 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.FilterLook
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.EffectKind
+import com.petruvideo.core.model.Transition
+import com.petruvideo.core.model.TransitionKind
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.export.DeviceLimits
@@ -675,6 +679,155 @@ class ExportPipelineTest {
         val (ps, pu) = export(plain, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-ov2-plain")
         check(ps is ExportState.Finished)
         check(changedPixels(frameAt(pu!!, 1_500), frame, 0.7f, 0.9f) > 500) { "video overlay not drawn near 80%, 70%" }
+    }
+
+    private fun solidPhoto(name: String, color: Int): MediaItem {
+        val file = File(context.cacheDir, "$name.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 300, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(color)
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        return runBlocking { MediaProbe(context).probe(Uri.fromFile(file), "$name.jpg").getOrThrow() }
+    }
+
+    private fun meanRgb(frame: android.graphics.Bitmap, l: Float, r: Float): IntArray {
+        val sum = LongArray(3)
+        var n = 0
+        for (y in 0 until frame.height step 2) for (x in (frame.width * l).toInt() until (frame.width * r).toInt() step 2) {
+            val c = frame.getPixel(x, y)
+            sum[0] += android.graphics.Color.red(c); sum[1] += android.graphics.Color.green(c)
+            sum[2] += android.graphics.Color.blue(c)
+            n++
+        }
+        return intArrayOf((sum[0] / n).toInt(), (sum[1] / n).toInt(), (sum[2] / n).toInt())
+    }
+
+    private fun twoPhotos(kind: TransitionKind?): Triple<Timeline, MediaItem, MediaItem> {
+        val brown = solidPhoto("brown", 0xFF804000.toInt())
+        val blue = solidPhoto("blue", 0xFF0040C0.toInt())
+        val transition = kind?.let { Transition(it, 1_000) }
+        val timeline = project(
+            VideoClip("p1", brown.id, 0, 3_000, false, transitionOut = transition),
+            VideoClip("p2", blue.id, 0, 3_000, false),
+            media = listOf(brown, blue),
+        )
+        return Triple(timeline, brown, blue)
+    }
+
+    @Test
+    fun transitionsBlendTheTwoClipsAndShortenTheProject() {
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        for (kind in TransitionKind.entries) {
+            val (timeline, _, _) = twoPhotos(kind)
+            val (state, uri) = export(timeline, settings, "pipeline-tr-${kind.name}")
+            check(state is ExportState.Finished) { "$kind export: $state" }
+            val duration = retriever(uri!!).extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()
+            check(duration in 4_800..5_200) { "$kind: two 3 s clips with a 1 s transition last $duration ms" }
+            val early = meanRgb(frameAt(uri, 1_000), 0f, 1f)
+            val late = meanRgb(frameAt(uri, 4_000), 0f, 1f)
+            check(early[0] > 70 && early[2] < 30) { "$kind: first clip not brown before the transition ${early.toList()}" }
+            check(late[2] > 150 && late[0] < 30) { "$kind: second clip not blue after the transition ${late.toList()}" }
+            val mid = frameAt(uri, 2_500)
+            val all = meanRgb(mid, 0f, 1f)
+            val left = meanRgb(mid, 0f, 0.4f)
+            val right = meanRgb(mid, 0.6f, 1f)
+            val msg = "$kind mid: all ${all.toList()} left ${left.toList()} right ${right.toList()}"
+            when (kind) {
+                TransitionKind.Dissolve, TransitionKind.Zoom ->
+                    check(all[0] in 20..75 && all[2] in 40..130) { "not a blend: $msg" }
+                TransitionKind.FadeBlack -> check(all.max() < 25) { "not black in the middle: $msg" }
+                TransitionKind.Slide, TransitionKind.Cover ->
+                    check(left[0] > 80 && left[2] < 40 && right[2] > 100 && right[0] < 40) { "not a side by side: $msg" }
+            }
+        }
+    }
+
+    /** A picture of vertical bands, brown then blue, each [bandPx] wide (of 400), so effects have detail to change. */
+    private fun bandsPhoto(name: String, bandPx: Int): MediaItem {
+        val file = File(context.cacheDir, "$name.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 300, android.graphics.Bitmap.Config.ARGB_8888)
+        for (x in 0 until 400) {
+            val color = if ((x / bandPx) % 2 == 0) 0xFF804000.toInt() else 0xFF0040C0.toInt()
+            for (y in 0 until 300) bitmap.setPixel(x, y, color)
+        }
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        return runBlocking { MediaProbe(context).probe(Uri.fromFile(file), "$name.jpg").getOrThrow() }
+    }
+
+    private fun effectFrames(photo: MediaItem, effect: ClipEffect?, name: String, vararg times: Long): List<android.graphics.Bitmap> {
+        val timeline = project(VideoClip("e1", photo.id, 0, 2_000, false, effect = effect), media = listOf(photo))
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return times.map { frameAt(uri!!, it) }
+    }
+
+    /** Along the middle row between the bars: [brown/blue changes, share of samples that are neither]. */
+    private fun rowProfile(frame: android.graphics.Bitmap): Pair<Int, Float> {
+        var last = 0
+        var changes = 0
+        var mixed = 0
+        var n = 0
+        val y = frame.height / 2
+        for (x in (frame.width * 0.15f).toInt() until (frame.width * 0.85f).toInt()) {
+            val c = frame.getPixel(x, y)
+            val r = android.graphics.Color.red(c)
+            val b = android.graphics.Color.blue(c)
+            val kind = when {
+                r > b + 40 -> 1
+                b > r + 40 -> 2
+                else -> 0
+            }
+            n++
+            if (kind == 0) mixed++ else {
+                if (last != 0 && kind != last) changes++
+                last = kind
+            }
+        }
+        return changes to mixed.toFloat() / n
+    }
+
+    @Test
+    fun clipEffectsChangeTheExportedPicture() {
+        val stripes = bandsPhoto("stripes", 10)
+        val split = bandsPhoto("split", 200)
+        val plain = rowProfile(effectFrames(stripes, null, "pipeline-fx-plain", 1_000)[0])
+        check(plain.first >= 20 && plain.second < 0.1f) { "plain stripes: changes ${plain.first} mixed ${plain.second}" }
+
+        val blur = rowProfile(effectFrames(stripes, ClipEffect(EffectKind.Blur, 100), "pipeline-fx-blur", 1_000)[0])
+        check(blur.second > 0.4f) { "blur left too few mixed samples: ${blur.second} (plain ${plain.second})" }
+
+        val pixel = rowProfile(effectFrames(stripes, ClipEffect(EffectKind.Pixelate, 100), "pipeline-fx-pixel", 1_000)[0])
+        check(pixel.first < plain.first / 2) { "pixelate kept ${pixel.first} changes of ${plain.first}" }
+
+        val shake = effectFrames(stripes, ClipEffect(EffectKind.Shake, 100), "pipeline-fx-shake", 1_000, 1_083)
+        val still = effectFrames(stripes, null, "pipeline-fx-still", 1_000, 1_083)
+        val moved = changedPixels(shake[0], shake[1])
+        val base = changedPixels(still[0], still[1])
+        check(moved > base + 2_000) { "shake changed $moved pixels, a still picture $base" }
+
+        val mirrored = effectFrames(split, ClipEffect(EffectKind.Mirror, 100), "pipeline-fx-mirror", 1_000)[0]
+        val right = meanRgb(mirrored, 0.6f, 0.8f)
+        check(right[0] > right[2] + 40) { "right side is not mirrored brown: ${right.toList()}" }
+        val unmirrored = meanRgb(effectFrames(split, null, "pipeline-fx-split", 1_000)[0], 0.6f, 0.8f)
+        check(unmirrored[2] > unmirrored[0] + 40) { "plain right side is not blue: ${unmirrored.toList()}" }
+    }
+
+    @Test
+    fun aFilledTemplateExportsWithItsLengthLookAndTransitions() {
+        val a = item("video_with_audio.mp4")
+        val b = item("video_silent.mp4")
+        val photo = solidPhoto("tpl-photo", 0xFF804000.toInt())
+        val template = com.petruvideo.core.model.template.TemplateCatalog.all.first { it.id == "memories" }
+        var n = 0
+        val fill = com.petruvideo.core.model.template.TemplateFiller.fill(
+            template, listOf(a, photo, b), "p", { "t${n++}" },
+        )!!
+        val timeline = fill.timeline.copy(format = ProjectFormat(320, 180, 30))
+        val clipsMs = timeline.videoLane.sumOf { it.lengthMs } - 2 * 800
+        timeline.videoLengthMs shouldBe clipsMs
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-tpl")
+        check(state is ExportState.Finished) { "template export: $state" }
+        val duration = retriever(uri!!).extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()
+        check(kotlin.math.abs(duration - clipsMs) < 300) { "template length $duration, expected $clipsMs" }
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

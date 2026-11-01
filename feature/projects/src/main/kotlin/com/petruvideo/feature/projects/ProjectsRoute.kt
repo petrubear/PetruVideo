@@ -25,6 +25,7 @@ fun ProjectsRoute(
     onOpenExport: (projectId: String) -> Unit,
     onOpenExports: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenTemplates: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProjectsViewModel = hiltViewModel(),
 ) {
@@ -37,6 +38,7 @@ fun ProjectsRoute(
                 is ProjectsEffect.OpenExport -> onOpenExport(effect.projectId)
                 ProjectsEffect.OpenExports -> onOpenExports()
                 ProjectsEffect.OpenSettings -> onOpenSettings()
+                ProjectsEffect.OpenTemplates -> onOpenTemplates()
             }
         }
     }

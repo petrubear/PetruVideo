@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.transitionLengthAfter
 import com.petruvideo.feature.editor.TimelineGeometry
 import com.petruvideo.feature.editor.TrimLimits
 
@@ -65,13 +68,14 @@ fun VideoLaneView(
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     modifier: Modifier = Modifier,
+    onTransitionTap: (clipId: String) -> Unit = {},
 ) {
     val density = LocalDensity.current.density
     var draggingId by remember { mutableStateOf<String?>(null) }
     var dragDx by remember { mutableFloatStateOf(0f) }
     var previewLength by remember { mutableStateOf<Pair<String, Long>?>(null) }
 
-    Row(modifier.height(LANE_HEIGHT)) {
+    Box(modifier.height(LANE_HEIGHT)) {
         lane.forEachIndexed { index, clip ->
             val item = media[clip.mediaItemId]
             val widthDp = geometry.timeToPx(clip.lengthMs).dp
@@ -79,6 +83,7 @@ fun VideoLaneView(
             val dragging = draggingId == clip.id
             Box(
                 Modifier
+                    .offset(x = startDp.dp)
                     .width(widthDp)
                     .fillMaxHeight()
                     .zIndex(if (dragging) 1f else 0f)
@@ -134,7 +139,40 @@ fun VideoLaneView(
                 }
             }
         }
+        TransitionMarkers(lane, geometry, onTransitionTap)
     }
+}
+
+/** One marker on every cut that has a transition. */
+@Composable
+private fun BoxScope.TransitionMarkers(lane: List<VideoClip>, geometry: TimelineGeometry, onTap: (String) -> Unit) {
+    lane.indices.forEach { index ->
+        val overlap = transitionLengthAfter(lane, index)
+        if (overlap > 0) {
+            val center = geometry.videoRects(lane)[index + 1].startPx + geometry.timeToPx(overlap) / 2
+            TransitionMarker(
+                lane[index].transitionOut?.kind?.label.orEmpty(),
+                Modifier.offset(x = center.dp - MARKER_SIZE / 2).align(Alignment.CenterStart),
+            ) { onTap(lane[index].id) }
+        }
+    }
+}
+
+private val MARKER_SIZE = 24.dp
+
+/** A diamond on the cut where a transition blends two clips; tapping it opens the transition. */
+@Composable
+private fun TransitionMarker(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier
+            .zIndex(2f)
+            .size(MARKER_SIZE)
+            .graphicsLayer { rotationZ = 45f }
+            .clip(RoundedCornerShape(4.dp))
+            .background(PetruColors.Accent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = "Transition $label" },
+    )
 }
 
 @Composable
@@ -168,5 +206,6 @@ private fun BoxScope.ClipDecorations(clip: VideoClip) {
         reverbOn = clip.attachedAudio && clip.reverb.enabled,
         fx = clip.fx.takeIf { clip.attachedAudio },
         filterOn = !clip.filter.isNeutral,
+        effectOn = clip.effect != null,
     )
 }

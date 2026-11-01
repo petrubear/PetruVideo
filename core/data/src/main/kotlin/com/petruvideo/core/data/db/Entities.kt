@@ -84,6 +84,8 @@ data class VideoClipEntity(
     @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
     @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
     @Embedded(prefix = "flt_") val filter: FilterColumns = FilterColumns(),
+    @Embedded(prefix = "trn_") val transition: TransitionColumns = TransitionColumns(),
+    @Embedded(prefix = "fxe_") val effect: EffectColumns = EffectColumns(),
 )
 
 @Entity(
@@ -142,6 +144,18 @@ data class FilterColumns(
     @ColumnInfo(defaultValue = "0") val saturation: Int = 0,
     @ColumnInfo(defaultValue = "0") val warmth: Int = 0,
     @ColumnInfo(defaultValue = "0") val vignette: Int = 0,
+)
+
+/** The transition into the next clip as `trn_kind` (null when there is none) and `trn_lengthMs`. */
+data class TransitionColumns(
+    @ColumnInfo(defaultValue = "NULL") val kind: String? = null,
+    @ColumnInfo(defaultValue = "0") val lengthMs: Long = 0,
+)
+
+/** A clip's effect as `fxe_kind` (null when there is none) and `fxe_strength`. */
+data class EffectColumns(
+    @ColumnInfo(defaultValue = "NULL") val kind: String? = null,
+    @ColumnInfo(defaultValue = "50") val strength: Int = 50,
 )
 
 /** A clip's fade, noise reduction, equalizer and voice effects as columns `fx_fadeInMs`, `fx_nrEnabled`, and so on. */

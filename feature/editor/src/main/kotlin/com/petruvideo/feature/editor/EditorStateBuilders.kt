@@ -4,7 +4,9 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.SPEED_UNIT
+import com.petruvideo.core.model.TRANSITION_MIN_MS
 import com.petruvideo.core.model.TextStyle
+import com.petruvideo.core.model.transitionLimitMs
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.engine.Delete
@@ -20,6 +22,8 @@ internal data class OpenAudio(val kind: AudioToolKind, val clipId: String)
 internal data class OpenText(val kind: TextToolKind, val clipId: String)
 
 internal data class OpenFilter(val kind: FilterToolKind, val clipId: String)
+
+internal data class OpenEffect(val kind: EffectToolKind, val clipId: String)
 
 internal fun soundClipReverb(timeline: Timeline, id: String): Reverb? =
     timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.reverb
@@ -44,6 +48,22 @@ internal fun filterPanelFor(
         frameTimeMs = clip.sourceStartMs + offset * clip.speedMilli / SPEED_UNIT,
         canApplyAll = timeline.videoLane.size > 1,
     )
+}
+
+internal fun effectPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenEffect?): EffectPanelState? {
+    if (timeline == null || selection == null || open == null) return null
+    if (open.clipId != selection.clipId) return null
+    val index = timeline.videoLane.indexOfFirst { it.id == open.clipId }
+    if (index < 0) return null
+    val clip = timeline.videoLane[index]
+    return EffectPanelState(open.kind, clip.id, clip.transitionOut, clip.effect, transitionLimit(timeline, index))
+}
+
+/** The longest transition after the clip at [index]; 0 when it is the last clip or the pair is too short. */
+internal fun transitionLimit(timeline: Timeline, index: Int): Long {
+    val next = timeline.videoLane.getOrNull(index + 1) ?: return 0L
+    val limit = transitionLimitMs(timeline.videoLane[index].lengthMs, next.lengthMs)
+    return if (limit < TRANSITION_MIN_MS) 0L else limit
 }
 
 internal fun textPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenText?): TextPanelState? {
@@ -93,7 +113,13 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
     val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
         ?: return emptyMap()
     val noSound = "This clip has no sound"
-    return when {
+    val index = timeline.videoLane.indexOf(clip)
+    val noTransition = when {
+        index == timeline.videoLane.lastIndex -> "No clip follows this one"
+        transitionLimit(timeline, index) == 0L -> "These clips are too short for a transition"
+        else -> null
+    }?.let { mapOf(ClipTool.EffectTransition to it) }.orEmpty()
+    return noTransition + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
             ClipTool.Speed to "Photos have no speed",
             ClipTool.Volume to "Photos have no sound",
@@ -144,13 +170,18 @@ internal fun clipToolsFor(
     tab: ToolbarTab,
 ): List<ClipTool> = when (selection) {
     null -> emptyList()
-    is ClipSelection.Video -> if (tab == ToolbarTab.Filters) FILTER_TOOLS else videoTools(timeline, selection)
+    is ClipSelection.Video -> when (tab) {
+        ToolbarTab.Filters -> FILTER_TOOLS
+        ToolbarTab.Effects -> EFFECT_TOOLS
+        ToolbarTab.Audio -> audioTabTools(timeline, selection)
+        else -> videoTools(timeline, selection)
+    }
     is ClipSelection.Overlay -> listOf(ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete)
     is ClipSelection.Text -> listOf(
         ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate,
         ClipTool.Delete,
     )
-    is ClipSelection.Audio ->
+    is ClipSelection.Audio -> if (tab == ToolbarTab.Audio) listOf(ClipTool.Audio, ClipTool.Delete) else
         listOf(
             ClipTool.Split,
             ClipTool.Speed,
@@ -171,6 +202,13 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Duplicate,
         ClipTool.Delete,
     )
+}
+
+private val EFFECT_TOOLS = listOf(ClipTool.EffectTransition, ClipTool.EffectFx, ClipTool.Duplicate, ClipTool.Delete)
+
+private fun audioTabTools(timeline: Timeline?, selection: ClipSelection): List<ClipTool> {
+    val attached = timeline?.videoLane?.firstOrNull { it.id == selection.clipId }?.attachedAudio == true
+    return listOfNotNull(ClipTool.Audio, ClipTool.Detach.takeIf { attached }, ClipTool.Duplicate, ClipTool.Delete)
 }
 
 private val FILTER_TOOLS = listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust, ClipTool.Duplicate, ClipTool.Delete)

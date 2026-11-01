@@ -28,6 +28,7 @@ internal fun badgeParts(
     reverbOn: Boolean,
     fx: AudioFx?,
     filterOn: Boolean = false,
+    effectOn: Boolean = false,
 ): List<String> =
     listOfNotNull(
         speedBadgeText(speedMilli).takeIf { speedMilli != SPEED_UNIT },
@@ -38,6 +39,7 @@ internal fun badgeParts(
         "Eq".takeIf { fx?.eq?.isFlat == false },
         "Vx".takeIf { fx?.voice?.anyOn == true },
         "Fl".takeIf { filterOn },
+        "Fx".takeIf { effectOn },
     )
 
 /** At most [MAX_BADGES] labels; the rest collapse into "+N" so the badge never outgrows a short clip. */
@@ -53,8 +55,9 @@ fun ClipBadge(
     reverbOn: Boolean = false,
     fx: AudioFx? = null,
     filterOn: Boolean = false,
+    effectOn: Boolean = false,
 ) {
-    val all = badgeParts(speedMilli, volumePercent, reverbOn, fx, filterOn)
+    val all = badgeParts(speedMilli, volumePercent, reverbOn, fx, filterOn, effectOn)
     if (all.isEmpty()) return
     val text = collapseBadges(all).joinToString(" ")
     Text(

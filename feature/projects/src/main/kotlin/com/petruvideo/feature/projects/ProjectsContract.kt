@@ -31,6 +31,7 @@ sealed interface ProjectsEvent {
     data class ExportProject(val id: String) : ProjectsEvent
     data object OpenExports : ProjectsEvent
     data object OpenSettings : ProjectsEvent
+    data object OpenTemplates : ProjectsEvent
     data class SelectProject(val id: String) : ProjectsEvent
     data class SetFilter(val filter: ProjectFilter) : ProjectsEvent
     data class SetQuery(val query: String) : ProjectsEvent
@@ -50,4 +51,5 @@ sealed interface ProjectsEffect {
     data class OpenExport(val projectId: String) : ProjectsEffect
     data object OpenExports : ProjectsEffect
     data object OpenSettings : ProjectsEffect
+    data object OpenTemplates : ProjectsEffect
 }

@@ -3,6 +3,7 @@ package com.petruvideo.feature.editor
 import com.petruvideo.core.model.AudioClip
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.formatDuration
+import com.petruvideo.core.model.transitionLengthAfter
 import kotlin.math.roundToLong
 
 data class ClipRect(val clipId: String, val startPx: Float, val widthPx: Float) {
@@ -32,9 +33,10 @@ class TimelineGeometry(val pxPerSecond: Float = DEFAULT_PX_PER_SECOND) {
 
     fun videoRects(lane: List<VideoClip>): List<ClipRect> {
         var start = 0f
-        return lane.map { clip ->
+        return lane.mapIndexed { index, clip ->
             val width = timeToPx(clip.lengthMs)
-            ClipRect(clip.id, start, width).also { start += width }
+            // The next clip starts earlier by the transition between them, so the two overlap on the lane.
+            ClipRect(clip.id, start, width).also { start += width - timeToPx(transitionLengthAfter(lane, index)) }
         }
     }
 

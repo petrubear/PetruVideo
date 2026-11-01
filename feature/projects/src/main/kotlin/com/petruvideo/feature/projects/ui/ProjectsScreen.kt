@@ -180,9 +180,7 @@ private fun BottomNavigation(onEvent: (ProjectsEvent) -> Unit, modifier: Modifie
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NavEntry("Projects", PetruIcons.NavProjects, active = true) {}
-        NavEntry("Templates", PetruIcons.NavTemplates, active = false) {
-            onEvent(ProjectsEvent.TapInactive("Templates"))
-        }
+        NavEntry("Templates", PetruIcons.NavTemplates, active = true) { onEvent(ProjectsEvent.OpenTemplates) }
         NavEntry("Exports", PetruIcons.NavExports, active = true) { onEvent(ProjectsEvent.OpenExports) }
     }
 }

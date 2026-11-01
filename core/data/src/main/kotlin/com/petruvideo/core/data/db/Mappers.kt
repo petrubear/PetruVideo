@@ -6,7 +6,11 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Bass
+import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.EffectKind
+import com.petruvideo.core.model.Transition
+import com.petruvideo.core.model.TransitionKind
 import com.petruvideo.core.model.Echo
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.Equalizer
@@ -95,12 +99,14 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
 fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
     reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
+    transitionOut = transition.toModel(), effect = effect.toModel(),
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
         muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
+        transitionOut.toColumns(), effect.toColumns(),
     )
 
 fun AudioClipEntity.toModel() = AudioClip(
@@ -178,3 +184,13 @@ fun OverlayClip.toEntity(projectId: String) =
         id, projectId, mediaItemId, startMs, sourceStartMs, sourceEndMs,
         xPermille, yPermille, widthPermille, opacityPercent,
     )
+
+fun TransitionColumns.toModel(): Transition? =
+    TransitionKind.entries.firstOrNull { it.name == kind }?.let { Transition(it, lengthMs) }
+
+fun Transition?.toColumns() = if (this == null) TransitionColumns() else TransitionColumns(kind.name, lengthMs)
+
+fun EffectColumns.toModel(): ClipEffect? =
+    EffectKind.entries.firstOrNull { it.name == kind }?.let { ClipEffect(it, strength) }
+
+fun ClipEffect?.toColumns() = if (this == null) EffectColumns() else EffectColumns(kind.name, strength)

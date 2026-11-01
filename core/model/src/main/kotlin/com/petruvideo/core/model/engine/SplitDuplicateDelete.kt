@@ -90,11 +90,13 @@ class Split(
         val first: VideoClip
         val second: VideoClip
         if (photo) {
-            first = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = offset)
+            first = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = offset, transitionOut = null)
             second = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = clip.lengthMs - offset)
         } else {
             val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
-            first = clip.copy(id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut())
+            first = clip.copy(
+                id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
+            )
             second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
         }
         val lane = timeline.videoLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
@@ -128,6 +130,7 @@ class Duplicate(private val clipId: String, private val newClipId: () -> String 
         if (videoIndex >= 0) {
             val lane = timeline.videoLane.toMutableList()
             lane.add(videoIndex + 1, lane[videoIndex].copy(id = newClipId()))
+            lane[videoIndex] = lane[videoIndex].copy(transitionOut = null)
             return CommandResult.Applied(timeline.copy(videoLane = lane), "Duplicate clip")
         }
         timeline.overlayLane.firstOrNull { it.id == clipId }?.let { overlay ->
@@ -150,9 +153,21 @@ class Duplicate(private val clipId: String, private val newClipId: () -> String 
 
 /** Removes a clip. A video clip's attached sound goes with it; detached audio stays where it is. */
 class Delete(private val clipId: String) : Command {
+    /** Drops the clip and the transition that led into it, so no transition joins clips that were not neighbours. */
+    private fun deleteVideo(lane: List<VideoClip>): List<VideoClip> {
+        val index = lane.indexOfFirst { it.id == clipId }
+        return lane.mapIndexedNotNull { i, clip ->
+            when {
+                i == index -> null
+                i == index - 1 -> clip.copy(transitionOut = null)
+                else -> clip
+            }
+        }
+    }
+
     override fun apply(timeline: Timeline): CommandResult = when {
         timeline.videoLane.any { it.id == clipId } -> CommandResult.Applied(
-            timeline.copy(videoLane = timeline.videoLane.filterNot { it.id == clipId }),
+            timeline.copy(videoLane = deleteVideo(timeline.videoLane)),
             "Delete clip",
         )
         timeline.audioLane.any { it.id == clipId } -> CommandResult.Applied(

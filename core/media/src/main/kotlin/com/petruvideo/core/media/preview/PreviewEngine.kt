@@ -47,6 +47,9 @@ interface PreviewEngine {
     /** Changes the fade, noise reduction, equalizer, and voice effects of one clip right away, without a rebuild. */
     fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long)
 
+    /** Changes the strength of one clip's picture effect right away; the current frame is redrawn. */
+    fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect)
+
     /** Changes the place or opacity of one overlay clip right away; the current frame is redrawn. */
     fun setOverlayLive(clip: OverlayClip)
 

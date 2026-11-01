@@ -48,6 +48,7 @@ class AccessibilityTest {
         audioPanel: AudioPanelState? = null,
         textPanel: TextPanelState? = null,
         filterPanel: FilterPanelState? = null,
+        effectPanel: EffectPanelState? = null,
         overlayPanel: OverlayPanelState? = null,
         fontScale: Float = 1f,
     ) {
@@ -63,6 +64,7 @@ class AccessibilityTest {
             audioPanel = audioPanel,
             textPanel = textPanel,
             filterPanel = filterPanel,
+            effectPanel = effectPanel,
             overlayPanel = overlayPanel,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -195,6 +197,24 @@ class AccessibilityTest {
     fun filterAdjustPanelWithLargeFont() = check(
         ClipSelection.Video("c1"), listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust),
         filterPanel = FilterPanelState(FilterToolKind.Adjust, "c1", com.petruvideo.core.model.ClipFilter(), null, 0, true),
+        fontScale = 2f,
+    )
+
+    private val transition = com.petruvideo.core.model.Transition(com.petruvideo.core.model.TransitionKind.Dissolve, 1_000)
+
+    @Test
+    fun effectsTransitionPanel() = check(
+        ClipSelection.Video("c1"), listOf(ClipTool.EffectTransition, ClipTool.EffectFx, ClipTool.Duplicate, ClipTool.Delete),
+        effectPanel = EffectPanelState(EffectToolKind.Transition, "c1", transition, null, 1_500),
+    )
+
+    @Test
+    fun effectsEffectPanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), listOf(ClipTool.EffectTransition, ClipTool.EffectFx),
+        effectPanel = EffectPanelState(
+            EffectToolKind.Effect, "c1", null,
+            com.petruvideo.core.model.ClipEffect(com.petruvideo.core.model.EffectKind.Blur, 50), 1_500,
+        ),
         fontScale = 2f,
     )
 

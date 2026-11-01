@@ -13,7 +13,13 @@ import com.petruvideo.core.media.preview.PreviewState
 import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.engine.RemoveTransition
+import com.petruvideo.core.model.engine.ResetClipEffect
+import com.petruvideo.core.model.engine.SetClipEffect
+import com.petruvideo.core.model.engine.SetTransition
 import com.petruvideo.core.model.Equalizer
 import com.petruvideo.core.model.FILTER_INTENSITY_DEFAULT
 import com.petruvideo.core.model.Fade
@@ -101,6 +107,7 @@ import kotlinx.coroutines.launch
  * [PreviewEngine]; this view model only combines them and routes events, so fold, unfold, rotation, and resize
  * never lose the playhead, selection source, or edits.
  */
+@Suppress("LargeClass") // The state holder for every editor tool; each tool's logic is small and lives with its event.
 @HiltViewModel
 class EditorViewModel @Inject constructor(
     private val session: ProjectSession,
@@ -126,6 +133,8 @@ class EditorViewModel @Inject constructor(
         val text: OpenText? = null,
         /** The open filter panel: which tool and which clip. */
         val filter: OpenFilter? = null,
+        /** The open Effects panel: which tool and which clip. */
+        val effect: OpenEffect? = null,
         /** Whether the overlay panel is open (for the selected overlay clip). */
         val overlayOpen: Boolean = false,
     )
@@ -141,8 +150,7 @@ class EditorViewModel @Inject constructor(
     /** What the engine plays; the playhead is deliberately not part of it. */
     private data class Content(val timeline: Timeline) {
         override fun equals(other: Any?) = other is Content &&
-            other.timeline.videoLane.map { it.copy(filter = it.filter.structural()) } ==
-                timeline.videoLane.map { it.copy(filter = it.filter.structural()) } &&
+            other.timeline.videoLane.map { it.structural() } == timeline.videoLane.map { it.structural() } &&
             other.timeline.audioLane == timeline.audioLane &&
             other.timeline.media == timeline.media &&
             other.timeline.textLane.map { it.id } == timeline.textLane.map { it.id } &&
@@ -152,6 +160,10 @@ class EditorViewModel @Inject constructor(
         /** Text past the end of the video makes the video sequence run on, which needs a rebuild. */
         private val textBeyondVideo: Long
             get() = (timeline.textLane.maxOfOrNull { it.endMs } ?: 0L).minus(timeline.videoLengthMs).coerceAtLeast(0)
+
+        /** Filter numbers and effect strength change live, so only whether they are on can force a rebuild. */
+        private fun VideoClip.structural() =
+            copy(filter = filter.structural(), effect = effect?.copy(strength = 0))
 
         private fun OverlayClip.structural() = copy(xPermille = 0, yPermille = 0, widthPermille = 0, opacityPercent = 0)
 
@@ -277,6 +289,16 @@ class EditorViewModel @Inject constructor(
             EditorEvent.FilterRemove -> selectedPictureId()?.let { run(RemoveFilter(it)) }
             EditorEvent.FilterApplyAll -> selectedPictureId()?.let { run(ApplyFilterToAll(it)) }
             EditorEvent.FilterDismiss -> closeFilter()
+            is EditorEvent.OpenEffectTool -> openEffect(event.kind)
+            is EditorEvent.TransitionSet ->
+                selectedPictureId()?.let { run(SetTransition(it, event.kind, event.lengthMs)) }
+            EditorEvent.TransitionRemove -> selectedPictureId()?.let { run(RemoveTransition(it)) }
+            is EditorEvent.EffectPreview -> selectedPictureId()?.let { engine.setClipEffectLive(it, event.effect) }
+            is EditorEvent.EffectCommit -> commitEffect(event.effect)
+            EditorEvent.EffectRemove -> selectedPictureId()?.let { run(ResetClipEffect(it)) }
+            EditorEvent.EffectDismiss -> closeEffect()
+            EditorEvent.AddMusic -> { pause(); effectChannel.trySend(EditorEffect.PickMusic) }
+            is EditorEvent.AddMusicMedia -> addMusic(event.media)
             is EditorEvent.OpenTextTool -> openText(event.kind)
             is EditorEvent.TextPreview -> previewText(event.clip)
             is EditorEvent.TextCommit -> commitText(event.clip)
@@ -328,6 +350,7 @@ class EditorViewModel @Inject constructor(
         closeReverb()
         closeAudio()
         closeFilter()
+        closeEffect()
         closeOverlay()
         local.update { it.copy(selection = selection, text = null) }
     }
@@ -384,7 +407,44 @@ class EditorViewModel @Inject constructor(
         closeSheet()
         closeReverb()
         closeAudio()
+        closeEffect()
         local.update { it.copy(filter = OpenFilter(kind, id), sheet = null, text = null) }
+    }
+
+    private fun openEffect(kind: EffectToolKind) {
+        val id = selectedPictureId() ?: return
+        val timeline = session.timeline.value ?: return
+        if (kind == EffectToolKind.Transition) {
+            disabledToolsFor(timeline, ClipSelection.Video(id))[ClipTool.EffectTransition]?.let { return say(it) }
+        }
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        local.update { it.copy(effect = OpenEffect(kind, id), sheet = null, text = null) }
+    }
+
+    private fun closeEffect() {
+        val open = local.value.effect ?: return
+        local.update { it.copy(effect = null) }
+        // A drag that did not become an edit must not leave its live strength behind.
+        session.timeline.value?.videoLane?.firstOrNull { it.id == open.clipId }?.effect
+            ?.let { engine.setClipEffectLive(open.clipId, it) }
+    }
+
+    private fun commitEffect(effect: ClipEffect) {
+        val id = selectedPictureId() ?: return
+        run(SetClipEffect(id, effect.kind, effect.strength))
+        session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.effect
+            ?.let { engine.setClipEffectLive(id, it) }
+    }
+
+    private fun addMusic(media: MediaItem) {
+        val at = engine.state.value.positionMs
+        val result = session.apply(AddAudioClips(listOf(media), at))
+        if (result !is CommandResult.Applied) say("That file can't be used as audio")
+        else if (Notice.Snapped in result.notices) say("Music moved to the next free spot")
     }
 
     private fun closeFilter() {
@@ -701,6 +761,8 @@ class EditorViewModel @Inject constructor(
             ClipTool.FilterLooks -> openFilter(FilterToolKind.Looks)
             ClipTool.OverlayOpacity -> openOverlay()
             ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
+            ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
+            ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
             ClipTool.TextStyle -> openText(TextToolKind.Style)
             ClipTool.TextAnim -> openText(TextToolKind.Animation)
@@ -814,6 +876,7 @@ class EditorViewModel @Inject constructor(
             selectedOverlay = timeline?.overlayLane?.firstOrNull { it.id == selection?.clipId },
             selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),
             textPanel = textPanelFor(timeline, selection, local.text),
+            effectPanel = effectPanelFor(timeline, selection, local.effect),
             filterPanel = filterPanelFor(timeline, selection, local.filter, core.preview.positionMs),
             selectedFilter = selection?.let {
                 filterPanelFor(timeline, it, OpenFilter(FilterToolKind.Looks, it.clipId), core.preview.positionMs)

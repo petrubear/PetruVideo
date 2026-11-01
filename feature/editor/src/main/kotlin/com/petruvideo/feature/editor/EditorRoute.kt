@@ -56,6 +56,7 @@ fun EditorRoute(
 
     val pickReplacement = rememberReplaceAudioPicker(mediaViewModel, viewModel::onEvent)
     val pickOverlay = rememberOverlayPicker(mediaViewModel, viewModel::onEvent)
+    val pickMusic = rememberMusicPicker(mediaViewModel, viewModel::onEvent)
 
     LaunchedEffect(projectId) { viewModel.open(projectId) }
     LaunchedEffect(viewModel) {
@@ -65,6 +66,7 @@ fun EditorRoute(
                 EditorEffect.OpenExport -> currentExport()
                 is EditorEffect.PickReplacementAudio -> pickReplacement(effect.clipId)
                 EditorEffect.PickOverlayMedia -> pickOverlay()
+                EditorEffect.PickMusic -> pickMusic()
                 is EditorEffect.PickRelinkFile -> {
                     relinkTarget = effect.mediaItemId
                     relinkPicker.launch(arrayOf("video/*", "image/*", "audio/*"))

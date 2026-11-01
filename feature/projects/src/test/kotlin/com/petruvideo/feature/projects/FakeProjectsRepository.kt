@@ -19,6 +19,7 @@ class FakeProjectsRepository(
     val renamed = mutableListOf<Pair<String, String>>()
     val duplicated = mutableListOf<String>()
     val deleted = mutableListOf<String>()
+    val saved = mutableListOf<Pair<String, Timeline>>()
     var created = 0
 
     override fun observeProjects(filter: ProjectFilter, query: String): Flow<List<ProjectSummary>> = projects
@@ -34,7 +35,9 @@ class FakeProjectsRepository(
         return Project("new-$created", "Untitled $created", 0, 0)
     }
 
-    override suspend fun saveTimeline(projectId: String, timeline: Timeline) = Unit
+    override suspend fun saveTimeline(projectId: String, timeline: Timeline) {
+        saved += projectId to timeline
+    }
 
     override suspend fun duplicateProject(id: String): Project? {
         duplicated += id

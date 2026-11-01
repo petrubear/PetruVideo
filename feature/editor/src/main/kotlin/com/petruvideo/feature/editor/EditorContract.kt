@@ -2,7 +2,9 @@ package com.petruvideo.feature.editor
 
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TextClip
@@ -23,10 +25,10 @@ sealed interface ClipSelection {
 /** Main tool bar tabs as designed. Only Edit is active in this feature; the rest show "coming soon". */
 enum class ToolbarTab(val label: String, val active: Boolean) {
     Edit("Edit", true),
-    Audio("Audio", false),
+    Audio("Audio", true),
     Text("Text", true),
     Overlay("Overlay", true),
-    Effects("Effects", false),
+    Effects("Effects", true),
     Filters("Filters", true),
 }
 
@@ -47,6 +49,8 @@ enum class ClipTool(val label: String, val active: Boolean) {
     TextAnim("Animation", true),
     FilterLooks("Looks", true),
     FilterAdjust("Adjust", true),
+    EffectTransition("Transition", true),
+    EffectFx("Effect", true),
     OverlayOpacity("Opacity", true),
 }
 
@@ -111,6 +115,21 @@ data class FilterPanelState(
     val canApplyAll: Boolean,
 )
 
+/** The two Effects panels: the transition after the clip, and the clip's picture effect. */
+enum class EffectToolKind(val label: String) { Transition("Transition"), Effect("Effect") }
+
+/**
+ * The open Effects panel for the selected video-lane clip. [limitMs] is the longest transition its cut allows (0 when
+ * no clip follows or the clips are too short).
+ */
+data class EffectPanelState(
+    val kind: EffectToolKind,
+    val clipId: String,
+    val transition: Transition?,
+    val effect: ClipEffect?,
+    val limitMs: Long,
+)
+
 /** The open reverb panel for one clip. */
 data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
@@ -147,6 +166,8 @@ data class EditorState(
     /** The selected overlay clip and the shape of its picture (width over height), for the preview box. */
     val selectedOverlay: OverlayClip? = null,
     val selectedOverlayAspect: Float = 1.78f,
+    /** The open Effects panel, if any. */
+    val effectPanel: EffectPanelState? = null,
     /** The open filter panel, if any. */
     val filterPanel: FilterPanelState? = null,
     /** The selected picture clip's filter with its look tiles (the inspector shows its controls). */
@@ -249,6 +270,19 @@ sealed interface EditorEvent {
     data object FilterRemove : EditorEvent
     data object FilterApplyAll : EditorEvent
     data object FilterDismiss : EditorEvent
+    data class OpenEffectTool(val kind: EffectToolKind) : EditorEvent
+    /** Sets the transition after the selected clip: one edit. */
+    data class TransitionSet(val kind: com.petruvideo.core.model.TransitionKind, val lengthMs: Long) : EditorEvent
+    data object TransitionRemove : EditorEvent
+    /** An effect strength while dragging: seen live, not yet an edit. */
+    data class EffectPreview(val effect: ClipEffect) : EditorEvent
+    /** The effect on release or a tap: one edit. */
+    data class EffectCommit(val effect: ClipEffect) : EditorEvent
+    data object EffectRemove : EditorEvent
+    data object EffectDismiss : EditorEvent
+    /** The Add music button: opens a file picker for an audio file. */
+    data object AddMusic : EditorEvent
+    data class AddMusicMedia(val media: MediaItem) : EditorEvent
     data class OpenTextTool(val kind: TextToolKind) : EditorEvent
     /** A text clip value while typing or dragging: seen live, not yet an edit. */
     data class TextPreview(val clip: TextClip) : EditorEvent
@@ -266,4 +300,5 @@ sealed interface EditorEffect {
     data class PickRelinkFile(val mediaItemId: String) : EditorEffect
     data class PickReplacementAudio(val clipId: String) : EditorEffect
     data object PickOverlayMedia : EditorEffect
+    data object PickMusic : EditorEffect
 }

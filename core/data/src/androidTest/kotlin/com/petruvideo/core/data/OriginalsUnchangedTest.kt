@@ -267,6 +267,34 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-006 of feature 011: transitions and effects reload exactly and leave the sources alone. */
+    @Test
+    fun transitionsAndEffectsSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip11.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video), AddVideoItem(video)), playheadMs = 0))
+        val (first, second) = session.timeline.value!!.videoLane.map { it.id }
+        session.apply(
+            com.petruvideo.core.model.engine.SetTransition(first, com.petruvideo.core.model.TransitionKind.Slide, 1_500),
+        )
+        session.apply(com.petruvideo.core.model.engine.SetClipEffect(second, com.petruvideo.core.model.EffectKind.Blur, 35))
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.videoLane shouldBe saved.videoLane
+        loaded.videoLane[0].transitionOut shouldBe
+            com.petruvideo.core.model.Transition(com.petruvideo.core.model.TransitionKind.Slide, 1_500)
+        loaded.videoLane[1].effect shouldBe com.petruvideo.core.model.ClipEffect(com.petruvideo.core.model.EffectKind.Blur, 35)
+        checksums() shouldBe before
+    }
+
     /** SC-005, SC-007 of feature 010: overlays reload exactly with their media and leave the sources alone. */
     @Test
     fun overlaysSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {

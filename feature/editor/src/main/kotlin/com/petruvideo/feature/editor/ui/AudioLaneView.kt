@@ -58,15 +58,18 @@ fun AttachedAudioRow(
     geometry: TimelineGeometry,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier.height(WAVE_ROW_HEIGHT)) {
-        lane.forEach { clip ->
+    // Clips overlap where a transition joins them, so each sits at its own start instead of end to end.
+    val rects = geometry.videoRects(lane)
+    Box(modifier.height(WAVE_ROW_HEIGHT)) {
+        lane.forEachIndexed { index, clip ->
             val item = media[clip.mediaItemId]
             val width = geometry.timeToPx(clip.lengthMs).dp
             if (clip.attachedAudio && item != null && item.availability == Availability.Available) {
                 val range = clip.sourceStartMs..clip.sourceEndMs
-                Waveform(item, range, TrackColors.Audio, TrackColors.AudioFill, Modifier.width(width))
-            } else {
-                Box(Modifier.width(width).fillMaxHeight())
+                Waveform(
+                    item, range, TrackColors.Audio, TrackColors.AudioFill,
+                    Modifier.offset(x = rects[index].startPx.dp).width(width),
+                )
             }
         }
     }

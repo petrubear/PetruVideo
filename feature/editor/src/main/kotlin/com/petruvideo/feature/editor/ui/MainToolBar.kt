@@ -151,3 +151,41 @@ fun TextTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modif
         ToolButton(label = "Add text", icon = PetruIcons.Add, active = true, onClick = onAdd)
     }
 }
+
+/** The bar of the Effects tab with no picture clip selected. */
+@Composable
+fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        Text("Select a clip to add a transition or effect", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+    }
+}
+
+/** The bar of the Audio tab with no clip selected: back to Edit, and Add music from a file. */
+@Composable
+fun AudioTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        ToolButton(label = "Add music", icon = PetruIcons.Add, active = true, onClick = onAdd)
+    }
+}

@@ -9,6 +9,9 @@ import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.designsystem.PetruTheme
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.EffectKind
+import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.feature.editor.ui.EditorScreen
 import com.petruvideo.feature.editor.ui.LocalMediaLoaders
@@ -50,6 +53,8 @@ class EditorScreenshotTest {
         textPanel: TextPanelState? = null,
         tab: ToolbarTab = ToolbarTab.Edit,
         filterPanel: FilterPanelState? = null,
+        effectPanel: EffectPanelState? = null,
+        joined: Boolean = false,
         overlays: List<com.petruvideo.core.model.OverlayClip> = emptyList(),
         overlayPanel: OverlayPanelState? = null,
     ): EditorState {
@@ -62,6 +67,16 @@ class EditorScreenshotTest {
                         it.copy(speedMilli = 2000, volumePercent = 40, fx = AudioFx(fade = fade))
                     } else {
                         it
+                    }
+                }
+            } else if (joined) {
+                loaded.timeline.videoLane.mapIndexed { i, clip ->
+                    when (i) {
+                        0 -> clip.copy(
+                            transitionOut = Transition(com.petruvideo.core.model.TransitionKind.Dissolve, 1_000),
+                        )
+                        1 -> clip.copy(effect = ClipEffect(EffectKind.Blur, 40))
+                        else -> clip
                     }
                 }
             } else {
@@ -93,6 +108,7 @@ class EditorScreenshotTest {
             audioPanel = audioPanel,
             textPanel = textPanel,
             filterPanel = filterPanel,
+            effectPanel = effectPanel,
             overlayPanel = overlayPanel,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -396,6 +412,55 @@ class EditorScreenshotTest {
         CompositionLocalProvider(LocalMediaLoaders provides loaders) {
             PetruTheme {
                 EditorScreen(state(tab = ToolbarTab.Filters), player = null, onEvent = {}, onBack = {})
+            }
+        }
+    }
+
+    private fun snapshotEffect(kind: EffectToolKind, transition: Transition?, effect: ClipEffect?) {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(
+                            selection = ClipSelection.Video("c1"),
+                            tab = ToolbarTab.Effects,
+                            joined = true,
+                            effectPanel = EffectPanelState(kind, "c1", transition, effect, 1_500),
+                        ),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun effectsTransitionPanel() = snapshotEffect(
+        EffectToolKind.Transition,
+        Transition(com.petruvideo.core.model.TransitionKind.Slide, 1_000), null,
+    )
+
+    @Test
+    fun effectsEffectPanel() = snapshotEffect(
+        EffectToolKind.Effect, null, ClipEffect(EffectKind.Pixelate, 60),
+    )
+
+    @Test
+    fun effectsTabWithNothingSelected() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(state(tab = ToolbarTab.Effects, joined = true), player = null, onEvent = {}, onBack = {})
+            }
+        }
+    }
+
+    @Test
+    fun audioTabWithNothingSelected() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(state(tab = ToolbarTab.Audio), player = null, onEvent = {}, onBack = {})
             }
         }
     }
