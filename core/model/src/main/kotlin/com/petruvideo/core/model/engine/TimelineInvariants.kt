@@ -44,6 +44,9 @@ object TimelineInvariants {
                 add("audio clip ${clip.id} trim is outside its source")
             }
         }
+        for (clip in timeline.textLane) {
+            if (!clip.inRange) add("text clip ${clip.id} is out of range")
+        }
         val sorted = timeline.audioLane.sortedBy { it.timelineStartMs }
         sorted.zipWithNext().forEach { (a, b) ->
             if (a.timelineEndMs > b.timelineStartMs) add("audio clips ${a.id} and ${b.id} overlap")

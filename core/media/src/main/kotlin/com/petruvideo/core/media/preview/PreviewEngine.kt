@@ -6,6 +6,7 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Timeline
 import kotlinx.coroutines.flow.StateFlow
 
@@ -43,6 +44,9 @@ interface PreviewEngine {
 
     /** Changes the fade, noise reduction, equalizer, and voice effects of one clip right away, without a rebuild. */
     fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long)
+
+    /** Changes one text clip right away (words, style, place, timing); the current frame is redrawn. */
+    fun setTextLive(clip: TextClip)
 
     /** Changes the volume of one clip in the loaded composition right away, without a rebuild or an edit. */
     fun setClipVolumeLive(clipId: String, percent: Int)

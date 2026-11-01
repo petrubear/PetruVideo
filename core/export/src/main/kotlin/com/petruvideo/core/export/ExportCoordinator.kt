@@ -73,7 +73,9 @@ class ExportCoordinator(
 
     fun check(timeline: Timeline, plan: ExportPlan): Blocker? {
         if (_job.value?.state?.active == true) return Blocker.Busy
-        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty()) return Blocker.NoClips
+        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty() && timeline.textLane.isEmpty()) {
+            return Blocker.NoClips
+        }
         missingName(timeline)?.let { return Blocker.MissingMedia(it) }
         val needed = plan.estimatedBytes * COPIES + MARGIN_BYTES
         return if (storage.freeBytes() < needed) Blocker.NotEnoughStorage(needed) else null

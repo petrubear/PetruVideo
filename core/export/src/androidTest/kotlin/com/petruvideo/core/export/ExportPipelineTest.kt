@@ -32,6 +32,9 @@ import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.ReverbPresets
+import com.petruvideo.core.model.TextBackground
+import com.petruvideo.core.model.TextClip
+import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.export.DeviceLimits
@@ -382,6 +385,99 @@ class ExportPipelineTest {
         codec.release()
         extractor.release()
         return sums.indices.map { if (counts[it] == 0L) 0f else kotlin.math.sqrt(sums[it] / counts[it]).toFloat() }
+    }
+
+    private fun textClip(id: String, start: Long, duration: Long, x: Int = 500, text: String = "TITLE") = TextClip(
+        id, text, start, duration, xPermille = x, yPermille = 500, sizePermille = 200,
+        style = TextStyle(
+            colorArgb = 0xFFFFFFFF.toInt(),
+            background = TextBackground(true, 0xFF000000.toInt(), 100),
+        ),
+    )
+
+    private fun frameAt(uri: String, ms: Long): android.graphics.Bitmap {
+        val r = retriever(uri)
+        val frame = r.getFrameAtTime(ms * 1000, MediaMetadataRetriever.OPTION_CLOSEST)!!
+        r.release()
+        return frame
+    }
+
+    /** Pixels whose color differs clearly between two frames of the same size. */
+    private fun changedPixels(a: android.graphics.Bitmap, b: android.graphics.Bitmap, left: Float = 0f, right: Float = 1f): Int {
+        var count = 0
+        for (y in 0 until a.height step 2) {
+            for (x in (a.width * left).toInt() until (a.width * right).toInt() step 2) {
+                val p = a.getPixel(x, y)
+                val q = b.getPixel(x, y)
+                val d = kotlin.math.abs(android.graphics.Color.red(p) - android.graphics.Color.red(q)) +
+                    kotlin.math.abs(android.graphics.Color.green(p) - android.graphics.Color.green(q)) +
+                    kotlin.math.abs(android.graphics.Color.blue(p) - android.graphics.Color.blue(q))
+                if (d > 150) count++
+            }
+        }
+        return count
+    }
+
+    /** Pixels that are nearly white in a frame; the title's white letters on its black box. */
+    private fun whitePixels(frame: android.graphics.Bitmap, left: Float = 0f, right: Float = 1f): Int {
+        var count = 0
+        for (y in 0 until frame.height step 2) {
+            for (x in (frame.width * left).toInt() until (frame.width * right).toInt() step 2) {
+                val c = frame.getPixel(x, y)
+                if (android.graphics.Color.red(c) > 235 && android.graphics.Color.green(c) > 235 &&
+                    android.graphics.Color.blue(c) > 235
+                ) count++
+            }
+        }
+        return count
+    }
+
+    @Test
+    fun textShowsOnlyInsideItsWindowAndAtItsPlace() {
+        val a = item("video_silent.mp4")
+        val plain = project(VideoClip("c1", a.id, 0, 2_000, false), media = listOf(a))
+        val titled = plain.copy(textLane = listOf(textClip("t1", 600, 800, x = 250)))
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val (s1, withoutText) = export(plain, settings, "pipeline-notext")
+        val (s2, withText) = export(titled, settings, "pipeline-text")
+        s1.shouldBeFinished()
+        s2.shouldBeFinished()
+        // The same footage with and without the title: frames match outside the window and differ inside, on the left.
+        val outside = changedPixels(frameAt(withoutText!!, 300), frameAt(withText!!, 300)) +
+            changedPixels(frameAt(withoutText, 1_700), frameAt(withText, 1_700))
+        val inside = changedPixels(frameAt(withoutText, 1_000), frameAt(withText, 1_000))
+        check(inside > 1_500 && outside < inside / 5) { "changed pixels inside $inside, outside $outside" }
+        val left = changedPixels(frameAt(withoutText, 1_000), frameAt(withText, 1_000), 0f, 0.5f)
+        val right = changedPixels(frameAt(withoutText, 1_000), frameAt(withText, 1_000), 0.5f, 1f)
+        check(left > right * 3) { "text should sit on the left half: left $left right $right" }
+    }
+
+    @Test
+    fun textAfterTheVideoExtendsTheProjectOverBlack() {
+        val a = item("video_silent.mp4")
+        val timeline = project(VideoClip("c1", a.id, 0, 1_000, false), media = listOf(a)).copy(
+            textLane = listOf(textClip("t1", 1_200, 1_300)),
+        )
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-text-tail")
+        state.shouldBeFinished()
+        val r = retriever(uri!!)
+        (r.int(MediaMetadataRetriever.METADATA_KEY_DURATION) in 2_400..2_650) shouldBe true
+        r.release()
+        (whitePixels(frameAt(uri, 2_000)) > 800) shouldBe true
+    }
+
+    @Test
+    fun aProjectWithOnlyTextExports() {
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            textLane = listOf(textClip("t1", 0, 2_000)),
+        )
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-text-only")
+        state.shouldBeFinished()
+        val r = retriever(uri!!)
+        (r.int(MediaMetadataRetriever.METADATA_KEY_DURATION) in 1_900..2_200) shouldBe true
+        r.release()
+        (whitePixels(frameAt(uri, 1_000)) > 800) shouldBe true
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

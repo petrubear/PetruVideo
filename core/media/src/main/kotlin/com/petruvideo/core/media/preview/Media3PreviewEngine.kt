@@ -14,6 +14,7 @@ import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Timeline
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -42,6 +43,8 @@ class Media3PreviewEngine @Inject constructor(
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     private var voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
     private var voiceFxAllowed = true
+    private var textOverlays: com.petruvideo.core.media.text.TextOverlaySet? = null
+    private val refresh = Runnable { refreshFrame() }
     private var reverbAllowed = true
 
     override val state: StateFlow<PreviewState> = _state
@@ -79,6 +82,7 @@ class Media3PreviewEngine @Inject constructor(
         gains = builder.gains
         reverbs = builder.reverbs
         voiceFxs = builder.voiceFxs
+        textOverlays = builder.textOverlays
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         val player = compositionPlayer ?: CompositionPlayer.Builder(context).build()
@@ -129,6 +133,20 @@ class Media3PreviewEngine @Inject constructor(
     /** The loaded clip's gain and fade processor, for tests. */
     internal fun gainOf(clipId: String): GainAudioProcessor? = gains[clipId]
 
+    override fun setTextLive(clip: TextClip) {
+        textOverlays?.update(clip)
+        if (!polling) {
+            handler.removeCallbacks(refresh)
+            handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
+
+    /** A paused player draws nothing new, so a seek to the same place makes it draw the frame again. */
+    private fun refreshFrame() {
+        val player = compositionPlayer ?: return
+        if (hasComposition && !player.isPlaying) player.seekTo(player.currentPosition)
+    }
+
     override fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long) {
         voiceFxs[clipId]?.update(fx, voiceFxAllowed)
         gains[clipId]?.setFade(fx.fade, clipLengthMs)
@@ -160,5 +178,6 @@ class Media3PreviewEngine @Inject constructor(
 
     private companion object {
         const val POLL_MS = 33L
+        const val REFRESH_MS = 40L
     }
 }

@@ -69,6 +69,10 @@ class FakePreviewEngine : PreviewEngine {
         calls += "reverb $clipId ${reverb.mix} ${reverb.enabled}"
     }
 
+    override fun setTextLive(clip: com.petruvideo.core.model.TextClip) {
+        calls += "text ${clip.id} ${clip.text}"
+    }
+
     override fun setClipFxLive(clipId: String, fx: com.petruvideo.core.model.AudioFx, clipLengthMs: Long) {
         calls += "fx $clipId ${fx.fade.inMs} ${fx.fade.outMs}"
     }

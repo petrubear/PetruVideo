@@ -12,6 +12,8 @@
 **Rationale**: Cheap per frame, deterministic, JVM-testable.
 **Alternatives**: One overlay per time segment (many overlays); rebuild the composition at each boundary (stutter).
 
+**Result of spike S1 (emulator, API 34)**: composition-level `OverlayEffect` receives composition time in export: the title shows only inside its window and at its place (left half for x=250). `BitmapOverlay` re-uploads only when the bitmap instance changes. A project with only text exports (a gap-only video sequence works); text past the end of the video extends the project over black via a trailing gap in the video sequence. For a gap-only sequence the output size is fixed by a `Presentation` effect placed before the overlays. Preview plays projects with animated text, text beyond the video, text only, and live changes while paused and playing. Bug found and fixed: a centered layout wider than the cropped bitmap showed only one letter; the layout is now made again at the widest line's width.
+
 ## 3. Position, size, and frame size
 
 **Decision**: Position (center) is stored in permille of the frame width and height, size as permille of the frame height. The renderer wraps to the frame width minus a 5% margin on each side and clamps the box inside the margin. The overlay anchor is the clip center in normalized device coordinates (x*2-1, 1-y*2).

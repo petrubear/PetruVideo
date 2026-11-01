@@ -152,6 +152,42 @@ data class AudioFxColumns(
     @ColumnInfo(defaultValue = "50") val bassAmount: Int = 50,
 )
 
+@Entity(
+    tableName = "text_clip",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProjectEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["projectId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["projectId", "startMs"])],
+)
+data class TextClipEntity(
+    @PrimaryKey val id: String,
+    val projectId: String,
+    val startMs: Long,
+    val durationMs: Long,
+    val text: String,
+    val x: Int,
+    val y: Int,
+    val size: Int,
+    val font: String,
+    val color: Int,
+    val align: String,
+    val bgEnabled: Boolean,
+    val bgColor: Int,
+    val bgOpacity: Int,
+    val olEnabled: Boolean,
+    val olColor: Int,
+    val olWidth: Int,
+    val inKind: String,
+    val inMs: Int,
+    val outKind: String,
+    val outMs: Int,
+)
+
 @Entity(tableName = "export_settings")
 data class ExportSettingsEntity(
     @PrimaryKey val projectId: String,

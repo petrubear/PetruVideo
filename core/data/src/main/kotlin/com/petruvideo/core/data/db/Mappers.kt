@@ -1,5 +1,6 @@
 package com.petruvideo.core.data.db
 
+import com.petruvideo.core.model.AnimKind
 import com.petruvideo.core.model.AudioClip
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
@@ -21,6 +22,13 @@ import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.Robot
+import com.petruvideo.core.model.TextAlign
+import com.petruvideo.core.model.TextAnimation
+import com.petruvideo.core.model.TextBackground
+import com.petruvideo.core.model.TextClip
+import com.petruvideo.core.model.TextFont
+import com.petruvideo.core.model.TextOutline
+import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.VoiceFx
 
@@ -128,4 +136,26 @@ fun AudioFx.toColumns() = AudioFxColumns(
     fade.inMs, fade.outMs, noise.enabled, noise.strength.name, eq.lowDb, eq.midDb, eq.highDb,
     voice.echo.enabled, voice.echo.delayMs, voice.echo.repeats, voice.robot.enabled, voice.robot.intensity,
     voice.pitch.enabled, voice.pitch.semitones, voice.bass.enabled, voice.bass.amount,
+)
+
+fun TextClipEntity.toModel() = TextClip(
+    id = id, text = text, startMs = startMs, durationMs = durationMs,
+    xPermille = x, yPermille = y, sizePermille = size,
+    style = TextStyle(
+        font = TextFont.entries.firstOrNull { it.name == font } ?: TextFont.Sans,
+        colorArgb = color,
+        align = TextAlign.entries.firstOrNull { it.name == align } ?: TextAlign.Center,
+        background = TextBackground(bgEnabled, bgColor, bgOpacity),
+        outline = TextOutline(olEnabled, olColor, olWidth),
+    ),
+    animIn = TextAnimation(AnimKind.entries.firstOrNull { it.name == inKind } ?: AnimKind.None, inMs),
+    animOut = TextAnimation(AnimKind.entries.firstOrNull { it.name == outKind } ?: AnimKind.None, outMs),
+)
+
+fun TextClip.toEntity(projectId: String) = TextClipEntity(
+    id, projectId, startMs, durationMs, text, xPermille, yPermille, sizePermille,
+    style.font.name, style.colorArgb, style.align.name,
+    style.background.enabled, style.background.colorArgb, style.background.opacityPercent,
+    style.outline.enabled, style.outline.colorArgb, style.outline.widthPermille,
+    animIn.kind.name, animIn.lengthMs, animOut.kind.name, animOut.lengthMs,
 )

@@ -41,6 +41,7 @@ class RoomProjectRepository @Inject constructor(
             media = media,
             videoLane = timelines.videoClips(id).map { it.toModel() },
             audioLane = timelines.audioClips(id).map { it.toModel() },
+            textLane = timelines.textClips(id).map { it.toModel() },
             playheadMs = entity.playheadMs,
         )
         return LoadedProject(project, timeline)
@@ -73,6 +74,7 @@ class RoomProjectRepository @Inject constructor(
             )
             timelines.deleteVideoClips(projectId)
             timelines.deleteAudioClips(projectId)
+            timelines.deleteTextClips(projectId)
             timelines.deleteMedia(projectId)
             val referenced = (timeline.videoLane.map { it.mediaItemId } + timeline.audioLane.map { it.mediaItemId })
                 .toSet()
@@ -81,6 +83,7 @@ class RoomProjectRepository @Inject constructor(
             )
             timelines.insertVideoClips(timeline.videoLane.mapIndexed { i, c -> c.toEntity(projectId, i) })
             timelines.insertAudioClips(timeline.audioLane.map { it.toEntity(projectId) })
+            timelines.insertTextClips(timeline.textLane.map { it.toEntity(projectId) })
         }
     }
 
@@ -97,7 +100,10 @@ class RoomProjectRepository @Inject constructor(
         projects.upsert(copy.toEntity(source.timeline.playheadMs))
 
         val mediaIds = source.timeline.media.keys.associateWith { newId() }
-        val clipIds = (source.timeline.videoLane.map { it.id } + source.timeline.audioLane.map { it.id })
+        val clipIds = (
+            source.timeline.videoLane.map { it.id } + source.timeline.audioLane.map { it.id } +
+                source.timeline.textLane.map { it.id }
+            )
             .associateWith { newId() }
         val timeline = source.timeline.copy(
             projectId = copy.id,
@@ -111,6 +117,7 @@ class RoomProjectRepository @Inject constructor(
             audioLane = source.timeline.audioLane.map {
                 it.copy(id = clipIds.getValue(it.id), mediaItemId = mediaIds.getValue(it.mediaItemId))
             },
+            textLane = source.timeline.textLane.map { it.copy(id = clipIds.getValue(it.id)) },
         )
         saveTimeline(copy.id, timeline)
         copy

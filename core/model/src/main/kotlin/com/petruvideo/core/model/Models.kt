@@ -99,12 +99,17 @@ data class Timeline(
     val media: Map<String, MediaItem> = emptyMap(),
     val videoLane: List<VideoClip> = emptyList(),
     val audioLane: List<AudioClip> = emptyList(),
+    val textLane: List<TextClip> = emptyList(),
     val playheadMs: Long = 0,
 ) {
     val videoLengthMs: Long get() = videoLane.sumOf { it.lengthMs }
 
     val totalDurationMs: Long
-        get() = maxOf(videoLengthMs, audioLane.maxOfOrNull { it.timelineEndMs } ?: 0L)
+        get() = maxOf(
+            videoLengthMs,
+            audioLane.maxOfOrNull { it.timelineEndMs } ?: 0L,
+            textLane.maxOfOrNull { it.endMs } ?: 0L,
+        )
 
     /** Start of each video clip on the timeline, derived from order (the lane is gapless). */
     fun videoStartOf(clipId: String): Long? {

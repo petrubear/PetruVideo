@@ -19,6 +19,7 @@ import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
 import com.petruvideo.core.media.preview.ReverbAudioProcessor
 import com.petruvideo.core.media.preview.VoiceFxProcessor
+import com.petruvideo.core.media.text.TextOverlaySet
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
@@ -87,17 +88,22 @@ class CompositionBuilder(private val spec: BuildSpec) {
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     val voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
 
+    /** The text lane's overlays after [build], so the preview can change a clip live; null without text clips. */
+    var textOverlays: TextOverlaySet? = null
+        private set
+
     /** The composition for [timeline], or null when there is nothing to play or render. */
     fun build(timeline: Timeline): Composition? {
         val sequences = listOfNotNull(videoSequence(timeline), audioSequence(timeline))
         if (sequences.isEmpty()) return null
         val builder = Composition.Builder(sequences)
+        textEffects(timeline)?.let { builder.setEffects(it) }
         if (spec.toneMapHdr) builder.setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_MEDIACODEC)
         return builder.build()
     }
 
     private fun videoSequence(timeline: Timeline): EditedMediaItemSequence? {
-        if (timeline.videoLane.isEmpty()) return null
+        if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty()) return null
         val builder = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO))
         val fps = spec.fps
         val frame = frameEffects()
@@ -131,7 +137,22 @@ class CompositionBuilder(private val spec: BuildSpec) {
                 )
             }
         }
+        // Text that ends after the video plays over black, so the video sequence runs on as a gap.
+        val textEndMs = timeline.textLane.maxOfOrNull { it.endMs } ?: 0L
+        if (textEndMs > timeline.videoLengthMs) builder.addGap((textEndMs - timeline.videoLengthMs) * US_PER_MS)
         return builder.build()
+    }
+
+    /** One overlay effect for every text clip, at the composition level so times are the project's. */
+    private fun textEffects(timeline: Timeline): Effects? {
+        if (timeline.textLane.isEmpty()) return null
+        val width = spec.width ?: timeline.format?.width ?: DEFAULT_WIDTH
+        val height = spec.height ?: timeline.format?.height ?: DEFAULT_HEIGHT
+        val set = TextOverlaySet(timeline.textLane, width, height).also { textOverlays = it }
+        val effect = set.effect ?: return null
+        // The output frame is fixed first, so text sizes follow it even when the video lane is only gaps.
+        val frame = Presentation.createForWidthAndHeight(width, height, Presentation.LAYOUT_SCALE_TO_FIT)
+        return Effects(emptyList(), listOf(frame, effect))
     }
 
     private fun audioSequence(timeline: Timeline): EditedMediaItemSequence? {
@@ -222,6 +243,8 @@ class CompositionBuilder(private val spec: BuildSpec) {
 
     private companion object {
         const val US_PER_MS = 1_000L
+        const val DEFAULT_WIDTH = 1920
+        const val DEFAULT_HEIGHT = 1080
         const val SPEED_DIVISOR = 1000f
     }
 }

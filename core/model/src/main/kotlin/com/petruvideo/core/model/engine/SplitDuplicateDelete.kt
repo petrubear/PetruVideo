@@ -2,7 +2,9 @@ package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.AnimKind
 import com.petruvideo.core.model.PHOTO_MIN_MS
+import com.petruvideo.core.model.TEXT_MIN_MS
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.withoutFadeIn
@@ -30,7 +32,27 @@ class Split(
         if (videoIndex >= 0) return splitVideo(timeline, videoIndex)
         val audioIndex = timeline.audioLane.indexOfFirst { it.id == clipId }
         if (audioIndex >= 0) return splitAudio(timeline, audioIndex)
+        val textIndex = timeline.textLane.indexOfFirst { it.id == clipId }
+        if (textIndex >= 0) return splitText(timeline, textIndex)
         return CommandResult.Rejected(RejectReason.NotFound)
+    }
+
+    private fun splitText(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.textLane[index]
+        val offset = atMs - clip.startMs
+        if (offset <= 0 || offset >= clip.durationMs) return CommandResult.Rejected(RejectReason.OutOfRange)
+        if (offset < TEXT_MIN_MS || clip.durationMs - offset < TEXT_MIN_MS) {
+            return CommandResult.Rejected(RejectReason.BelowMinimumLength)
+        }
+        val first = clip.copy(
+            id = newClipId(), durationMs = offset, animOut = clip.animOut.copy(kind = AnimKind.None),
+        )
+        val second = clip.copy(
+            id = newClipId(), startMs = atMs, durationMs = clip.durationMs - offset,
+            animIn = clip.animIn.copy(kind = AnimKind.None),
+        )
+        val lane = timeline.textLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
+        return CommandResult.Applied(timeline.copy(textLane = lane), "Split text")
     }
 
     private fun splitVideo(timeline: Timeline, index: Int): CommandResult {
@@ -86,6 +108,10 @@ class Duplicate(private val clipId: String, private val newClipId: () -> String 
             lane.add(videoIndex + 1, lane[videoIndex].copy(id = newClipId()))
             return CommandResult.Applied(timeline.copy(videoLane = lane), "Duplicate clip")
         }
+        timeline.textLane.firstOrNull { it.id == clipId }?.let { text ->
+            val lane = (timeline.textLane + text.copy(id = newClipId(), startMs = text.endMs)).sortedBy { it.startMs }
+            return CommandResult.Applied(timeline.copy(textLane = lane), "Duplicate text")
+        }
         val clip = timeline.audioLane.firstOrNull { it.id == clipId }
             ?: return CommandResult.Rejected(RejectReason.NotFound)
         val start = AudioPlacement.nextFreeStart(timeline.audioLane, clip.timelineEndMs, clip.lengthMs)
@@ -105,6 +131,10 @@ class Delete(private val clipId: String) : Command {
         timeline.audioLane.any { it.id == clipId } -> CommandResult.Applied(
             timeline.copy(audioLane = timeline.audioLane.filterNot { it.id == clipId }),
             "Delete audio",
+        )
+        timeline.textLane.any { it.id == clipId } -> CommandResult.Applied(
+            timeline.copy(textLane = timeline.textLane.filterNot { it.id == clipId }),
+            "Delete text",
         )
         else -> CommandResult.Rejected(RejectReason.NotFound)
     }
