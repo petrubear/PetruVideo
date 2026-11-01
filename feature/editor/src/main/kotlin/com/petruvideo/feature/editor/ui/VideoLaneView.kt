@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -110,14 +111,7 @@ fun VideoLaneView(
                 } else {
                     ClipThumbnails(clip, item, widthDp.value)
                 }
-                if (clip.attachedAudio) FadeRamps(clip.fx.fade, clip.lengthMs)
-                ClipBadge(
-                    clip.speedMilli,
-                    clip.volumePercent.takeIf { clip.attachedAudio },
-                    Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp),
-                    reverbOn = clip.attachedAudio && clip.reverb.enabled,
-                    fx = clip.fx.takeIf { clip.attachedAudio },
-                )
+                ClipDecorations(clip)
                 if (clip.muted && clip.attachedAudio && clip.id != selectedClipId) {
                     MutedBadge(Modifier.align(Alignment.BottomEnd).padding(4.dp))
                 }
@@ -161,4 +155,17 @@ private fun ClipThumbnails(clip: VideoClip, item: MediaItem, widthDp: Float) {
             }
         }
     }
+}
+
+/** The fade ramps and the settings badge of a video clip; sound settings show only while its sound is attached. */
+@Composable
+private fun BoxScope.ClipDecorations(clip: VideoClip) {
+    if (clip.attachedAudio) FadeRamps(clip.fx.fade, clip.lengthMs)
+    ClipBadge(
+        clip.speedMilli,
+        clip.volumePercent.takeIf { clip.attachedAudio },
+        Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp),
+        reverbOn = clip.attachedAudio && clip.reverb.enabled,
+        fx = clip.fx.takeIf { clip.attachedAudio },
+    )
 }

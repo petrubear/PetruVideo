@@ -51,7 +51,8 @@ class EditorScreenshotTest {
             videoLane = if (edited) {
                 loaded.timeline.videoLane.map {
                     if (it.id == "c1") {
-                        it.copy(speedMilli = 2000, volumePercent = 40, fx = AudioFx(fade = com.petruvideo.core.model.Fade(800, 600)))
+                        val fade = com.petruvideo.core.model.Fade(800, 600)
+                        it.copy(speedMilli = 2000, volumePercent = 40, fx = AudioFx(fade = fade))
                     } else {
                         it
                     }
