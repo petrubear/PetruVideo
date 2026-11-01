@@ -7,6 +7,8 @@ import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Bass
 import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.ClipTransform
+import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.EffectKind
 import com.petruvideo.core.model.Transition
@@ -103,15 +105,21 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
 fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
     reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
-    transitionOut = transition.toModel(), effect = effect.toModel(),
+    transitionOut = transition.toModel(), effect = effect.toModel(), transform = transform.toModel(),
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
         muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
-        transitionOut.toColumns(), effect.toColumns(),
+        transitionOut.toColumns(), effect.toColumns(), transform.toColumns(),
     )
+
+fun TransformColumns.toModel() =
+    ClipTransform(turns.coerceIn(0, 3), flipH, flipV, CropBox(cropLeft, cropTop, cropRight, cropBottom).normalized())
+
+fun ClipTransform.toColumns() =
+    TransformColumns(quarterTurns, flipH, flipV, crop.left, crop.top, crop.right, crop.bottom)
 
 fun AudioClipEntity.toModel() = AudioClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin),

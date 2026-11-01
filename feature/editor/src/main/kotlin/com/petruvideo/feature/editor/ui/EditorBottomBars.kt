@@ -26,6 +26,7 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             FilterPanel(state.filterPanel, onEvent)
             EffectPanel(state.effectPanel, onEvent)
             KeyframePanel(state.keyframePanel, onEvent)
+            TransformPanel(state.transformPanel, onEvent)
             OverlayPanel(state.overlayPanel, onEvent)
         }
         ClipToolBar(

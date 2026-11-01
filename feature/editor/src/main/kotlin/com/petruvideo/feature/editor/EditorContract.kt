@@ -53,6 +53,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     EffectFx("Effect", true),
     OverlayOpacity("Opacity", true),
     Keyframes("Keyframes", true),
+    Transform("Transform", true),
 }
 
 /**
@@ -150,6 +151,24 @@ data class KeyframePanelState(
     val framing: com.petruvideo.core.model.Pose? = null,
 )
 
+/** The open Transform panel: the clip's turn, mirrors, and crop. */
+data class TransformPanelState(val clipId: String, val transform: com.petruvideo.core.model.ClipTransform)
+
+/**
+ * The open crop screen: the still to crop (the clip's picture as turned and mirrored, [stillTimeMs] into its source),
+ * the box being edited, and the shape it keeps. [pictureWidth] and [pictureHeight] are the turned picture's pixels.
+ */
+data class CropSessionState(
+    val clipId: String,
+    val media: MediaItem,
+    val stillTimeMs: Long,
+    val transform: com.petruvideo.core.model.ClipTransform,
+    val box: com.petruvideo.core.model.CropBox,
+    val shape: com.petruvideo.core.model.CropShape,
+    val pictureWidth: Int,
+    val pictureHeight: Int,
+)
+
 /** The open reverb panel for one clip. */
 data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
@@ -188,6 +207,10 @@ data class EditorState(
     val selectedOverlayAspect: Float = 1.78f,
     /** The count-in or running voice-over take, if any; editing is locked while it is set. */
     val voiceOver: VoiceOverUi? = null,
+    /** The open Transform panel for the selected main-track clip, if any. */
+    val transformPanel: TransformPanelState? = null,
+    /** The open crop screen, if any. */
+    val crop: CropSessionState? = null,
     /** The open Keyframes panel, if any. */
     val keyframePanel: KeyframePanelState? = null,
     /** Time of the selected keyframe inside the selected clip, if one is selected. */
@@ -312,6 +335,19 @@ sealed interface EditorEvent {
     data object KeyframeDelete : EditorEvent
     data class KeyframeMotion(val ease: Boolean) : EditorEvent
     data object KeyframeDismiss : EditorEvent
+
+    data object TransformRotate : EditorEvent
+    data class TransformFlip(val horizontal: Boolean) : EditorEvent
+    data object TransformReset : EditorEvent
+    data object TransformDismiss : EditorEvent
+    data object CropOpen : EditorEvent
+
+    /** Drags [handle] (or the whole box when null) by permille of the picture. */
+    data class CropDrag(val handle: com.petruvideo.core.model.CropHandle?, val dx: Int, val dy: Int) : EditorEvent
+    data class CropShapePick(val shape: com.petruvideo.core.model.CropShape) : EditorEvent
+    data object CropFullPicture : EditorEvent
+    data object CropDone : EditorEvent
+    data object CropCancel : EditorEvent
 
     /** The ducking of the selected audio-lane clip as it should be; one undo step. */
     data class DuckingChange(val ducking: com.petruvideo.core.model.Ducking) : EditorEvent

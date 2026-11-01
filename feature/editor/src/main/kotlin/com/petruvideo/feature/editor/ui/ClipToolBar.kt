@@ -37,6 +37,7 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.EffectTransition -> PetruIcons.ToolEffects
     ClipTool.EffectFx -> PetruIcons.ToolFilters
     ClipTool.Keyframes -> PetruIcons.ToolEffects
+    ClipTool.Transform -> PetruIcons.ToolOverlay
     ClipTool.TextStyle -> PetruIcons.ToolFilters
     ClipTool.TextAnim -> PetruIcons.ToolEffects
 }

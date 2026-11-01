@@ -17,6 +17,7 @@ import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.effects.ClipEffectHandle
 import com.petruvideo.core.media.effects.ClipFramingHandle
+import com.petruvideo.core.media.effects.transformEffects
 import com.petruvideo.core.media.filter.ClipFilterEffects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
@@ -272,14 +273,16 @@ class CompositionBuilder(
         val effect = clip.effect?.let { ClipEffectHandle(it).also { handle -> clipEffects[clip.id] = handle } }
         val framing = clip.takeIf { it.keyframes.isNotEmpty() || it.id in framingIds }
             ?.let { ClipFramingHandle(clip).also { handle -> framings[clip.id] = handle } }
-        if (clip.filter.isNeutral && effect == null && framing == null) return frame
+        val turn = transformEffects(clip.transform)
+        val plain = effect == null && framing == null && turn.isEmpty()
+        if (clip.filter.isNeutral && plain) return frame
         val filter = if (clip.filter.isNeutral) {
             emptyList()
         } else {
             ClipFilterEffects(clip.filter).also { filters[clip.id] = it }.effects
         }
         val picture = listOfNotNull(effect?.glEffect, framing?.glEffect)
-        return Effects(frame.audioProcessors, frame.videoEffects + filter + picture)
+        return Effects(frame.audioProcessors, turn + frame.videoEffects + filter + picture)
     }
 
     /** One overlay effect for every text clip, at the composition level so times are the project's. */

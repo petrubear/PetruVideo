@@ -25,6 +25,8 @@ import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.SheetState
+import com.petruvideo.feature.editor.TransformPanelState
+import com.petruvideo.feature.editor.ui.TransformControls
 import com.petruvideo.feature.editor.FilterPanelState
 import com.petruvideo.feature.editor.ui.AdjustControls
 import com.petruvideo.feature.editor.ui.EqualizerControls
@@ -64,6 +66,7 @@ fun InspectorPanel(
     keyframes: KeyframePanelState?,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
+    transform: TransformPanelState? = null,
 ) {
     Column(
         modifier.fillMaxHeight().background(PetruColors.Surface).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -110,6 +113,10 @@ fun InspectorPanel(
             if (overlay != null) {
                 Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 OverlayControls(overlay, onEvent)
+            }
+            if (transform != null) {
+                Text("Transform", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                TransformControls(transform, onEvent)
             }
             if (keyframes != null) {
                 Text("Keyframes", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)

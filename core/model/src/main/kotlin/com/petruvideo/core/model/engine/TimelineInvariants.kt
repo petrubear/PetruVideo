@@ -63,6 +63,7 @@ object TimelineInvariants {
         if (clip.effect?.inRange == false) add("video clip ${clip.id} effect is out of range")
         if (clip.transitionOut?.inRange == false) add("video clip ${clip.id} transition is out of range")
         addAll(videoKeyframeViolations(clip))
+        if (!clip.transform.inRange) add("video clip ${clip.id} transform is out of range")
     }
 
     /** Video keyframes are a frame apart, inside the clip, at most [KEYFRAME_MAX], and cover the frame. */

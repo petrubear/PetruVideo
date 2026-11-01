@@ -100,6 +100,7 @@ fun ExpandedEditorLayout(
                         state.keyframePanel,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
+                        transform = state.transformPanel,
                     )
                     TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
                 }
@@ -129,6 +130,7 @@ fun ExpandedEditorLayout(
                             state.keyframePanel,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
+                            transform = state.transformPanel,
                         )
                     }
                 }

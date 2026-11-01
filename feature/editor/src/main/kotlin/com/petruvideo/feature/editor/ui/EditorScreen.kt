@@ -54,6 +54,7 @@ fun EditorScreen(
             tabletopBottom = { TabletopControlsHalf(state, onEvent) },
         )
         Banner(state, onEvent, Modifier.align(Alignment.BottomCenter).padding(bottom = 168.dp))
+        CropScreen(state.crop, onEvent)
         if (state.fullscreen) FullscreenPreview(player, onClose = { onEvent(EditorEvent.SetFullscreen(false)) })
     }
 }
@@ -71,7 +72,8 @@ private fun CompactEditor(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
             val panelOpen = state.sheet != null || state.reverbPanel != null || state.audioPanel != null ||
-                state.textPanel != null || state.filterPanel != null || state.overlayPanel != null
+                state.textPanel != null || state.filterPanel != null || state.overlayPanel != null ||
+                state.transformPanel != null
             PreviewWithText(state, player, onEvent, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,

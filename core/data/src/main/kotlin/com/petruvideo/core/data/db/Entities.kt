@@ -86,6 +86,18 @@ data class VideoClipEntity(
     @Embedded(prefix = "flt_") val filter: FilterColumns = FilterColumns(),
     @Embedded(prefix = "trn_") val transition: TransitionColumns = TransitionColumns(),
     @Embedded(prefix = "fxe_") val effect: EffectColumns = EffectColumns(),
+    @Embedded(prefix = "xf_") val transform: TransformColumns = TransformColumns(),
+)
+
+/** A clip's turn, mirrors, and crop box stored as columns `xf_turns`, `xf_flipH`, and so on. */
+data class TransformColumns(
+    @ColumnInfo(defaultValue = "0") val turns: Int = 0,
+    @ColumnInfo(defaultValue = "0") val flipH: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val flipV: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val cropLeft: Int = 0,
+    @ColumnInfo(defaultValue = "0") val cropTop: Int = 0,
+    @ColumnInfo(defaultValue = "1000") val cropRight: Int = 1000,
+    @ColumnInfo(defaultValue = "1000") val cropBottom: Int = 1000,
 )
 
 @Entity(

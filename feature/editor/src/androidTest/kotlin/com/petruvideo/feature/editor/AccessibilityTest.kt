@@ -52,6 +52,8 @@ class AccessibilityTest {
         keyframePanel: KeyframePanelState? = null,
         voiceOver: VoiceOverUi? = null,
         overlayPanel: OverlayPanelState? = null,
+        transformPanel: TransformPanelState? = null,
+        crop: CropSessionState? = null,
         fontScale: Float = 1f,
     ) {
         val state = EditorState(
@@ -70,6 +72,8 @@ class AccessibilityTest {
             keyframePanel = keyframePanel,
             voiceOver = voiceOver,
             overlayPanel = overlayPanel,
+            transformPanel = transformPanel,
+            crop = crop,
             selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
@@ -136,6 +140,28 @@ class AccessibilityTest {
 
     private fun audio(kind: AudioToolKind) = AudioPanelState(
         kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
+    )
+
+    @Test
+    fun transformPanel() = check(
+        ClipSelection.Video("c1"), videoTools,
+        transformPanel = TransformPanelState("c1", com.petruvideo.core.model.ClipTransform(quarterTurns = 1)),
+    )
+
+    @Test
+    fun transformPanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools,
+        transformPanel = TransformPanelState("c1", com.petruvideo.core.model.ClipTransform(quarterTurns = 1)),
+        fontScale = 2f,
+    )
+
+    @Test
+    fun cropScreen() = check(
+        ClipSelection.Video("c1"), videoTools,
+        crop = CropSessionState(
+            "c1", timeline.media.values.first(), 0, com.petruvideo.core.model.ClipTransform(),
+            com.petruvideo.core.model.CropBox(100, 100, 700, 800), com.petruvideo.core.model.CropShape.Free, 1920, 1080,
+        ),
     )
 
     @Test

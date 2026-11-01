@@ -72,6 +72,8 @@ data class VideoClip(
     val effect: ClipEffect? = null,
     /** Zoom, pan, and fade over the clip's time; empty keeps the full-frame look (feature 014). */
     val keyframes: List<Keyframe> = emptyList(),
+    /** Turn, mirror, and crop of the picture before it is fitted to the frame (feature 016). */
+    val transform: ClipTransform = ClipTransform(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)

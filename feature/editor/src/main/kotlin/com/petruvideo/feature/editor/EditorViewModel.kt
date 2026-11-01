@@ -50,6 +50,12 @@ import com.petruvideo.core.model.engine.CopyKeyframe
 import com.petruvideo.core.model.engine.DeleteKeyframe
 import com.petruvideo.core.model.engine.MoveKeyframe
 import com.petruvideo.core.model.engine.RejectReason
+import com.petruvideo.core.model.CropBox
+import com.petruvideo.core.model.CropShape
+import com.petruvideo.core.model.engine.FlipClip
+import com.petruvideo.core.model.engine.ResetTransform
+import com.petruvideo.core.model.engine.RotateClip
+import com.petruvideo.core.model.engine.SetCrop
 import com.petruvideo.core.model.engine.SetDucking
 import com.petruvideo.core.model.engine.SetKeyframeMotion
 import com.petruvideo.core.model.engine.SetPoseAt
@@ -157,7 +163,12 @@ class EditorViewModel @Inject constructor(
         val micBlocked: Boolean = false,
         /** Whether the overlay panel is open (for the selected overlay clip). */
         val overlayOpen: Boolean = false,
+        /** Whether the Transform panel is open, and the crop being edited on its screen. */
+        val transformOpen: Boolean = false,
+        val crop: OpenCrop? = null,
     )
+
+    private data class OpenCrop(val clipId: String, val box: CropBox, val shape: CropShape)
 
     private data class Core(
         val project: Project?,
@@ -358,6 +369,25 @@ class EditorViewModel @Inject constructor(
                 (local.value.selection as? ClipSelection.Audio)?.let { run(SetDucking(it.clipId, event.ducking)) }
             is EditorEvent.FramingPreview -> previewFraming(event.pose)
             is EditorEvent.FramingCommit -> commitFraming(event.pose)
+            else -> onTransformEvent(event)
+        }
+    }
+
+    /** The events of the Transform panel and the crop screen. */
+    private fun onTransformEvent(event: EditorEvent) {
+        val id = (local.value.selection as? ClipSelection.Video)?.clipId ?: return
+        when (event) {
+            EditorEvent.TransformRotate -> run(RotateClip(id))
+            is EditorEvent.TransformFlip -> run(FlipClip(id, event.horizontal))
+            EditorEvent.TransformReset -> run(ResetTransform(id))
+            EditorEvent.TransformDismiss -> local.update { it.copy(transformOpen = false, crop = null) }
+            EditorEvent.CropOpen -> openCrop(id)
+            is EditorEvent.CropDrag -> dragCrop(event)
+            is EditorEvent.CropShapePick -> pickCropShape(event.shape)
+            EditorEvent.CropFullPicture ->
+                local.update { s -> s.copy(crop = s.crop?.copy(box = CropBox(), shape = CropShape.Free)) }
+            EditorEvent.CropDone -> doneCrop()
+            EditorEvent.CropCancel -> local.update { it.copy(crop = null) }
             else -> Unit
         }
     }
@@ -405,7 +435,7 @@ class EditorViewModel @Inject constructor(
         closeEffect()
         closeOverlay()
         closeKeyframes()
-        local.update { it.copy(selection = selection, text = null) }
+        local.update { it.copy(selection = selection, text = null, transformOpen = false, crop = null) }
     }
 
     private fun selectedClipId(): String? = local.value.selection?.clipId
@@ -574,6 +604,52 @@ class EditorViewModel @Inject constructor(
         closeFilter()
         closeEffect()
         local.update { it.copy(keyframesOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun openTransform() {
+        if (local.value.selection !is ClipSelection.Video) return
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        closeEffect()
+        closeKeyframes()
+        local.update { it.copy(transformOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun cropPicture(id: String): Pair<Int, Int> {
+        val timeline = session.timeline.value
+        val clip = timeline?.videoLane?.firstOrNull { it.id == id }
+        val media = clip?.let { timeline.media[it.mediaItemId] }
+        return clip?.transform?.turnedSize(media?.width ?: FALLBACK_WIDTH, media?.height ?: FALLBACK_HEIGHT)
+            ?: (FALLBACK_WIDTH to FALLBACK_HEIGHT)
+    }
+
+    private fun openCrop(id: String) {
+        val clip = session.timeline.value?.videoLane?.firstOrNull { it.id == id } ?: return
+        local.update { it.copy(crop = OpenCrop(id, clip.transform.crop, CropShape.Free)) }
+    }
+
+    private fun dragCrop(event: EditorEvent.CropDrag) {
+        val open = local.value.crop ?: return
+        val (w, h) = cropPicture(open.clipId)
+        val box = event.handle?.let { open.box.resized(it, event.dx, event.dy, open.shape.aspect, w, h) }
+            ?: open.box.moved(event.dx, event.dy)
+        local.update { it.copy(crop = open.copy(box = box)) }
+    }
+
+    private fun pickCropShape(shape: CropShape) {
+        val open = local.value.crop ?: return
+        val (w, h) = cropPicture(open.clipId)
+        val box = shape.aspect?.let { CropBox.forShape(it, w, h) } ?: open.box
+        local.update { it.copy(crop = open.copy(box = box, shape = shape)) }
+    }
+
+    private fun doneCrop() {
+        val open = local.value.crop ?: return
+        run(SetCrop(open.clipId, open.box))
+        local.update { it.copy(crop = null) }
     }
 
     private fun closeKeyframes() {
@@ -1045,6 +1121,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.OverlayOpacity -> openOverlay()
             ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
             ClipTool.Keyframes -> openKeyframes()
+            ClipTool.Transform -> openTransform()
             ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
             ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
@@ -1161,6 +1238,8 @@ class EditorViewModel @Inject constructor(
                 ?.shownAt(core.preview.positionMs),
             selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),
             textPanel = textPanelFor(timeline, selection, local.text, core.preview.positionMs),
+            transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
+            crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(
                 timeline, selection, local.keyframesOpen, local.keyframeRel, core.preview.positionMs,
             ),

@@ -1,6 +1,7 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
@@ -58,7 +59,8 @@ class RelinkMedia(private val mediaItemId: String, private val replacement: Medi
             if (clip.mediaItemId != mediaItemId) return@map clip
             val (start, end) = clamp(clip.sourceStartMs, clip.sourceEndMs)
             val attached = clip.attachedAudio && replacement.hasAudio
-            clip.copy(sourceStartMs = start, sourceEndMs = end, attachedAudio = attached)
+            val transform = if (sameShape(old, replacement)) clip.transform else clip.transform.copy(crop = CropBox())
+            clip.copy(sourceStartMs = start, sourceEndMs = end, attachedAudio = attached, transform = transform)
         }
         val audio = timeline.audioLane.map { clip ->
             if (clip.mediaItemId != mediaItemId) return@map clip
@@ -100,3 +102,21 @@ class RemoveMissingMedia(private val mediaItemId: String) : Command {
         )
     }
 }
+
+/** Whether two pictures have the same width over height within 1%; unknown sizes count as the same. */
+private fun sameShape(a: MediaItem, b: MediaItem): Boolean {
+    val first = shapeOf(a) ?: return true
+    val second = shapeOf(b) ?: return true
+    val ratio = first / second
+    return ratio in SHAPE_LOW..SHAPE_HIGH
+}
+
+/** Width over height of a picture, or null when it is not known. */
+private fun shapeOf(item: MediaItem): Float? {
+    val w = item.width ?: return null
+    val h = item.height?.takeIf { it > 0 } ?: return null
+    return w.toFloat() / h
+}
+
+private const val SHAPE_LOW = 0.99f
+private const val SHAPE_HIGH = 1.01f

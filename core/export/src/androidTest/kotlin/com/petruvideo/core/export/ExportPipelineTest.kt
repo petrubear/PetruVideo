@@ -952,6 +952,72 @@ class ExportPipelineTest {
         }
     }
 
+    private fun halvesAt(frame: android.graphics.Bitmap, x: Float, y: Float): String {
+        val c = frame.getPixel((frame.width * x).toInt(), (frame.height * y).toInt())
+        val r = android.graphics.Color.red(c)
+        val b = android.graphics.Color.blue(c)
+        return when {
+            r > b + 40 -> "brown"
+            b > r + 40 -> "blue"
+            else -> "other"
+        }
+    }
+
+    private fun transformed(transform: com.petruvideo.core.model.ClipTransform, name: String): android.graphics.Bitmap {
+        val photo = halvesPhoto()
+        val clip = VideoClip("t1", photo.id, 0, 2_000, false, transform = transform)
+        val (state, uri) = export(project(clip, media = listOf(photo)), ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return frameAt(uri!!, 800)
+    }
+
+    /** SC-003 of feature 016: orientation and crop in the export are the ones the transform describes. */
+    @Test
+    fun aClipIsTurnedMirroredAndCroppedAsItsTransformSays() {
+        val t = com.petruvideo.core.model.ClipTransform()
+        val plain = transformed(t, "pipeline-xf-plain")
+        check(halvesAt(plain, 0.4f, 0.5f) == "brown" && halvesAt(plain, 0.6f, 0.5f) == "blue") { "plain picture is wrong" }
+
+        // A quarter turn clockwise: the left (brown) half goes to the top.
+        val turned = transformed(t.rotated(), "pipeline-xf-turn")
+        check(halvesAt(turned, 0.5f, 0.25f) == "brown" && halvesAt(turned, 0.5f, 0.75f) == "blue") {
+            "turned: top ${halvesAt(turned, 0.5f, 0.25f)}, bottom ${halvesAt(turned, 0.5f, 0.75f)}"
+        }
+
+        // A horizontal mirror swaps the halves.
+        val mirrored = transformed(t.flippedHorizontally(), "pipeline-xf-flip")
+        check(halvesAt(mirrored, 0.4f, 0.5f) == "blue" && halvesAt(mirrored, 0.6f, 0.5f) == "brown") { "mirror is wrong" }
+
+        // Cropping to the right half shows only blue, fitted across the frame.
+        val cropped = transformed(
+            t.copy(crop = com.petruvideo.core.model.CropBox(500, 0, 1000, 1000)), "pipeline-xf-crop",
+        )
+        check(halvesAt(cropped, 0.5f, 0.5f) == "blue" && halvesAt(cropped, 0.4f, 0.3f) == "blue") { "crop shows brown" }
+
+        // Turn first, then crop the top half of the turned picture: the brown half stays.
+        val both = transformed(
+            t.rotated().copy(crop = com.petruvideo.core.model.CropBox(0, 0, 1000, 500)), "pipeline-xf-both",
+        )
+        check(halvesAt(both, 0.5f, 0.5f) == "brown" && halvesAt(both, 0.5f, 0.3f) == "brown") { "turn and crop is wrong" }
+    }
+
+    /** FR-011 of feature 016: keyframes zoom and pan the turned picture, after the turn. */
+    @Test
+    fun keyframesActOnThePictureAfterItIsTurned() {
+        val photo = halvesPhoto()
+        val clip = VideoClip(
+            "k1", photo.id, 0, 2_000, false,
+            transform = com.petruvideo.core.model.ClipTransform().rotated(),
+        ).withKeyframes(
+            listOf(com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(500, 250, 2_000, 100))),
+        )
+        val (state, uri) = export(project(clip, media = listOf(photo)), ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-xf-kf")
+        check(state is ExportState.Finished) { "turn and keyframe export: $state" }
+        val frame = frameAt(uri!!, 800)
+        // Turned, the brown half is on top; zoomed on the top half, only brown is left in the middle of the frame.
+        check(halvesAt(frame, 0.5f, 0.5f) == "brown" && halvesAt(frame, 0.5f, 0.8f) == "brown") { "keyframes did not act on the turned picture" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

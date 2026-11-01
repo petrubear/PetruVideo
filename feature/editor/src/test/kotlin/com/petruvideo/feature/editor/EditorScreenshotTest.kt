@@ -60,6 +60,8 @@ class EditorScreenshotTest {
         joined: Boolean = false,
         overlays: List<com.petruvideo.core.model.OverlayClip> = emptyList(),
         overlayPanel: OverlayPanelState? = null,
+        transformPanel: TransformPanelState? = null,
+        crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -116,6 +118,8 @@ class EditorScreenshotTest {
             keyframePanel = keyframePanel,
             selectedKeyframeMs = selectedKeyframeMs,
             overlayPanel = overlayPanel,
+            transformPanel = transformPanel,
+            crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
             selectedText = texts.firstOrNull { it.id == selection?.clipId },
@@ -278,6 +282,45 @@ class EditorScreenshotTest {
 
     private fun audioPanel(kind: AudioToolKind, fx: AudioFx = AudioFx()) =
         AudioPanelState(kind, "c1", "m1.mp4", fx, 4_000, 80, false, com.petruvideo.core.model.Reverb())
+
+    private val turnedClip = com.petruvideo.core.model.ClipTransform(quarterTurns = 1, flipH = true)
+
+    @Test
+    fun transformPanelOnAVideoClip() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Video("c1"),
+                        transformPanel = TransformPanelState(
+                            "c1", turnedClip.copy(crop = com.petruvideo.core.model.CropBox(100, 100, 800, 800)),
+                        ),
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun cropScreenWithAShapeAndTheBox() = paparazzi.snapshot {
+        val media = sampleLoaded().timeline.media.getValue("m1")
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Video("c1"),
+                        crop = CropSessionState(
+                            "c1", media, 0, com.petruvideo.core.model.ClipTransform(),
+                            com.petruvideo.core.model.CropBox.forShape(1f, 1920, 1080),
+                            com.petruvideo.core.model.CropShape.Square, 1920, 1080,
+                        ),
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
 
     @Test
     fun duckingPanelOnAnAudioClip() = paparazzi.snapshot {

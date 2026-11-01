@@ -101,6 +101,29 @@ internal fun keyframeTarget(timeline: Timeline, selection: ClipSelection): Keyfr
             timeline.videoStartOf(clip.id)?.let { KeyframeSubject(clip.keyframes, it, clip.lengthMs) }
         }
 
+internal fun transformPanelFor(timeline: Timeline?, selection: ClipSelection?, open: Boolean): TransformPanelState? {
+    if (!open || timeline == null || selection !is ClipSelection.Video) return null
+    val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId } ?: return null
+    return TransformPanelState(clip.id, clip.transform)
+}
+
+internal fun cropSessionFor(
+    timeline: Timeline?,
+    open: Triple<String, com.petruvideo.core.model.CropBox, com.petruvideo.core.model.CropShape>?,
+): CropSessionState? {
+    if (timeline == null || open == null) return null
+    val clip = timeline.videoLane.firstOrNull { it.id == open.first } ?: return null
+    val media = timeline.media[clip.mediaItemId] ?: return null
+    val (w, h) = clip.transform.turnedSize(media.width ?: FALLBACK_WIDTH, media.height ?: FALLBACK_HEIGHT)
+    return CropSessionState(
+        clip.id, media, clip.sourceStartMs, clip.transform.copy(crop = com.petruvideo.core.model.CropBox()),
+        open.second, open.third, w, h,
+    )
+}
+
+internal const val FALLBACK_WIDTH = 1920
+internal const val FALLBACK_HEIGHT = 1080
+
 internal fun textPanelFor(
     timeline: Timeline?,
     selection: ClipSelection?,
@@ -242,6 +265,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Split,
         ClipTool.Speed,
         ClipTool.Keyframes,
+        ClipTool.Transform,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
         ClipTool.Duplicate,
