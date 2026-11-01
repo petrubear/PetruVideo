@@ -70,9 +70,9 @@ class TrimAndAudioFlowTest {
     }
 
     private val videoTools = listOf(
-        ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Detach, ClipTool.Duplicate, ClipTool.Delete,
+        ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Detach, ClipTool.Duplicate, ClipTool.Delete,
     )
-    private val audioTools = listOf(ClipTool.Split, ClipTool.Mute, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
+    private val audioTools = listOf(ClipTool.Split, ClipTool.Audio, ClipTool.Replace, ClipTool.Duplicate, ClipTool.Delete)
 
     @Test
     fun draggingTheStartHandleCommitsOneTrim() {
@@ -109,10 +109,10 @@ class TrimAndAudioFlowTest {
     }
 
     @Test
-    fun theVideoToolBarOffersDetachSpeedAndVolume() {
+    fun theVideoToolBarOffersDetachSpeedAndAudio() {
         val events = show(ClipSelection.Video("c1"), videoTools)
         compose.onNodeWithContentDescription("Speed").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Volume").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Audio").assertIsDisplayed()
         compose.onNodeWithContentDescription("Split").performClick()
         compose.onNodeWithContentDescription("Speed").performClick()
         compose.onNodeWithContentDescription("Detach").performClick()
@@ -126,12 +126,12 @@ class TrimAndAudioFlowTest {
     }
 
     @Test
-    fun theAudioToolBarHasMuteAndReplaceButNoDetach() {
+    fun theAudioToolBarHasAudioAndReplaceButNoDetach() {
         val events = show(ClipSelection.Audio("a1"), audioTools)
         compose.onNodeWithContentDescription("Detach").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Mute").performClick()
+        compose.onNodeWithContentDescription("Audio").performClick()
         compose.onNodeWithContentDescription("Replace").performClick()
-        assertEquals(listOf(ClipTool.Mute, ClipTool.Replace).map { EditorEvent.UseTool(it) }, events.toList())
+        assertEquals(listOf(ClipTool.Audio, ClipTool.Replace).map { EditorEvent.UseTool(it) }, events.toList())
     }
 
     @Test

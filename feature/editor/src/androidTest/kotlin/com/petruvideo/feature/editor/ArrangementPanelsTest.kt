@@ -41,7 +41,7 @@ class ArrangementPanelsTest {
         audioLane = listOf(AudioClip("a1", "c", 0, 2_000, 1_000, origin = AudioOrigin.Detached)),
     )
     private val tools = listOf(
-        ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+        ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Detach,
         ClipTool.Duplicate, ClipTool.Delete,
     )
 

@@ -12,6 +12,8 @@
 **Rationale**: Fades must be right after a seek into the middle of a fade; a plain sample counter restarts at the item start.
 **Alternatives**: Counting frames from flush (wrong after seeks); `VolumeScale`/keyframed gain effects (not available for audio in Media3 1.11). Spike S1 verifies the offset; fallback is a Media3 `SpeedChangingAudioProcessor`-style position lookup or splitting each clip into three items (fade in, body, fade out) at build time, which avoids needing the position at the cost of more items.
 
+**Result of spike S1 (emulator, API 34)**: Media3 passes the seek position as `positionOffsetUs` at flush; `AudioFxPlaybackTest.theFadeKnowsTheClipPositionAfterASeek` shows the processor's clip time ends at the clip's length after a seek into the middle, so the offset is honoured. Speed is applied before the effects (research 3), so the clip time is timeline time.
+
 ## 3. Order of speed and effects
 
 **Decision**: Media3 puts speed change before the clip's custom audio effects, so effects see timeline-rate audio and fade lengths and echo delays are in timeline time.
@@ -45,11 +47,11 @@
 **Rationale**: Recognisable result, tiny CPU, deterministic for tests.
 **Alternatives**: vocoder-based robot (heavier); dynamic bass enhancer (more tuning).
 
-## 8. Latency compensation
+## 8. Latency
 
-**Decision**: Stages report their latency (noise reduction one hop, pitch half a window); the processor drops that many leading frames after a flush and emits the remainder at end of stream, so the output length and timing match the input within one block.
-**Rationale**: Keeps A/V within 40 ms (SC-007) and tails cut at the clip end.
-**Alternatives**: Ignore the latency (up to about 25 ms drift).
+**Decision**: No compensation. Noise reduction adds one 512-sample frame (about 11 ms at 48 kHz) and pitch about 15 ms (half of a 30 ms window), so the worst case with both on is about 26 ms, inside the 40 ms A/V budget (SC-007). Output length equals input length; the last few milliseconds of a clip are not flushed, which a fade or the clip cut hides.
+**Rationale**: Compensating a live-toggled stage needs a variable delay line and a flush at end of stream; the budget does not require it. Measured on the Fold (T053) before any change.
+**Alternatives**: Report and drop leading latency frames (more code, shifts timing when a stage is toggled live); smaller frames (worse noise reduction).
 
 ## 9. Preview pressure
 

@@ -2,6 +2,7 @@ package com.petruvideo.core.export
 
 import android.content.ContentUris
 import android.content.Context
+import android.media.MediaCodec
 import android.media.MediaCodecList
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -14,6 +15,17 @@ import com.petruvideo.core.data.repo.ExportRepository
 import com.petruvideo.core.data.repo.StoredJob
 import com.petruvideo.core.media.probe.MediaProbe
 import com.petruvideo.core.model.AudioClip
+import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.Echo
+import com.petruvideo.core.model.EqPreset
+import com.petruvideo.core.model.EqPresets
+import com.petruvideo.core.model.Fade
+import com.petruvideo.core.model.NoiseReduction
+import com.petruvideo.core.model.NoiseStrength
+import com.petruvideo.core.model.Pitch
+import com.petruvideo.core.model.Robot
+import com.petruvideo.core.model.Bass
+import com.petruvideo.core.model.VoiceFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.ProjectFormat
@@ -285,6 +297,91 @@ class ExportPipelineTest {
             end.bytes.toDouble() / estimate
         }
         check(ratios.all { it in 0.85..1.15 }) { "real size / estimate = $ratios" }
+    }
+
+    @Test
+    fun audioToolsExportWithTheFadesAndSoundOfThePreview() {
+        val a = item("video_silent.mp4")
+        val music = item("audio.mp3")
+        val fx = AudioFx(
+            fade = Fade(600, 600),
+            noise = NoiseReduction(true, NoiseStrength.Medium),
+            eq = EqPresets.settings(EqPreset.Warm),
+            voice = VoiceFx(Echo(true, 150, 2), Robot(), Pitch(true, 3), Bass(true, 40)),
+        )
+        val audio = AudioClip("m1", music.id, 0, 2_000, timelineStartMs = 0, origin = AudioOrigin.Added, fx = fx)
+        val timeline = project(VideoClip("c1", a.id, 0, 2_000, false), media = listOf(a, music), audio = listOf(audio))
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-fx")
+        state.shouldBeFinished()
+        val r = retriever(uri!!)
+        (r.int(MediaMetadataRetriever.METADATA_KEY_DURATION) in 1_930..2_150) shouldBe true
+        r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) shouldBe "yes"
+        r.release()
+        val rms = audioRms(uri, listOf(0L to 60L, 900L to 1_100L, 1_940L to 2_000L))
+        check(rms[0] < rms[1] * 0.35f) { "start level ${rms[0]} should be far below the middle ${rms[1]}" }
+        check(rms[2] < rms[1] * 0.35f) { "end level ${rms[2]} should be far below the middle ${rms[1]}" }
+    }
+
+    /** Decodes the audio track and returns the RMS (0..1) of each [windows] range in milliseconds. */
+    private fun audioRms(uri: String, windows: List<Pair<Long, Long>>): List<Float> {
+        val extractor = MediaExtractor().apply { setDataSource(context, Uri.parse(uri), null) }
+        val track = (0 until extractor.trackCount).first {
+            extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("audio/")
+        }
+        val format = extractor.getTrackFormat(track)
+        extractor.selectTrack(track)
+        val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
+        codec.configure(format, null, null, 0)
+        codec.start()
+        val sums = DoubleArray(windows.size)
+        val counts = LongArray(windows.size)
+        val info = MediaCodec.BufferInfo()
+        var inputDone = false
+        var outputDone = false
+        var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        var rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        while (!outputDone) {
+            if (!inputDone) {
+                val index = codec.dequeueInputBuffer(10_000)
+                if (index >= 0) {
+                    val size = extractor.readSampleData(codec.getInputBuffer(index)!!, 0)
+                    if (size < 0) {
+                        codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        inputDone = true
+                    } else {
+                        codec.queueInputBuffer(index, 0, size, extractor.sampleTime, 0)
+                        extractor.advance()
+                    }
+                }
+            }
+            val out = codec.dequeueOutputBuffer(info, 10_000)
+            if (out == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                channels = codec.outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                rate = codec.outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+            } else if (out >= 0) {
+                val shorts = codec.getOutputBuffer(out)!!.order(java.nio.ByteOrder.nativeOrder()).asShortBuffer()
+                var frame = 0L
+                while (shorts.remaining() >= channels) {
+                    val timeMs = info.presentationTimeUs / 1000 + frame * 1000 / rate
+                    var sample = 0.0
+                    repeat(channels) { sample += shorts.get() / 32768.0 }
+                    sample /= channels
+                    windows.forEachIndexed { i, (from, to) ->
+                        if (timeMs in from until to) {
+                            sums[i] += sample * sample
+                            counts[i]++
+                        }
+                    }
+                    frame++
+                }
+                codec.releaseOutputBuffer(out, false)
+                if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) outputDone = true
+            }
+        }
+        codec.stop()
+        codec.release()
+        extractor.release()
+        return sums.indices.map { if (counts[it] == 0L) 0f else kotlin.math.sqrt(sums[it] / counts[it]).toFloat() }
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

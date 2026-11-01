@@ -126,6 +126,9 @@ class Media3PreviewEngine @Inject constructor(
         reverbs[clipId]?.update(reverb.copy(enabled = reverb.enabled && reverbAllowed))
     }
 
+    /** The loaded clip's gain and fade processor, for tests. */
+    internal fun gainOf(clipId: String): GainAudioProcessor? = gains[clipId]
+
     override fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long) {
         voiceFxs[clipId]?.update(fx, voiceFxAllowed)
         gains[clipId]?.setFade(fx.fade, clipLengthMs)

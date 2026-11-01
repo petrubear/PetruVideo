@@ -20,6 +20,8 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.feature.editor.ui.EditorScreen
 import androidx.compose.ui.unit.Density
+import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import org.junit.Test
@@ -43,6 +45,7 @@ class AccessibilityTest {
         tools: List<ClipTool>,
         sheet: SheetState? = null,
         reverbPanel: ReverbPanelState? = null,
+        audioPanel: AudioPanelState? = null,
         fontScale: Float = 1f,
     ) {
         val state = EditorState(
@@ -54,6 +57,7 @@ class AccessibilityTest {
             clipTools = tools,
             sheet = sheet,
             reverbPanel = reverbPanel,
+            audioPanel = audioPanel,
             selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
@@ -84,7 +88,7 @@ class AccessibilityTest {
     )
 
     private val videoTools = listOf(
-        ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+        ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Detach,
         ClipTool.Duplicate, ClipTool.Delete,
     )
 
@@ -116,5 +120,34 @@ class AccessibilityTest {
     fun reverbPanelWithLargeFont() = check(
         ClipSelection.Video("c1"), videoTools,
         reverbPanel = ReverbPanelState("c1", "a.mp4", Reverb()), fontScale = 2f,
+    )
+
+    private fun audio(kind: AudioToolKind) = AudioPanelState(
+        kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
+    )
+
+    @Test
+    fun audioToolList() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.List))
+
+    @Test
+    fun fadePanel() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Fade))
+
+    @Test
+    fun noisePanel() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Noise))
+
+    @Test
+    fun equalizerPanel() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Eq))
+
+    @Test
+    fun voicePanel() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Voice))
+
+    @Test
+    fun audioListWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.List), fontScale = 2f,
+    )
+
+    @Test
+    fun equalizerPanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Eq), fontScale = 2f,
     )
 }

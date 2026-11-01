@@ -29,7 +29,7 @@ class CoverWidthToolBarTest {
     @Test
     fun audioClipTools() = everyToolIsReachable(
         listOf(
-            ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Replace,
+            ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Replace,
             ClipTool.Duplicate, ClipTool.Delete,
         ),
     )
@@ -37,7 +37,7 @@ class CoverWidthToolBarTest {
     @Test
     fun videoClipTools() = everyToolIsReachable(
         listOf(
-            ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+            ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Detach,
             ClipTool.Duplicate, ClipTool.Delete,
         ),
     )

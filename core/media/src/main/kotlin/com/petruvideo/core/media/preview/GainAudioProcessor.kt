@@ -26,6 +26,10 @@ class GainAudioProcessor(percent: Int, fade: Fade = Fade(), clipLengthMs: Long =
     private var lengthMs = clipLengthMs
     private var position = 0L
 
+    /** Where in the clip (timeline time) the last processed sample was, for tests of the seek handling. */
+    val clipPositionMs: Long
+        get() = if (inputAudioFormat.sampleRate > 0) position * MILLIS / inputAudioFormat.sampleRate else 0L
+
     fun setPercent(percent: Int) {
         gain = percent / PERCENT
     }

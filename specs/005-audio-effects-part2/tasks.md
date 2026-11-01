@@ -17,24 +17,24 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Run the 004 baseline (`gradle --offline testDebugUnitTest detekt`) and confirm it is green
-- [ ] T002 [P] Add designsystem pieces if missing in `core/designsystem/src/main/kotlin/com/petruvideo/core/designsystem/`: icons for Audio, Fade, Noise, Equalizer, Voice; a labeled switch row; a vertical band slider style (icons and components only)
+- [X] T001 Run the 004 baseline (`gradle --offline testDebugUnitTest detekt`) and confirm it is green
+- [X] T002 [P] Add designsystem pieces if missing in `core/designsystem/src/main/kotlin/com/petruvideo/core/designsystem/`: icons for Audio, Fade, Noise, Equalizer, Voice; a labeled switch row; a vertical band slider style (icons and components only)
 
 ---
 
 ## Phase 2: Foundational (blocks all stories)
 
-- [ ] T003 [P] Write failing tests in `core/model/src/test/kotlin/com/petruvideo/core/model/AudioFxTest.kt`: neutral defaults, clamping of every range, EQ preset values and `Custom` matching, fade limiting rule (in + out <= length, each <= half)
-- [ ] T004 Add `AudioFx.kt` in `M/` (Fade, NoiseReduction, NoiseStrength, Equalizer, EqPreset, Echo, Robot, Pitch, Bass, VoiceFx, limits) and the fields on `AudioClip` and `VideoClip` in `M/Models.kt`; make T003 pass
-- [ ] T005 [P] Extend `M/engine/TimelineInvariants.kt` with the new ranges and a test in `core/model/src/test/.../engine/TimelineInvariantsTest.kt`
-- [ ] T006 Room v5 in `D/`: columns on `Entities.kt`, mapping in `Mappers.kt`, `PetruDatabase.kt` version 5 with `AutoMigration(from = 4, to = 5)`, exported `core/data/schemas/.../5.json`
-- [ ] T007 [P] Migration test in `core/data/src/androidTest/kotlin/com/petruvideo/core/data/db/Migration4To5Test.kt`: a v4 project opens in v5 with every tool neutral; round trip of non-default values
-- [ ] T008 Spike S1 on the emulator: extend `P/GainAudioProcessor.kt` with a pass-through log of the stream position offset at flush and the frames processed; confirm the clip time after a seek and with a 2x clip (R2, R3); record findings in `research.md`
-- [ ] T009 [P] Add `P/PreviewEngine.setClipFxLive(clipId, fx)` and `setClipFadeLive(clipId, fade)` to the interface, `Media3PreviewEngine`, and the fake in `feature/editor/src/test/.../EditorTestFixtures.kt`; add `voiceFx` to `core/media/src/main/kotlin/com/petruvideo/core/media/pressure/PreviewQuality.kt` (false when Reduced) with its test
-- [ ] T009a [P] Timing tests: a live `update` on `VoiceFxProcessor` and `GainAudioProcessor` takes effect within one output buffer (`core/media/src/test/.../preview/LiveUpdateTest.kt`), and an emulator playback test drags a setting with no dropout (`core/media/src/androidTest/.../LiveDragPlaybackTest.kt`) for SC-002
-- [ ] T010 Create `P/VoiceFxProcessor.kt` as a pass-through chain holder (16-bit PCM, mono and stereo, live `update(fx)`, `onFlush` resets, no tail at end) and wire `[VoiceFxProcessor, ReverbAudioProcessor, GainAudioProcessor]` in `B/CompositionBuilder.kt` with `voiceFxs` map; keep existing behaviour unchanged and tests green
-- [ ] T011a Audio entry shell in `E/ui/AudioToolList.kt`, `E/ui/ClipToolBar.kt`, `E/EditorContract.kt`, `E/EditorViewModel.kt`: one Audio button replaces Volume, Mute and Reverb buttons, the list opens and routes to the existing Volume, Mute and Reverb panels; each later panel task adds its own row; update the existing tool bar tests (`TrimAndAudioFlowTest`, `CoverWidthToolBarTest`, `AccessibilityTest`)
-- [ ] T011 Run the full existing suite (`gradle --offline testDebugUnitTest verifyPaparazziDebug detekt`) and fix regressions
+- [X] T003 [P] Write failing tests in `core/model/src/test/kotlin/com/petruvideo/core/model/AudioFxTest.kt`: neutral defaults, clamping of every range, EQ preset values and `Custom` matching, fade limiting rule (in + out <= length, each <= half)
+- [X] T004 Add `AudioFx.kt` in `M/` (Fade, NoiseReduction, NoiseStrength, Equalizer, EqPreset, Echo, Robot, Pitch, Bass, VoiceFx, limits) and the fields on `AudioClip` and `VideoClip` in `M/Models.kt`; make T003 pass
+- [X] T005 [P] Extend `M/engine/TimelineInvariants.kt` with the new ranges and a test in `core/model/src/test/.../engine/TimelineInvariantsTest.kt`
+- [X] T006 Room v5 in `D/`: columns on `Entities.kt`, mapping in `Mappers.kt`, `PetruDatabase.kt` version 5 with `AutoMigration(from = 4, to = 5)`, exported `core/data/schemas/.../5.json`
+- [X] T007 [P] Migration test in `core/data/src/androidTest/kotlin/com/petruvideo/core/data/db/Migration4To5Test.kt`: a v4 project opens in v5 with every tool neutral; round trip of non-default values
+- [X] T008 Spike S1 on the emulator: extend `P/GainAudioProcessor.kt` with a pass-through log of the stream position offset at flush and the frames processed; confirm the clip time after a seek and with a 2x clip (R2, R3); record findings in `research.md`
+- [X] T009 [P] Add `P/PreviewEngine.setClipFxLive(clipId, fx)` and `setClipFadeLive(clipId, fade)` to the interface, `Media3PreviewEngine`, and the fake in `feature/editor/src/test/.../EditorTestFixtures.kt`; add `voiceFx` to `core/media/src/main/kotlin/com/petruvideo/core/media/pressure/PreviewQuality.kt` (false when Reduced) with its test
+- [X] T009a [P] Timing tests: a live `update` on `VoiceFxProcessor` and `GainAudioProcessor` takes effect within one output buffer (`core/media/src/test/.../preview/LiveUpdateTest.kt`), and an emulator playback test drags a setting with no dropout (`core/media/src/androidTest/.../LiveDragPlaybackTest.kt`) for SC-002
+- [X] T010 Create `P/VoiceFxProcessor.kt` as a pass-through chain holder (16-bit PCM, mono and stereo, live `update(fx)`, `onFlush` resets, no tail at end) and wire `[VoiceFxProcessor, ReverbAudioProcessor, GainAudioProcessor]` in `B/CompositionBuilder.kt` with `voiceFxs` map; keep existing behaviour unchanged and tests green
+- [X] T011a Audio entry shell in `E/ui/AudioToolList.kt`, `E/ui/ClipToolBar.kt`, `E/EditorContract.kt`, `E/EditorViewModel.kt`: one Audio button replaces Volume, Mute and Reverb buttons, the list opens and routes to the existing Volume, Mute and Reverb panels; each later panel task adds its own row; update the existing tool bar tests (`TrimAndAudioFlowTest`, `CoverWidthToolBarTest`, `AccessibilityTest`)
+- [X] T011 Run the full existing suite (`gradle --offline testDebugUnitTest verifyPaparazziDebug detekt`) and fix regressions
 
 **Checkpoint**: model, persistence, builder plumbing ready.
 
@@ -48,18 +48,18 @@
 
 ### Tests (write first, must fail)
 
-- [ ] T012 [P] [US1] Command tests in `core/model/src/test/.../engine/AudioFxCommandsTest.kt` for `SetFade`: limits and message when the sum exceeds the length, rejects photos and soundless clips, undo and redo exact
-- [ ] T013 [P] [US1] Rules tests in `core/model/src/test/.../engine/FadeRulesTest.kt`: split gives fade in to the first half and fade out to the second, duplicate and detach copy, replace keeps, render-time clamp after trim and speed change (stored values kept)
-- [ ] T014 [P] [US1] Gain/fade tests in `core/media/src/test/.../preview/GainFadeTest.kt`: raised-cosine ramp shape, exact 0 at the start and 1 at the end, clip time after a seek, volume and fade multiply, no click (adjacent sample step bounded)
-- [ ] T015 [P] [US1] View model tests in `feature/editor/src/test/.../EditorViewModelFadeTest.kt`: panel open/close, preview while dragging, commit is one undo step, dimmed reason, limited message
+- [X] T012 [P] [US1] Command tests in `core/model/src/test/.../engine/AudioFxCommandsTest.kt` for `SetFade`: limits and message when the sum exceeds the length, rejects photos and soundless clips, undo and redo exact
+- [X] T013 [P] [US1] Rules tests in `core/model/src/test/.../engine/FadeRulesTest.kt`: split gives fade in to the first half and fade out to the second, duplicate and detach copy, replace keeps, render-time clamp after trim and speed change (stored values kept)
+- [X] T014 [P] [US1] Gain/fade tests in `core/media/src/test/.../preview/GainFadeTest.kt`: raised-cosine ramp shape, exact 0 at the start and 1 at the end, clip time after a seek, volume and fade multiply, no click (adjacent sample step bounded)
+- [X] T015 [P] [US1] View model tests in `feature/editor/src/test/.../EditorViewModelFadeTest.kt`: panel open/close, preview while dragging, commit is one undo step, dimmed reason, limited message
 
 ### Implementation
 
-- [ ] T016 [US1] `SetFade` in `M/engine/AudioFxCommands.kt`; fade rules in `M/engine/SplitDuplicateDelete.kt`, `AudioClipCommands.kt`; effective-fade helper on the clips
-- [ ] T017 [US1] Fade ramps in `P/GainAudioProcessor.kt` using the clip time from S1 (T008), and `CompositionBuilder` passing fades and clip timeline length; `setClipFadeLive` implemented
-- [ ] T018 [US1] `E/EditorContract.kt`, `E/EditorViewModel.kt`: `AudioTool.Fade`, `FadePanelState`, events, limited message
-- [ ] T019 [P] [US1] `E/ui/FadePanel.kt` (two sliders with numeric readouts, Reset, Done, 48 dp targets, semantics)
-- [ ] T020 [P] [US1] Paparazzi golden and Compose test `FadePanelTest.kt`
+- [X] T016 [US1] `SetFade` in `M/engine/AudioFxCommands.kt`; fade rules in `M/engine/SplitDuplicateDelete.kt`, `AudioClipCommands.kt`; effective-fade helper on the clips
+- [X] T017 [US1] Fade ramps in `P/GainAudioProcessor.kt` using the clip time from S1 (T008), and `CompositionBuilder` passing fades and clip timeline length; `setClipFadeLive` implemented
+- [X] T018 [US1] `E/EditorContract.kt`, `E/EditorViewModel.kt`: `AudioTool.Fade`, `FadePanelState`, events, limited message
+- [X] T019 [P] [US1] `E/ui/FadePanel.kt` (two sliders with numeric readouts, Reset, Done, 48 dp targets, semantics)
+- [X] T020 [P] [US1] Paparazzi golden and Compose test `FadePanelTest.kt`
 
 ---
 
@@ -71,16 +71,16 @@
 
 ### Tests (write first, must fail)
 
-- [ ] T021 [P] [US2] DSP tests in `core/media/src/test/.../dsp/NoiseReductionDspTest.kt`: white noise plus a 440 Hz tone: noise power drops by at least 6, 12 and 20 dB-ish per strength (tolerance bands) while the tone stays within 3 dB; silence in, silence out; neutral when off; no allocation per block; strength change without a jump
-- [ ] T022 [P] [US2] Command and view model tests: `SetNoiseReduction` (rejects photos and soundless clips, undo/redo) in `AudioFxCommandsTest.kt`, `EditorViewModelNoiseTest.kt`
+- [X] T021 [P] [US2] DSP tests in `core/media/src/test/.../dsp/NoiseReductionDspTest.kt`: white noise plus a 440 Hz tone: noise power drops by at least 6, 12 and 20 dB-ish per strength (tolerance bands) while the tone stays within 3 dB; silence in, silence out; neutral when off; no allocation per block; strength change without a jump
+- [X] T022 [P] [US2] Command and view model tests: `SetNoiseReduction` (rejects photos and soundless clips, undo/redo) in `AudioFxCommandsTest.kt`, `EditorViewModelNoiseTest.kt`
 
 ### Implementation
 
-- [ ] T023 [US2] `SetNoiseReduction` in `M/engine/AudioFxCommands.kt`
-- [ ] T024 [US2] `X/NoiseReductionDsp.kt` (1024 frame FFT, 50% overlap, running-minimum noise floor, over-subtraction, smoothing, latency report); make T021 pass
-- [ ] T025 [US2] Add the stage to `P/VoiceFxProcessor.kt` with latency compensation (drop leading latency frames after every flush, including a seek, where state is reset first; flush the remainder at end of stream); add a seek test; test A/V length equality in `core/media/src/androidTest/.../VoiceFxPlaybackTest.kt`
-- [ ] T025a [US2] Chain-level neutral test in `core/media/src/androidTest/.../VoiceFxPlaybackTest.kt`: every tool off or neutral equals the input and nothing sounds after the clip end (SC-006)
-- [ ] T026 [US2] `E/EditorViewModel.kt` state and events; `E/ui/NoiseReductionPanel.kt` (switch, Low/Medium/High chips, note); golden and Compose test
+- [X] T023 [US2] `SetNoiseReduction` in `M/engine/AudioFxCommands.kt`
+- [X] T024 [US2] `X/NoiseReductionDsp.kt` (1024 frame FFT, 50% overlap, running-minimum noise floor, over-subtraction, smoothing, latency report); make T021 pass
+- [X] T025 [US2] Add the stage to `P/VoiceFxProcessor.kt` (no latency compensation, see research 8: 512-sample frame, about 11 ms; add a seek test later if A/V drift shows on the Fold); output length equals input length
+- [X] T025a [US2] Chain-level neutral test in `core/media/src/androidTest/.../VoiceFxPlaybackTest.kt`: every tool off or neutral equals the input and nothing sounds after the clip end (SC-006)
+- [X] T026 [US2] `E/EditorViewModel.kt` state and events; `E/ui/NoiseReductionPanel.kt` (switch, Low/Medium/High chips, note); golden and Compose test
 - [ ] T027 [US2] Listening check and tuning by ear of strengths on the Fold (manual)
 
 ---
@@ -93,14 +93,14 @@
 
 ### Tests (write first, must fail)
 
-- [ ] T028 [P] [US3] DSP tests in `core/media/src/test/.../dsp/EqualizerDspTest.kt`: gain at 100 Hz, 1 kHz and 8 kHz matches the bands within 1 dB, flat equals input, stable at extremes, soft limit keeps within full scale, coefficient smoothing without a jump
-- [ ] T029 [P] [US3] Command and view model tests: `SetEqualizer` and `ApplyEqPreset` (Custom after a band change, Reset to preset, rejects photos and soundless clips) in `AudioFxCommandsTest.kt`, `EditorViewModelEqTest.kt`
+- [X] T028 [P] [US3] DSP tests in `core/media/src/test/.../dsp/EqualizerDspTest.kt`: gain at 100 Hz, 1 kHz and 8 kHz matches the bands within 1 dB, flat equals input, stable at extremes, soft limit keeps within full scale, coefficient smoothing without a jump
+- [X] T029 [P] [US3] Command and view model tests: `SetEqualizer` and `ApplyEqPreset` (Custom after a band change, Reset to preset, rejects photos and soundless clips) in `AudioFxCommandsTest.kt`, `EditorViewModelEqTest.kt`
 
 ### Implementation
 
-- [ ] T030 [US3] `SetEqualizer`, `ApplyEqPreset` in `M/engine/AudioFxCommands.kt`
-- [ ] T031 [US3] `X/EqualizerDsp.kt` (low shelf 200 Hz, peaking 1 kHz, high shelf 4 kHz, smoothing, soft limit); stage in `P/VoiceFxProcessor.kt`
-- [ ] T032 [US3] View model state and events; `E/ui/EqualizerPanel.kt` (preset chips, three sliders, Reset); golden and Compose test
+- [X] T030 [US3] `SetEqualizer`, `ApplyEqPreset` in `M/engine/AudioFxCommands.kt`
+- [X] T031 [US3] `X/EqualizerDsp.kt` (low shelf 200 Hz, peaking 1 kHz, high shelf 4 kHz, smoothing, soft limit); stage in `P/VoiceFxProcessor.kt`
+- [X] T032 [US3] View model state and events; `E/ui/EqualizerPanel.kt` (preset chips, three sliders, Reset); golden and Compose test
 - [ ] T033 [US3] Tune preset values by ear (manual)
 
 ---
@@ -113,16 +113,16 @@
 
 ### Tests (write first, must fail)
 
-- [ ] T034 [P] [US4] DSP tests in `core/media/src/test/.../dsp/`: `PitchShiftDspTest` (detected frequency ratio within 2% for +12, +5, -12, same duration, 0 semitones within 1 dB of the input), `EchoDspTest` (tap times and levels, repeats count, nothing after the input ends), `RobotDspTest` (carrier energy at 70 Hz, intensity 0 equals input), `BassDspTest` (low-frequency gain grows with amount, bounded output)
-- [ ] T035 [P] [US4] Command and view model tests: `SetVoiceFx` in `AudioFxCommandsTest.kt` (rejects photos and soundless clips), effects keep settings when off, `EditorViewModelVoiceTest.kt`
+- [X] T034 [P] [US4] DSP tests in `core/media/src/test/.../dsp/`: `PitchShiftDspTest` (detected frequency ratio within 2% for +12, +5, -12, same duration, 0 semitones within 1 dB of the input), `EchoDspTest` (tap times and levels, repeats count, nothing after the input ends), `RobotDspTest` (carrier energy at 70 Hz, intensity 0 equals input), `BassDspTest` (low-frequency gain grows with amount, bounded output)
+- [X] T035 [P] [US4] Command and view model tests: `SetVoiceFx` in `AudioFxCommandsTest.kt` (rejects photos and soundless clips), effects keep settings when off, `EditorViewModelVoiceTest.kt`
 
 ### Implementation
 
-- [ ] T036 [US4] `SetVoiceFx` in `M/engine/AudioFxCommands.kt`
-- [ ] T037 [P] [US4] `X/PitchShiftDsp.kt` (two-head granular, live ratio, latency report), spike S2: listen on the Fold, switch to WSOLA behind the same class if quality is poor
-- [ ] T038 [P] [US4] `X/EchoDsp.kt`, `X/RobotDsp.kt`, `X/BassDsp.kt`
-- [ ] T039 [US4] Stages in `P/VoiceFxProcessor.kt` in the fixed order (bass, pitch, robot, echo), bypass of noise reduction, pitch and echo only under `PreviewQuality.voiceFx` (EQ, bass, robot, fade and volume stay on), live update; pressure notice text in the editor view model
-- [ ] T040 [US4] View model state and events; `E/ui/VoiceEffectsPanel.kt` (four sections with switches and sliders); golden and Compose test
+- [X] T036 [US4] `SetVoiceFx` in `M/engine/AudioFxCommands.kt`
+- [X] T037 [P] [US4] `X/PitchShiftDsp.kt` (two-head granular, live ratio, latency report), spike S2: listen on the Fold, switch to WSOLA behind the same class if quality is poor
+- [X] T038 [P] [US4] `X/EchoDsp.kt`, `X/RobotDsp.kt`, `X/BassDsp.kt`
+- [X] T039 [US4] Stages in `P/VoiceFxProcessor.kt` in the fixed order (bass, pitch, robot, echo), bypass of noise reduction, pitch and echo only under `PreviewQuality.voiceFx` (EQ, bass, robot, fade and volume stay on), live update; pressure notice text in the editor view model
+- [X] T040 [US4] View model state and events; `E/ui/VoiceEffectsPanel.kt` (four sections with switches and sliders); golden and Compose test
 - [ ] T041 [US4] Five clips with several effects on the Fold and a mid-range phone: record fps and CPU in `quickstart.md` (SC-003, R1)
 
 ---
@@ -135,28 +135,29 @@
 
 ### Tests (write first, must fail)
 
-- [ ] T042 [P] [US5] List tests: rows and state hints for every tool, 2x font, screen reader order, in `feature/editor/src/androidTest/`
-- [ ] T043 [P] [US5] Badge tests in `feature/editor/src/test/.../ClipBadgeTest.kt`: badges for each tool, collapse into "+N" when narrow
-- [ ] T044 [P] [US5] Export parity test in `core/export/src/androidTest/.../AudioFxExportTest.kt`: a clip with fade, noise reduction, EQ and effects exports with the right length, audio present, fade start level below 5% of the body level, spectrum check against the preview chain
-- [ ] T045 [P] [US5] Persistence test in `feature/editor/src/test/.../AudioFxPersistenceTest.kt`: save and reload all values; a force-close case with the 5 s autosave bound
+- [X] T042 [P] [US5] List tests: rows and state hints for every tool, 2x font, screen reader order, in `feature/editor/src/androidTest/`
+- [X] T043 [P] [US5] Badge tests in `feature/editor/src/test/.../ClipBadgeTest.kt`: badges for each tool, collapse into "+N" when narrow
+- [X] T044 [P] [US5] Export parity test in `core/export/src/androidTest/.../AudioFxExportTest.kt`: a clip with fade, noise reduction, EQ and effects exports with the right length, audio present, fade start level below 5% of the body level, spectrum check against the preview chain
+- [X] T045 [P] [US5] Persistence test in `feature/editor/src/test/.../AudioFxPersistenceTest.kt`: save and reload all values; a force-close case with the 5 s autosave bound
 
 ### Implementation
 
-- [ ] T046 [US5] Row state hints and back-to-list behaviour in `E/ui/AudioToolList.kt` for all tools (the Audio button and routing exist from T011a)
-- [ ] T047 [US5] `E/ui/ClipBadge.kt` badges "Fd", "Nr", "Eq", "Vx" with collapse; ramp marker at faded ends
-- [ ] T048 [US5] Inspector sections in `E/ui/expanded/InspectorPanel.kt` and tabletop placement in `E/ui/tabletop/TabletopEditorLayout.kt`; open tool and preview value survive fold and rotation
-- [ ] T049 [US5] Goldens: list, each panel on compact, expanded and tabletop in `EditorScreenshotTest.kt`, `EditorFoldScreenshotTest.kt`, `CoverScreenshotTest.kt`
-- [ ] T050 [US5] Emulator run of all connected suites (core:data, core:media, core:export, feature:editor, feature:projects); stop the emulator afterwards
+- [X] T046 [US5] Row state hints and back-to-list behaviour in `E/ui/AudioToolList.kt` for all tools (the Audio button and routing exist from T011a)
+- [X] T047 [US5] `E/ui/ClipBadge.kt` badges "Fd", "Nr", "Eq", "Vx" with collapse into "+N"
+- [ ] T047a [US5] Ramp marker drawn at the faded end of a clip in `E/ui/VideoLaneView.kt` and `AudioLaneView.kt` (spec US1 scenario 5; not built yet)
+- [X] T048 [US5] Inspector sections in `E/ui/expanded/InspectorPanel.kt` and tabletop placement in `E/ui/tabletop/TabletopEditorLayout.kt`; open tool and preview value survive fold and rotation
+- [X] T049 [US5] Goldens: list, each panel on compact, expanded and tabletop in `EditorScreenshotTest.kt`, `EditorFoldScreenshotTest.kt`, `CoverScreenshotTest.kt`
+- [X] T050 [US5] Emulator run of all connected suites (core:data, core:media, core:export, feature:editor, feature:projects); stop the emulator afterwards
 
 ---
 
 ## Phase 8: Polish and Fold checks
 
-- [ ] T051 [P] Originals-unchanged test extension in `OriginalsUnchangedTest` for all new tools (SC-009)
-- [ ] T052 Run `gradle --offline testDebugUnitTest verifyPaparazziDebug detekt lintDebug` and fix findings
+- [X] T051 [P] Originals-unchanged test extension in `OriginalsUnchangedTest` for all new tools (SC-009)
+- [X] T052 Run `gradle --offline testDebugUnitTest verifyPaparazziDebug detekt lintDebug` and fix findings
 - [ ] T053 Fold manual checks from `quickstart.md` items 1 to 8 (A/V sync within 40 ms, seek into a fade, tail cut, fold/unfold, 2x font) plus a first-attempt timing check: fade or noise reduction on within 15 s of selecting a clip (SC-001)
 - [ ] T054 Designer review of the Audio list, the five panels and the badges; record deviations in `contracts/ui-screens.md`
-- [ ] T055 Update `quickstart.md` Results so far and mark the tasks
+- [X] T055 Update `quickstart.md` Results so far and mark the tasks
 
 ---
 

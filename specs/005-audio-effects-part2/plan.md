@@ -22,7 +22,7 @@ Add Fade, Noise reduction, Equalizer and four stackable voice effects (Echo, Rob
 
 **Project Type**: mobile-app (multi-module Gradle build)
 
-**Performance Goals**: change heard within 100 ms with no gap; 30 fps at 1080p with up to 5 clips using several tools; no audio dropouts; UI under 100 ms; pipeline latency added by the new stages at most 25 ms, compensated so audio stays in sync (A/V within 40 ms).
+**Performance Goals**: change heard within 100 ms with no gap; 30 fps at 1080p with up to 5 clips using several tools; no audio dropouts; UI under 100 ms; pipeline latency added by the new stages at most about 26 ms (noise reduction 11 ms, pitch 15 ms), so audio stays in sync (A/V within 40 ms).
 
 **Constraints**: offline; no activity restart on fold or rotation, open panel survives; at most 5 seconds of work lost; one undo step per gesture; tails cut at clip end; export renders in the same order and with the same code as the preview.
 
@@ -106,7 +106,7 @@ Per clip: noise reduction, equalizer, bass, pitch, robot, echo, reverb, then fad
 - **R1**: CPU cost of noise reduction (FFT) and pitch shifting with several clips on mid-range phones. Mitigation: fixed buffers, a spike measuring 5 clips with all tools on the Fold and a mid-range phone, a pressure-monitor bypass of the heavy stages with a notice, and stages skipped entirely when off.
 - **R2**: Fade position after seek: a processor sees only the stream, so it must know the clip time. Mitigation: use the stream position offset given at flush (research 2); spike on the emulator; fallback is to count samples from the item start and re-derive on seek.
 - **R3**: Speed is applied before the clip's effects (research 3); if the order differs, fade lengths and echo timing scale wrongly. Mitigation: a test with a 2x clip checks fade length in timeline time.
-- **R4**: Latency added by FFT and pitch stages breaks A/V sync. Mitigation: report and compensate latency (drop the first samples of latency, flush the rest at end of stream), measured in an emulator test.
+- **R4**: Latency added by FFT and pitch stages breaks A/V sync. Mitigation: small frames (11 ms and 15 ms, research 8); measured on the Fold (T053).
 - **R5**: Live parameter changes click. Mitigation: smooth coefficient and gain changes; discontinuity test.
 - **R6**: Room v5 on top of v4 and many columns. Mitigation: additive columns with defaults, auto migration, test from v4.
 - **R7**: Noise reduction can make speech sound watery or remove music. Mitigation: three conservative strengths, a floor on reduction, a panel note, tuning by ear.

@@ -10,6 +10,21 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.engine.SetEqualizer
+import com.petruvideo.core.model.engine.SetVoiceFx
+import com.petruvideo.core.model.engine.ApplyEqPreset
+import com.petruvideo.core.model.engine.SetNoiseReduction
+import com.petruvideo.core.model.engine.SetFade
+import com.petruvideo.core.model.Bass
+import com.petruvideo.core.model.Pitch
+import com.petruvideo.core.model.Robot
+import com.petruvideo.core.model.Echo
+import com.petruvideo.core.model.VoiceFx
+import com.petruvideo.core.model.Equalizer
+import com.petruvideo.core.model.EqPreset
+import com.petruvideo.core.model.NoiseStrength
+import com.petruvideo.core.model.NoiseReduction
+import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.engine.AddAudioClips
 import com.petruvideo.core.model.engine.ApplyReverbPreset
@@ -141,6 +156,40 @@ class OriginalsUnchangedTest {
         loaded.videoLane.first().speedMilli shouldBe 2_000
         loaded.videoLane.first().muted shouldBe true
         loaded.audioLane.first().reverb.preset shouldBe ReverbPreset.Custom
+        checksums() shouldBe before
+    }
+
+    /** SC-005, SC-009 of feature 005: fade, noise, equalizer, and voice effects reload exactly and leave sources alone. */
+    @Test
+    fun audioEffectsSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip5.mp4", MediaKind.Video, 10_000)
+        val music = source("music5.mp3", MediaKind.Audio, 20_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(AddAudioClips(listOf(music), playheadMs = 0))
+        val clip = session.timeline.value!!.videoLane.first().id
+        val audio = session.timeline.value!!.audioLane.first().id
+        session.apply(SetFade(clip, Fade(1_500, 2_500)))
+        session.apply(SetNoiseReduction(clip, NoiseReduction(true, NoiseStrength.High)))
+        session.apply(ApplyEqPreset(clip, EqPreset.Telephone))
+        session.apply(SetVoiceFx(audio, VoiceFx(Echo(true, 320, 4), Robot(true, 35), Pitch(false, -7), Bass(true, 80))))
+        session.apply(SetEqualizer(audio, Equalizer(EqPreset.Custom, 3, -2, 9)))
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.videoLane shouldBe saved.videoLane
+        loaded.audioLane shouldBe saved.audioLane
+        loaded.videoLane.first().fx.fade shouldBe Fade(1_500, 2_500)
+        loaded.videoLane.first().fx.eq.preset shouldBe EqPreset.Telephone
+        loaded.audioLane.first().fx.voice.pitch shouldBe Pitch(false, -7)
+        loaded.audioLane.first().fx.eq.preset shouldBe EqPreset.Custom
         checksums() shouldBe before
     }
 }
