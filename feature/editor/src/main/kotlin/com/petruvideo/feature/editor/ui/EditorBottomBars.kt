@@ -11,6 +11,11 @@ import com.petruvideo.feature.editor.ToolbarTab
  */
 @Composable
 fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPanels: Boolean = true) {
+    val take = state.voiceOver
+    if (take != null) {
+        RecordingBar(take, onEvent)
+        return
+    }
     val back = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) }
     if (state.selection != null && state.clipTools.isNotEmpty()) {
         if (showPanels) {
@@ -34,7 +39,9 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             ToolbarTab.Overlay -> OverlayTabBar(back, onAdd = { onEvent(EditorEvent.AddOverlay) })
             ToolbarTab.Filters -> FiltersTabBar(back)
             ToolbarTab.Effects -> EffectsTabBar(back)
-            ToolbarTab.Audio -> AudioTabBar(back, onAdd = { onEvent(EditorEvent.AddMusic) })
+            ToolbarTab.Audio -> AudioTabBar(
+                back, onAdd = { onEvent(EditorEvent.AddMusic) }, onRecord = { onEvent(EditorEvent.RecordVoiceOver) },
+            )
             ToolbarTab.Text -> TextTabBar(back, onAdd = { onEvent(EditorEvent.AddText) })
             else -> MainToolBar(
                 onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },

@@ -54,6 +54,7 @@ class EditorScreenshotTest {
         tab: ToolbarTab = ToolbarTab.Edit,
         filterPanel: FilterPanelState? = null,
         effectPanel: EffectPanelState? = null,
+        voiceOver: VoiceOverUi? = null,
         keyframePanel: KeyframePanelState? = null,
         selectedKeyframeMs: Long? = null,
         joined: Boolean = false,
@@ -111,6 +112,7 @@ class EditorScreenshotTest {
             textPanel = textPanel,
             filterPanel = filterPanel,
             effectPanel = effectPanel,
+            voiceOver = voiceOver,
             keyframePanel = keyframePanel,
             selectedKeyframeMs = selectedKeyframeMs,
             overlayPanel = overlayPanel,
@@ -459,6 +461,20 @@ class EditorScreenshotTest {
             }
         }
     }
+
+    private fun snapshotRecording(take: VoiceOverUi) = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(state(tab = ToolbarTab.Audio, voiceOver = take), player = null, onEvent = {}, onBack = {})
+            }
+        }
+    }
+
+    @Test
+    fun voiceOverCountIn() = snapshotRecording(VoiceOverUi.CountIn(2))
+
+    @Test
+    fun voiceOverRecording() = snapshotRecording(VoiceOverUi.Recording(7_400, 0.55f))
 
     @Test
     fun audioTabWithNothingSelected() = paparazzi.snapshot {

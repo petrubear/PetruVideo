@@ -18,6 +18,8 @@ class RoomProjectRepository @Inject constructor(
     private val db: PetruDatabase,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    /** Told which files are still used after a project is deleted, so recordings nobody uses can go (FR-010). */
+    private val onDeleted: suspend (stillUsedUris: Set<String>) -> Unit = {},
 ) : ProjectRepository {
     private val projects get() = db.projectDao()
     private val timelines get() = db.timelineDao()
@@ -137,7 +139,10 @@ class RoomProjectRepository @Inject constructor(
         copy
     }
 
-    override suspend fun deleteProject(id: String) = projects.delete(id)
+    override suspend fun deleteProject(id: String) {
+        projects.delete(id)
+        onDeleted(timelines.allMediaUris().toSet())
+    }
 
     override suspend fun rename(id: String, name: String) = projects.rename(id, name.trim().take(MAX_NAME), clock())
 

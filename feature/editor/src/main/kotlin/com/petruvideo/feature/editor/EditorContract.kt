@@ -179,6 +179,8 @@ data class EditorState(
     /** The selected overlay clip and the shape of its picture (width over height), for the preview box. */
     val selectedOverlay: OverlayClip? = null,
     val selectedOverlayAspect: Float = 1.78f,
+    /** The count-in or running voice-over take, if any; editing is locked while it is set. */
+    val voiceOver: VoiceOverUi? = null,
     /** The open Keyframes panel, if any. */
     val keyframePanel: KeyframePanelState? = null,
     /** Time of the selected keyframe inside the selected clip, if one is selected. */
@@ -287,6 +289,13 @@ sealed interface EditorEvent {
     data object FilterRemove : EditorEvent
     data object FilterApplyAll : EditorEvent
     data object FilterDismiss : EditorEvent
+    /** The Record voice-over button: asks for the microphone when needed, then counts in. */
+    data object RecordVoiceOver : EditorEvent
+    data class MicrophoneResult(val access: MicAccess) : EditorEvent
+    data object StopVoiceOver : EditorEvent
+    data object CancelVoiceOver : EditorEvent
+    /** The screen left the foreground: a running take stops and is kept. */
+    data object VoiceOverInterrupted : EditorEvent
     data object OpenKeyframes : EditorEvent
     data object KeyframeAdd : EditorEvent
     data class KeyframeJump(val forward: Boolean) : EditorEvent
@@ -327,4 +336,6 @@ sealed interface EditorEffect {
     data class PickReplacementAudio(val clipId: String) : EditorEffect
     data object PickOverlayMedia : EditorEffect
     data object PickMusic : EditorEffect
+    data object RequestMicrophone : EditorEffect
+    data object OpenAppSettings : EditorEffect
 }

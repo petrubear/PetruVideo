@@ -30,7 +30,7 @@ class ManifestPermissionsTest {
     }
 
     @Test
-    fun `only media read and export permissions are requested, besides the playback wake lock`() {
+    fun `only media, export, and microphone permissions are requested, besides the playback wake lock`() {
         val allowed = listOf(
             "android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WAKE_LOCK",
@@ -39,6 +39,8 @@ class ManifestPermissionsTest {
             "android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING",
             "android.permission.POST_NOTIFICATIONS",
             "android.permission.WRITE_EXTERNAL_STORAGE",
+            // Voice-over: the microphone, asked only when the user first taps Record (feature 013).
+            "android.permission.RECORD_AUDIO",
         )
         permissions.filterNot {
             it.startsWith("android.permission.READ_MEDIA_") || it in allowed || it.contains("DYNAMIC_RECEIVER")

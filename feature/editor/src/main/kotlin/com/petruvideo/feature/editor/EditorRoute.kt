@@ -57,6 +57,7 @@ fun EditorRoute(
     val pickReplacement = rememberReplaceAudioPicker(mediaViewModel, viewModel::onEvent)
     val pickOverlay = rememberOverlayPicker(mediaViewModel, viewModel::onEvent)
     val pickMusic = rememberMusicPicker(mediaViewModel, viewModel::onEvent)
+    val askMicrophone = rememberMicrophone { viewModel.onEvent(EditorEvent.MicrophoneResult(it)) }
 
     LaunchedEffect(projectId) { viewModel.open(projectId) }
     LaunchedEffect(viewModel) {
@@ -67,6 +68,8 @@ fun EditorRoute(
                 is EditorEffect.PickReplacementAudio -> pickReplacement(effect.clipId)
                 EditorEffect.PickOverlayMedia -> pickOverlay()
                 EditorEffect.PickMusic -> pickMusic()
+                EditorEffect.RequestMicrophone -> askMicrophone()
+                EditorEffect.OpenAppSettings -> openAppSettings(context)
                 is EditorEffect.PickRelinkFile -> {
                     relinkTarget = effect.mediaItemId
                     relinkPicker.launch(arrayOf("video/*", "image/*", "audio/*"))
@@ -74,10 +77,17 @@ fun EditorRoute(
             }
         }
     }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        viewModel.onEvent(EditorEvent.VoiceOverInterrupted)
+        viewModel.flush()
+    }
     // Coming back from freeing space retries a save that failed for lack of it.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.flush() }
-    BackHandler { viewModel.flush(); onBack() }
+    BackHandler {
+        viewModel.onEvent(EditorEvent.StopVoiceOver)
+        viewModel.flush()
+        onBack()
+    }
 
     CompositionLocalProvider(LocalMediaLoaders provides mediaViewModel.loaders) {
         EditorScreen(

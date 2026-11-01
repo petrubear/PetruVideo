@@ -14,6 +14,8 @@ import com.petruvideo.core.media.preview.PreviewEngine
 import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.media.thumbs.ProjectThumbnailUpdater
 import com.petruvideo.core.media.thumbs.ThumbnailStripGenerator
+import com.petruvideo.core.media.voiceover.MediaVoiceRecorder
+import com.petruvideo.core.media.voiceover.VoiceRecorder
 import dagger.Binds
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,6 +36,9 @@ abstract class MediaModule {
 
     @Binds
     abstract fun previewEngine(impl: Media3PreviewEngine): PreviewEngine
+
+    @Binds
+    abstract fun voiceRecorder(impl: MediaVoiceRecorder): VoiceRecorder
 
     @Binds
     abstract fun availabilityChecker(impl: MissingMediaChecker): MediaAvailabilityChecker

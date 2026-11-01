@@ -13,6 +13,7 @@ import com.petruvideo.core.data.repo.RoomProjectRepository
 import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.media.probe.MediaProber
+import com.petruvideo.core.media.voiceover.VoiceOverStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,7 +44,8 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun projectRepository(db: PetruDatabase): ProjectRepository = RoomProjectRepository(db)
+    fun projectRepository(db: PetruDatabase, recordings: VoiceOverStore): ProjectRepository =
+        RoomProjectRepository(db, onDeleted = { used -> recordings.sweep(used) })
 
     @Provides
     @Singleton

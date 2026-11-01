@@ -50,6 +50,7 @@ class AccessibilityTest {
         filterPanel: FilterPanelState? = null,
         effectPanel: EffectPanelState? = null,
         keyframePanel: KeyframePanelState? = null,
+        voiceOver: VoiceOverUi? = null,
         overlayPanel: OverlayPanelState? = null,
         fontScale: Float = 1f,
     ) {
@@ -67,6 +68,7 @@ class AccessibilityTest {
             filterPanel = filterPanel,
             effectPanel = effectPanel,
             keyframePanel = keyframePanel,
+            voiceOver = voiceOver,
             overlayPanel = overlayPanel,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -219,6 +221,13 @@ class AccessibilityTest {
         ),
         fontScale = 2f,
     )
+
+    @Test
+    fun voiceOverCountIn() = check(null, emptyList(), voiceOver = VoiceOverUi.CountIn(3))
+
+    @Test
+    fun voiceOverRecordingWithLargeFont() =
+        check(null, emptyList(), voiceOver = VoiceOverUi.Recording(65_000, 0.8f), fontScale = 2f)
 
     private val keyframes = listOf(
         com.petruvideo.core.model.Keyframe(0, com.petruvideo.core.model.Pose(250, 300, 300, 100)),

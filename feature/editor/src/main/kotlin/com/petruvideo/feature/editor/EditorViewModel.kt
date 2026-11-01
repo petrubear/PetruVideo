@@ -39,6 +39,10 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
 import com.petruvideo.core.model.Keyframes
+import com.petruvideo.core.model.VOICE_OVER_MIN_MS
+import com.petruvideo.core.model.VoiceOverLimit
+import com.petruvideo.core.model.VoiceOverStop
+import com.petruvideo.core.model.engine.AddVoiceOver
 import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.engine.AddAudioClips
 import com.petruvideo.core.model.engine.AddKeyframe
@@ -123,6 +127,7 @@ class EditorViewModel @Inject constructor(
     private val availability: MediaAvailabilityChecker,
     private val thumbnails: ThumbnailRefresher,
     private val pressure: ResourcePressureMonitor,
+    private val voiceOver: VoiceOverController,
 ) : ViewModel() {
 
     private data class Local(
@@ -146,6 +151,8 @@ class EditorViewModel @Inject constructor(
         /** Whether the Keyframes panel is open, and the selected keyframe's time inside the clip. */
         val keyframesOpen: Boolean = false,
         val keyframeRel: Long? = null,
+        /** The microphone was refused for good, so Record opens the phone's settings. */
+        val micBlocked: Boolean = false,
         /** Whether the overlay panel is open (for the selected overlay clip). */
         val overlayOpen: Boolean = false,
     )
@@ -199,7 +206,8 @@ class EditorViewModel @Inject constructor(
         session.saveStatus,
         engine.state,
         ::Core,
-    ).combine(local, ::toState).stateIn(viewModelScope, SharingStarted.Eagerly, EditorState())
+    ).combine(local, ::toState).combine(voiceOver.ui) { state, take -> state.copy(voiceOver = take) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, EditorState())
 
     init {
         viewModelScope.launch {
@@ -226,7 +234,10 @@ class EditorViewModel @Inject constructor(
     }
 
     fun open(projectId: String) {
-        viewModelScope.launch { session.open(projectId) }
+        viewModelScope.launch {
+            session.open(projectId)
+            recoverTake(projectId)
+        }
     }
 
     fun flush() {
@@ -238,7 +249,14 @@ class EditorViewModel @Inject constructor(
     }
 
     fun onEvent(event: EditorEvent) {
+        // While counting in or recording only Stop, Cancel, and the lifecycle stop do anything (spec FR-005a).
+        if (voiceOver.active && event !in VOICE_OVER_EVENTS && event !is EditorEvent.DismissMessage) return
         when (event) {
+            EditorEvent.RecordVoiceOver -> recordVoiceOver()
+            is EditorEvent.MicrophoneResult -> onMicrophone(event.access)
+            EditorEvent.StopVoiceOver -> voiceOver.stop()
+            EditorEvent.CancelVoiceOver -> voiceOver.cancel()
+            EditorEvent.VoiceOverInterrupted -> voiceOver.stop(VoiceOverStop.Interrupted)
             EditorEvent.Play -> play()
             EditorEvent.Pause -> pause()
             is EditorEvent.SeekTo -> seek(event.ms)
@@ -431,6 +449,98 @@ class EditorViewModel @Inject constructor(
         closeAudio()
         closeEffect()
         local.update { it.copy(filter = OpenFilter(kind, id), sheet = null, text = null) }
+    }
+
+    private fun recordVoiceOver() {
+        if (local.value.micBlocked) {
+            effectChannel.trySend(EditorEffect.OpenAppSettings)
+        } else {
+            effectChannel.trySend(EditorEffect.RequestMicrophone)
+        }
+    }
+
+    private fun onMicrophone(access: MicAccess) {
+        when (access) {
+            MicAccess.Granted -> startVoiceOver()
+            MicAccess.Denied -> say("A voice-over needs the microphone")
+            MicAccess.Blocked -> {
+                local.update { it.copy(micBlocked = true) }
+                say("Microphone access is off. Tap Record again to open Settings")
+            }
+        }
+    }
+
+    private fun startVoiceOver() {
+        val timeline = session.timeline.value ?: return
+        val projectId = session.project.value?.id ?: return
+        local.update { it.copy(micBlocked = false) }
+        pause()
+        select(null)
+        val start = engine.state.value.positionMs
+        val free = voiceOver.files.freeBytes()
+        val max = VoiceOverLimit.maxDurationMs(start, timeline.audioLane, free)
+        if (max < VOICE_OVER_MIN_MS) {
+            val storage = VoiceOverLimit.stopReason(start, timeline.audioLane, free) == VoiceOverStop.Storage
+            say(if (storage) "Not enough storage to record" else "No room here before the next audio clip")
+            return
+        }
+        voiceOver.begin(
+            viewModelScope, projectId, start, max, VoiceOverLimit.stopReason(start, timeline.audioLane, free),
+            onRecording = {
+                engine.seekTo(start)
+                engine.play()
+            },
+            onDone = ::onVoiceOverDone,
+        )
+    }
+
+    private fun onVoiceOverDone(result: VoiceOverResult) {
+        engine.pause()
+        session.setPlayhead(engine.state.value.positionMs)
+        when (result) {
+            VoiceOverResult.TooShort -> say("Too short")
+            VoiceOverResult.MicBusy -> say("The microphone is in use")
+            is VoiceOverResult.Take -> addTake(result)
+        }
+    }
+
+    private fun addTake(take: VoiceOverResult.Take) {
+        val item = voiceOver.files.mediaItemFor(take.file, take.durationMs)
+        val result = session.apply(AddVoiceOver(item, take.startMs))
+        if (result !is CommandResult.Applied) {
+            take.file.delete()
+            say("That recording could not be added")
+            return
+        }
+        val clip = result.timeline.audioLane.firstOrNull { it.mediaItemId == item.id }
+        if (clip != null) local.update { it.copy(selection = ClipSelection.Audio(clip.id)) }
+        when (take.reason) {
+            VoiceOverStop.NextClip -> say("Stopped at the next clip")
+            VoiceOverStop.Storage -> say("Storage is almost full, recording stopped")
+            else -> Unit
+        }
+    }
+
+    /** A take left by a crash or a lost process becomes a clip when its project opens (research 5). */
+    private fun recoverTake(projectId: String) {
+        if (voiceOver.active) return
+        val pending = voiceOver.files.pendingTake() ?: return
+        if (pending.projectId != projectId) return
+        voiceOver.files.closeTake()
+        val timeline = session.timeline.value
+        val length = VoiceOverLimit.durationOfBytes(pending.file.length())
+        val room = timeline?.let { VoiceOverLimit.maxDurationMs(pending.startMs, it.audioLane, Long.MAX_VALUE) } ?: 0L
+        val usable = minOf(length, room)
+        if (!pending.file.exists() || usable < VOICE_OVER_MIN_MS) {
+            pending.file.delete()
+            return
+        }
+        val item = voiceOver.files.mediaItemFor(pending.file, usable)
+        if (session.apply(AddVoiceOver(item, pending.startMs)) is CommandResult.Applied) {
+            say("Recovered your voice-over")
+        } else {
+            pending.file.delete()
+        }
     }
 
     private fun keyframeSubject(): KeyframeSubject? {
@@ -1036,6 +1146,9 @@ class EditorViewModel @Inject constructor(
 
 
     private companion object {
+        val VOICE_OVER_EVENTS = setOf<EditorEvent>(
+            EditorEvent.StopVoiceOver, EditorEvent.CancelVoiceOver, EditorEvent.VoiceOverInterrupted,
+        )
         const val DEFAULT_FPS = 30
         const val DEFAULT_ASPECT = 16f / 9f
         const val HASH_MIX = 31

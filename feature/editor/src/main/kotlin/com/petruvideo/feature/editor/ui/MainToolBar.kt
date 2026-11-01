@@ -171,9 +171,9 @@ fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** The bar of the Audio tab with no clip selected: back to Edit, and Add music from a file. */
+/** The bar of the Audio tab with no clip selected: back to Edit, Add music from a file, and Record voice-over. */
 @Composable
-fun AudioTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+fun AudioTabBar(onBack: () -> Unit, onAdd: () -> Unit, onRecord: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier
             .fillMaxWidth()
@@ -187,5 +187,6 @@ fun AudioTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modi
     ) {
         ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
         ToolButton(label = "Add music", icon = PetruIcons.Add, active = true, onClick = onAdd)
+        ToolButton(label = "Record voice-over", icon = PetruIcons.Mic, active = true, onClick = onRecord)
     }
 }

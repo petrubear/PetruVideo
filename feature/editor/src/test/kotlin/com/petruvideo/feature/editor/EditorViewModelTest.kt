@@ -42,7 +42,7 @@ class EditorViewModelTest {
         val availability = FakeAvailability(missing)
         val thumbnails = FakeThumbnails()
         val pressure = ResourcePressureMonitor()
-        val vm = EditorViewModel(session, engine, availability, thumbnails, pressure)
+        val vm = EditorViewModel(session, engine, availability, thumbnails, pressure, fakeVoiceOver())
         vm.open("p")
         return Env(vm, engine, availability, thumbnails, pressure, session)
     }

@@ -885,6 +885,30 @@ class ExportPipelineTest {
         check(faded < diff(200) / 4) { "text should have faded out: $faded changed pixels against ${diff(200)}" }
     }
 
+    @Test
+    fun aVoiceOverIsHeardInTheExportAtTheTimeItWasRecorded() {
+        val a = item("video_silent.mp4")
+        val file = File(context.cacheDir, "take-${System.nanoTime()}.aac").also { it.writeBytes(SyntheticTake.bytes(1_500)) }
+        try {
+            val take = com.petruvideo.core.media.voiceover.VoiceOverStore(File(context.cacheDir, "vo-test"))
+                .mediaItemFor(file, 1_500)
+            val timeline = com.petruvideo.core.model.engine.AddVoiceOver(take, 1_000, { "vo" })
+                .apply(project(VideoClip("c1", a.id, 0, 3_000, false), media = listOf(a)))
+                .let { (it as com.petruvideo.core.model.engine.CommandResult.Applied).timeline }
+            val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-vo")
+            state.shouldBeFinished()
+            val r = retriever(uri!!)
+            r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) shouldBe "yes"
+            r.release()
+            val rms = audioRms(uri, listOf(100L to 800L, 1_300L to 2_200L, 2_700L to 2_950L))
+            check(rms[1] > 0.02f) { "voice-over not heard: ${rms[1]}" }
+            check(rms[0] < rms[1] * 0.2f) { "sound before the voice-over: ${rms[0]} against ${rms[1]}" }
+            check(rms[2] < rms[1] * 0.2f) { "sound after the voice-over: ${rms[2]} against ${rms[1]}" }
+        } finally {
+            file.delete()
+        }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

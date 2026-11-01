@@ -338,6 +338,31 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
+    @Test
+    fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {
+        val take = source("take13.aac", MediaKind.Audio, 4_000)
+        val reported = mutableListOf<Set<String>>()
+        val repo = RoomProjectRepository(db, onDeleted = { reported += it })
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(com.petruvideo.core.model.engine.AddVoiceOver(take, 1_500, { "vo" }))
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.audioLane shouldBe saved.audioLane
+        loaded.audioLane.single().timelineStartMs shouldBe 1_500
+        val copy = repo.duplicateProject(project.id)!!
+        repo.deleteProject(project.id)
+        reported.single().contains(take.uri) shouldBe true
+        repo.loadProject(copy.id)!!.timeline.audioLane.single().lengthMs shouldBe 4_000
+        repo.deleteProject(copy.id)
+        reported.last().contains(take.uri) shouldBe false
+    }
+
     /** SC-005, SC-007 of feature 010: overlays reload exactly with their media and leave the sources alone. */
     @Test
     fun overlaysSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {

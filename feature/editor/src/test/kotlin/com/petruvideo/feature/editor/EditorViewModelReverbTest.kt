@@ -35,7 +35,10 @@ class EditorViewModelReverbTest {
         val session = ProjectSession(repo, backgroundScope)
         val engine = FakePreviewEngine()
         val pressure = ResourcePressureMonitor()
-        val vm = EditorViewModel(session, engine, FakeAvailability(missing), FakeThumbnails(), pressure)
+        val vm = EditorViewModel(
+            session, engine, FakeAvailability(missing), FakeThumbnails(), pressure,
+            fakeVoiceOver(),
+        )
         vm.open("p")
         return Env(vm, engine, session, pressure)
     }

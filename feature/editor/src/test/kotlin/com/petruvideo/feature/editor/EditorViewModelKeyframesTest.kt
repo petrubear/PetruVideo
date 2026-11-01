@@ -30,7 +30,10 @@ class EditorViewModelKeyframesTest {
         Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
         val session = ProjectSession(FakeRepository(mapOf("p" to sampleLoaded())), backgroundScope)
         val engine = FakePreviewEngine()
-        val vm = EditorViewModel(session, engine, FakeAvailability(), FakeThumbnails(), ResourcePressureMonitor())
+        val vm = EditorViewModel(
+            session, engine, FakeAvailability(), FakeThumbnails(), ResourcePressureMonitor(),
+            fakeVoiceOver(),
+        )
         vm.open("p")
         return Env(vm, engine, session)
     }

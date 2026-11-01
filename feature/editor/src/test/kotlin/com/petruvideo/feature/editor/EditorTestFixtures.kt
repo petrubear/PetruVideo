@@ -151,3 +151,42 @@ fun sampleLoaded(): LoadedProject {
     )
     return LoadedProject(Project("p", "Coast road", 0, 0), timeline)
 }
+
+
+/** A recorder that does what the test says: whether it opens, the length it reports, and the level it shows. */
+class FakeVoiceRecorder : com.petruvideo.core.media.voiceover.VoiceRecorder {
+    private val _state = MutableStateFlow<com.petruvideo.core.media.voiceover.RecorderState>(
+        com.petruvideo.core.media.voiceover.RecorderState.Idle,
+    )
+    override val state: StateFlow<com.petruvideo.core.media.voiceover.RecorderState> = _state
+    override var onInterrupted: (Long) -> Unit = {}
+    var canStart = true
+    var stopMs = 0L
+    val files = mutableListOf<java.io.File>()
+
+    override fun start(file: java.io.File): Boolean {
+        if (!canStart) return false
+        files += file
+        file.writeBytes(ByteArray(FILE_BYTES))
+        _state.value = com.petruvideo.core.media.voiceover.RecorderState.Recording(0, 0f)
+        return true
+    }
+
+    override fun stop(): Long {
+        _state.value = com.petruvideo.core.media.voiceover.RecorderState.Idle
+        return stopMs
+    }
+
+    fun tick(elapsedMs: Long, level: Float = 0.3f) {
+        _state.value = com.petruvideo.core.media.voiceover.RecorderState.Recording(elapsedMs, level)
+    }
+
+    private companion object {
+        const val FILE_BYTES = 1_000
+    }
+}
+
+fun fakeVoiceOver(
+    recorder: FakeVoiceRecorder = FakeVoiceRecorder(),
+    root: java.io.File = java.nio.file.Files.createTempDirectory("voiceovers").toFile(),
+) = VoiceOverController(recorder, com.petruvideo.core.media.voiceover.VoiceOverStore(root))
