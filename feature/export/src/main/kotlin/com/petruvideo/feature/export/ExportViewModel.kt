@@ -44,14 +44,17 @@ class ExportViewModel @Inject constructor(
 
     val effects = effectChannel.receiveAsFlow()
 
+    // The open project only counts once [projectId] names it, so the state is also recomputed when that changes.
+    private val openProject = combine(session.project, projectId) { project, id -> project?.takeIf { it.id == id } }
+
     val state: StateFlow<ExportUiState> = combine(
-        session.project,
+        openProject,
         session.timeline,
         chosen,
         coordinator.job,
         interrupted,
     ) { project, timeline, picked, job, wasInterrupted ->
-        if (project == null || timeline == null || project.id != projectId.value) return@combine ExportUiState()
+        if (project == null || timeline == null) return@combine ExportUiState()
         val caps = ExportCaps.from(timeline)
         val device = encoders.limits
         val first = caps.defaults(timeline.format?.fps ?: DEFAULT_FPS, device)
