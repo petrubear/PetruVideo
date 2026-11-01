@@ -140,6 +140,12 @@ class Media3PreviewEngine @Inject constructor(
         // Overlays and transitions are separate video inputs, which needs the multiple-input video graph. That player
         // does not take a second composition, so it is made again for every load (keeping position and play state);
         // it is also made again when the need itself changes.
+        if (composition == null) {
+            // Nothing to show: drop the player so the last picture of an earlier project does not stay on screen.
+            discardPlayer()
+            publish()
+            return
+        }
         val previous = compositionPlayer
         val resumeBefore = previous?.isPlaying == true
         val positionBefore = previous?.currentPosition ?: 0L
@@ -156,12 +162,7 @@ class Media3PreviewEngine @Inject constructor(
                 }
                 compositionPlayer = it
             }
-        hasComposition = composition != null
-        if (composition == null) {
-            player.pause()
-            publish()
-            return
-        }
+        hasComposition = true
         val reused = previous != null && player === previous
         val resume = if (reused) player.isPlaying else resumeBefore
         val position = (if (reused) player.currentPosition else positionBefore).coerceIn(0, totalMs)
