@@ -12,6 +12,14 @@
 
 This feature adds a third lane to the timeline, the Text lane, holding text clips that sit over the video. The Text tab of the main tool bar, disabled until now, becomes active. Export (004) renders the text exactly as the preview shows it. Not included: text templates and presets packs, auto captions from speech, keyframe animation, per-character styling, and curved or 3D text.
 
+## Clarifications
+
+### Session 2026-11-01
+
+- Q: How do overlapping text clips appear? → A: On separate rows, assigned automatically from start times; users never pick a row.
+- Q: Which colors can users pick? → A: A fixed palette of 12 swatches plus a custom color picker.
+- Q: Which fonts are offered? → A: System fonts only (no bundled font files); the six choices map to the device's built-in families, and export uses the same device fonts as the preview.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Add a title and edit its words (Priority: P1)
@@ -195,7 +203,7 @@ The Text tool works in the unfolded editor (inspector) and in tabletop (panel be
 
 - Features 001 to 005 are in place and reused: the editing engine, undo, autosave, the clip tool bar, inspector, tabletop layout, the shared composition builder, and export.
 - The designer's reference shows a Text tab but no panels for it; the controls follow the existing visual language and are reviewed with the designer, with deviations recorded.
-- Fonts come from the device and a small bundled set; the exact list is chosen during planning.
-- Text is a single style per clip (no per-word styling); color pickers offer a fixed palette plus a custom color.
+- Fonts are the device's built-in families (Sans, Serif, Mono, Display, Handwritten, Bold map to the closest system family); a text clip looks the same in preview and export on the same device, and may look slightly different on another device.
+- Text is a single style per clip (no per-word styling); color pickers offer a fixed palette of 12 swatches plus a custom color.
 - Animations are simple presets with a length; keyframes and custom curves belong to a later feature.
 - Subtitles imported from files and automatic captions are out of scope.

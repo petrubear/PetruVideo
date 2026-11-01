@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Candidates for /speckit-clarify: overlap rows vs single row, font list, color picker, text clip maximum length.
+- Clarified 2026-11-01: overlap rows, color picker, fonts.
