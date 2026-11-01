@@ -105,6 +105,8 @@ fun ExpandedEditorLayout(
                         transform = state.transformPanel,
                         freeze = state.freezePanel,
                         curve = state.curvePanel,
+                        chromaChecker = state.chromaChecker,
+                        chromaPicking = state.chromaPicking,
                     )
                     TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
                 }
@@ -137,6 +139,8 @@ fun ExpandedEditorLayout(
                             transform = state.transformPanel,
                             freeze = state.freezePanel,
                             curve = state.curvePanel,
+                        chromaChecker = state.chromaChecker,
+                        chromaPicking = state.chromaPicking,
                         )
                     }
                 }

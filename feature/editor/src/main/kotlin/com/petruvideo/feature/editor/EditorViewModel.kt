@@ -38,6 +38,7 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
+import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.VOICE_OVER_MIN_MS
 import com.petruvideo.core.model.VoiceOverLimit
@@ -52,6 +53,7 @@ import com.petruvideo.core.model.engine.MoveKeyframe
 import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.CropShape
+import com.petruvideo.core.media.chroma.ChromaSampler
 import com.petruvideo.core.media.freeze.FreezeStillMaker
 import com.petruvideo.core.media.captions.CaptionMaker
 import com.petruvideo.core.media.captions.CaptionResult
@@ -110,6 +112,7 @@ import com.petruvideo.core.model.engine.SetFilterIntensity
 import com.petruvideo.core.model.engine.SetFilterLook
 import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
+import com.petruvideo.core.model.engine.SetChromaKey
 import com.petruvideo.core.model.engine.SetOverlayOpacity
 import com.petruvideo.core.model.engine.SetOverlayPlacement
 import com.petruvideo.core.model.engine.SetReverbEnabled
@@ -160,6 +163,7 @@ class EditorViewModel @Inject constructor(
     private val pressure: ResourcePressureMonitor,
     private val voiceOver: VoiceOverController,
     private val freezeStills: FreezeStillMaker = FreezeStillMaker { _, _ -> null },
+    private val chromaSampler: ChromaSampler = ChromaSampler { _, _, _, _ -> null },
     private val reverse: ReversePreparer = NoReversePreparer,
     private val captions: CaptionMaker = NoCaptionMaker,
 ) : ViewModel() {
@@ -189,6 +193,8 @@ class EditorViewModel @Inject constructor(
         val micBlocked: Boolean = false,
         /** Whether the overlay panel is open (for the selected overlay clip). */
         val overlayOpen: Boolean = false,
+        val chromaChecker: Boolean = false,
+        val chromaPicking: Boolean = false,
         /** Whether the Transform panel is open, and the crop being edited on its screen. */
         val transformOpen: Boolean = false,
         val freezeOpen: Boolean = false,
@@ -382,6 +388,8 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.OverlayPreview -> previewOverlay(event.clip)
             is EditorEvent.OverlayCommit -> commitOverlay(event.clip)
             EditorEvent.OverlayDismiss -> closeOverlay()
+            is EditorEvent.ChromaPreview, is EditorEvent.ChromaCommit, is EditorEvent.ChromaChecker,
+            is EditorEvent.ChromaPicking, is EditorEvent.ChromaPick -> onChromaEvent(event)
             is EditorEvent.MoveOverlayClip -> run(MoveOverlay(event.clipId, event.startMs))
             is EditorEvent.TrimOverlayClip -> run(TrimOverlay(event.clipId, event.startMs, event.endMs))
             is EditorEvent.OpenFilterTool -> openFilter(event.kind)
@@ -1066,8 +1074,53 @@ class EditorViewModel @Inject constructor(
     private fun closeOverlay() {
         val id = selectedOverlayId()
         if (!local.value.overlayOpen) return
-        local.update { it.copy(overlayOpen = false) }
+        local.update { it.copy(overlayOpen = false, chromaPicking = false) }
         id?.let { restoreLiveOverlay(it) }
+    }
+
+    private fun onChromaEvent(event: EditorEvent) {
+        when (event) {
+            is EditorEvent.ChromaPreview -> previewChroma(event.key)
+            is EditorEvent.ChromaCommit -> selectedOverlayId()?.let { run(SetChromaKey(it, event.key)) }
+            is EditorEvent.ChromaChecker -> setChromaChecker(event.on)
+            is EditorEvent.ChromaPicking -> local.update { it.copy(chromaPicking = event.on) }
+            is EditorEvent.ChromaPick -> pickChroma(event.xPermille, event.yPermille)
+            else -> Unit
+        }
+    }
+
+    private fun previewChroma(key: ChromaKey) {
+        val stored = selectedOverlayId()
+            ?.let { id -> session.timeline.value?.overlayLane?.firstOrNull { it.id == id } } ?: return
+        engine.setOverlayLive(stored.copy(chroma = key.normalized()))
+    }
+
+    private fun setChromaChecker(on: Boolean) {
+        local.update { it.copy(chromaChecker = on) }
+        engine.setChromaChecker(on)
+    }
+
+    /** The colour of the selected overlay's picture under a tap on the preview becomes its key colour. */
+    private fun pickChroma(xPermille: Int, yPermille: Int) {
+        val timeline = session.timeline.value ?: return
+        val clip = timeline.overlayLane.firstOrNull { it.id == selectedOverlayId() } ?: return
+        val media = timeline.media[clip.mediaItemId] ?: return
+        val format = timeline.format ?: return
+        val at = engine.state.value.positionMs
+        val shown = clip.shownAt(at)
+        val aspect = overlayAspect(timeline, clip.id)
+        // The overlay is shown [widthPermille] of the frame wide and as tall as its own shape makes it.
+        val wide = shown.widthPermille.toFloat()
+        val high = wide / aspect * format.width / format.height
+        val u = (xPermille - (shown.xPermille - wide / 2)) / wide
+        val tallPermille = high
+        val v = (yPermille - (shown.yPermille - tallPermille / 2)) / tallPermille
+        local.update { it.copy(chromaPicking = false) }
+        viewModelScope.launch {
+            val source = clip.sourceStartMs + (at - clip.startMs).coerceIn(0, clip.durationMs)
+            val color = chromaSampler.sample(media, source, u, v) ?: return@launch say("Tap on the overlay's picture")
+            run(SetChromaKey(clip.id, clip.chroma.copy(enabled = true, color = color)))
+        }
     }
 
     private fun restoreLiveOverlay(id: String) {
@@ -1106,10 +1159,14 @@ class EditorViewModel @Inject constructor(
         selection: ClipSelection?,
         open: Boolean,
         playheadMs: Long,
+        local: Local,
     ): OverlayPanelState? {
         if (!open || timeline == null || selection == null) return null
         val clip = timeline.overlayLane.firstOrNull { it.id == selection.clipId } ?: return null
-        return OverlayPanelState(clip.shownAt(playheadMs), timeline.media[clip.mediaItemId]?.displayName.orEmpty())
+        return OverlayPanelState(
+            clip.shownAt(playheadMs), timeline.media[clip.mediaItemId]?.displayName.orEmpty(),
+            local.chromaChecker, local.chromaPicking,
+        )
     }
 
     private fun overlayAspect(timeline: Timeline?, id: String?): Float {
@@ -1474,7 +1531,9 @@ class EditorViewModel @Inject constructor(
             reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
             audioPanel = audioPanelFor(timeline, selection, local.audio),
             toolbarTab = local.tab,
-            overlayPanel = overlayPanelFor(timeline, selection, local.overlayOpen, core.preview.positionMs),
+            chromaChecker = local.chromaChecker,
+            chromaPicking = local.chromaPicking,
+            overlayPanel = overlayPanelFor(timeline, selection, local.overlayOpen, core.preview.positionMs, local),
             selectedOverlay = timeline?.overlayLane?.firstOrNull { it.id == selection?.clipId }
                 ?.shownAt(core.preview.positionMs),
             selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),

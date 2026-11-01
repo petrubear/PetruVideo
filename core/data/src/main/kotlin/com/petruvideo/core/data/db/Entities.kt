@@ -6,6 +6,10 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.petruvideo.core.model.CHROMA_GREEN
+import com.petruvideo.core.model.CHROMA_SMOOTHNESS_DEFAULT
+import com.petruvideo.core.model.CHROMA_SPILL_DEFAULT
+import com.petruvideo.core.model.CHROMA_STRENGTH_DEFAULT
 
 @Entity(tableName = "project")
 data class ProjectEntity(
@@ -229,6 +233,11 @@ data class OverlayClipEntity(
     val y: Int,
     val width: Int,
     val opacity: Int,
+    @ColumnInfo(defaultValue = "0") val chromaEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "-16731840") val chromaColor: Int = CHROMA_GREEN,
+    @ColumnInfo(defaultValue = "40") val chromaStrength: Int = CHROMA_STRENGTH_DEFAULT,
+    @ColumnInfo(defaultValue = "20") val chromaSmoothness: Int = CHROMA_SMOOTHNESS_DEFAULT,
+    @ColumnInfo(defaultValue = "50") val chromaSpill: Int = CHROMA_SPILL_DEFAULT,
 )
 
 /** One keyframe of an overlay or text clip; [ownerId] is the clip's id (the two lanes live in two tables). */

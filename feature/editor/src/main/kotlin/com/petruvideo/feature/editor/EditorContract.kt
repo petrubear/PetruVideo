@@ -6,6 +6,7 @@ import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
@@ -109,7 +110,14 @@ enum class TextToolKind(val label: String) {
 data class TextPanelState(val kind: TextToolKind, val clip: TextClip)
 
 /** The open overlay panel: the selected overlay clip and the name of its media. */
-data class OverlayPanelState(val clip: OverlayClip, val name: String)
+data class OverlayPanelState(
+    val clip: OverlayClip,
+    val name: String,
+    /** The checkerboard behind see-through areas of a keyed overlay (the preview only). */
+    val chromaChecker: Boolean = false,
+    /** The next tap on the preview picks the key colour. */
+    val chromaPicking: Boolean = false,
+)
 
 /** The two filter panels. */
 enum class FilterToolKind(val label: String) { Looks("Looks"), Adjust("Adjust") }
@@ -234,6 +242,8 @@ data class EditorState(
     val toolbarTab: ToolbarTab = ToolbarTab.Edit,
     /** The open overlay panel, if any. */
     val overlayPanel: OverlayPanelState? = null,
+    val chromaChecker: Boolean = false,
+    val chromaPicking: Boolean = false,
     /** The selected overlay clip and the shape of its picture (width over height), for the preview box. */
     val selectedOverlay: OverlayClip? = null,
     val selectedOverlayAspect: Float = 1.78f,
@@ -354,6 +364,13 @@ sealed interface EditorEvent {
     /** The overlay on release or a tap: one edit per changed part. */
     data class OverlayCommit(val clip: OverlayClip) : EditorEvent
     data object OverlayDismiss : EditorEvent
+    data class ChromaPreview(val key: ChromaKey) : EditorEvent
+    data class ChromaCommit(val key: ChromaKey) : EditorEvent
+    data class ChromaChecker(val on: Boolean) : EditorEvent
+    data class ChromaPicking(val on: Boolean) : EditorEvent
+
+    /** A tap on the preview while picking, as permille of the frame width and of the frame height. */
+    data class ChromaPick(val xPermille: Int, val yPermille: Int) : EditorEvent
     data class MoveOverlayClip(val clipId: String, val startMs: Long) : EditorEvent
     data class TrimOverlayClip(val clipId: String, val startMs: Long, val endMs: Long) : EditorEvent
     data class OpenFilterTool(val kind: FilterToolKind) : EditorEvent

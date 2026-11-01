@@ -15,6 +15,7 @@ import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
+import com.petruvideo.core.media.effects.ChromaKeyHandle
 import com.petruvideo.core.media.effects.ClipEffectHandle
 import com.petruvideo.core.media.effects.ClipFramingHandle
 import com.petruvideo.core.media.effects.FitWithBackground
@@ -112,6 +113,9 @@ class CompositionBuilder(
 
     /** The framing (zoom, pan, fade) of each clip with keyframes after [build], so the preview can change it live. */
     val framings = mutableMapOf<String, ClipFramingHandle>()
+
+    /** The chroma key of each keyed overlay after [build], so the preview can change it live. */
+    val chromas = mutableMapOf<String, ChromaKeyHandle>()
 
     /** The placement of the overlay clips after [build], so the preview can change one live; null without overlays. */
     var overlayLayout: OverlayLayout? = null
@@ -265,6 +269,10 @@ class CompositionBuilder(
             } else {
                 EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
                     .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
+            }
+            if (clip.chroma.enabled) {
+                val handle = ChromaKeyHandle(clip.chroma).also { chromas[clip.id] = it }
+                item.setEffects(Effects(emptyList(), listOf(handle.glEffect)))
             }
             builder.addItem(item.setRemoveAudio(true).build())
             // An ended input would keep showing its last frame, so a gap runs on to the end of the project.

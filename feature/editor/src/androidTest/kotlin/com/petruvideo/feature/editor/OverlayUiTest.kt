@@ -41,6 +41,22 @@ class OverlayUiTest {
     }
 
     @Test
+    fun chromaKeyTabPicksAGreenKeyAndStartsPicking() {
+        val events = mutableListOf<EditorEvent>()
+        compose.setContent { PetruTheme { OverlayPanel(OverlayPanelState(clips[0], "pip.mp4"), { events += it }) } }
+        compose.onNodeWithText("Chroma key").performClick()
+        compose.onNodeWithText("Green").performClick()
+        assertEquals(
+            EditorEvent.ChromaCommit(com.petruvideo.core.model.ChromaKey(enabled = true)),
+            events.last(),
+        )
+        compose.onNodeWithText("Pick colour").performClick()
+        assertEquals(EditorEvent.ChromaPicking(true), events.last())
+        compose.onNodeWithText("Checkerboard").performClick()
+        assertEquals(EditorEvent.ChromaChecker(true), events.last())
+    }
+
+    @Test
     fun laneClipsAreSelectableOnSeparateRowsAndTheEndHandleTrims() {
         val selected = mutableListOf<String>()
         val trims = mutableListOf<Triple<String, Long, Long>>()

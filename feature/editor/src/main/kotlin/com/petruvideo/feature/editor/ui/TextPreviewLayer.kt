@@ -3,6 +3,7 @@ package com.petruvideo.feature.editor.ui
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
@@ -69,6 +70,36 @@ fun PreviewWithText(
         if (overlay != null && format != null && playhead in overlay.startMs until overlay.endMs) {
             OverlayPreviewLayer(overlay, state.selectedOverlayAspect, format.width.toFloat() / format.height, onEvent)
         }
+        if (state.chromaPicking && format != null) {
+            ChromaPickLayer(format.width.toFloat() / format.height, onEvent)
+        }
+    }
+}
+
+/** While picking a key colour, a tap on the frame sends its place as permille of the frame. */
+@Composable
+private fun ChromaPickLayer(aspect: Float, onEvent: (EditorEvent) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val frameWidth: Dp = min(maxWidth.value, maxHeight.value * aspect).dp
+        val frameHeight: Dp = frameWidth / aspect
+        Box(
+            Modifier
+                .align(androidx.compose.ui.Alignment.Center)
+                .width(frameWidth)
+                .height(frameHeight)
+                .border(2.dp, PetruColors.Accent)
+                .semantics { contentDescription = "Tap the colour to remove" }
+                .pointerInput(Unit) {
+                    detectTapGestures { tap ->
+                        onEvent(
+                            EditorEvent.ChromaPick(
+                                (tap.x / size.width * TEXT_PERMILLE).roundToInt(),
+                                (tap.y / size.height * TEXT_PERMILLE).roundToInt(),
+                            ),
+                        )
+                    }
+                },
+        )
     }
 }
 

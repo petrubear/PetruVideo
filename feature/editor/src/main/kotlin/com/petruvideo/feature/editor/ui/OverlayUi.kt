@@ -19,17 +19,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -42,8 +45,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
+import com.petruvideo.core.designsystem.components.PetruChip
 import com.petruvideo.core.designsystem.components.PillButton
+import com.petruvideo.core.designsystem.components.SegmentedControl
 import com.petruvideo.core.designsystem.components.SheetSurface
+import com.petruvideo.core.model.CHROMA_BLUE
+import com.petruvideo.core.model.CHROMA_GREEN
+import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.OVERLAY_MIN_MS
 import com.petruvideo.core.model.OVERLAY_WIDTH_MAX
@@ -85,15 +93,34 @@ fun OverlayPanel(panel: OverlayPanelState?, onEvent: (EditorEvent) -> Unit, modi
                 PillButton("Done", onClick = { onEvent(EditorEvent.OverlayDismiss) })
             }
             Text(panel.name, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted, maxLines = 1)
-            OverlayControls(panel.clip, onEvent)
+            OverlayControls(panel.clip, onEvent, checker = panel.chromaChecker, picking = panel.chromaPicking)
         }
     }
 }
 
 @Composable
-fun OverlayControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
+fun OverlayControls(
+    clip: OverlayClip,
+    onEvent: (EditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
+    checker: Boolean = false,
+    picking: Boolean = false,
+    startOnChroma: Boolean = false,
+) {
+    var tab by remember { mutableIntStateOf(if (startOnChroma) 1 else 0) }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        SegmentedControl(listOf("Opacity", "Chroma key"), tab, {
+            tab = it
+            if (it == 0) onEvent(EditorEvent.ChromaPicking(false))
+        })
+        if (tab == 0) OpacityControls(clip, onEvent) else ChromaControls(clip, checker, picking, onEvent)
+    }
+}
+
+@Composable
+private fun OpacityControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
     var shown by remember(clip) { mutableStateOf(clip) }
-    Column(modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth()) {
         SettingSlider(
             "Opacity", "${shown.opacityPercent}%", shown.opacityPercent.toFloat(), 0f..PERCENT_MAX,
             {
@@ -108,6 +135,66 @@ fun OverlayControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit, modifier:
             color = PetruColors.OnSurfaceMuted,
         )
     }
+}
+
+/** The chroma key of an overlay: on or off, the colour to remove, and how wide, soft, and clean the result is. */
+@Composable
+private fun ChromaControls(
+    clip: OverlayClip,
+    checker: Boolean,
+    picking: Boolean,
+    onEvent: (EditorEvent) -> Unit,
+) {
+    var shown by remember(clip.chroma) { mutableStateOf(clip.chroma) }
+    val commit = { next: ChromaKey -> onEvent(EditorEvent.ChromaCommit(next)) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            PetruChip("Off", selected = !shown.enabled, onClick = { commit(shown.copy(enabled = false)) })
+            PetruChip("On", selected = shown.enabled, onClick = { commit(shown.copy(enabled = true)) })
+            PetruChip("Green", selected = shown.color == CHROMA_GREEN, onClick = {
+                commit(shown.copy(enabled = true, color = CHROMA_GREEN))
+            })
+            PetruChip("Blue", selected = shown.color == CHROMA_BLUE, onClick = {
+                commit(shown.copy(enabled = true, color = CHROMA_BLUE))
+            })
+            Box(
+                Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(androidx.compose.ui.graphics.Color(shown.color))
+                    .border(1.dp, PetruColors.OnSurfaceMuted, RoundedCornerShape(12.dp))
+                    .semantics { contentDescription = "Key colour" },
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            PetruChip(
+                if (picking) "Tap the preview" else "Pick colour", selected = picking,
+                onClick = { onEvent(EditorEvent.ChromaPicking(!picking)) },
+            )
+            PetruChip("Checkerboard", selected = checker, onClick = { onEvent(EditorEvent.ChromaChecker(!checker)) })
+        }
+        ChromaSlider("Strength", shown.strength, { shown = shown.copy(strength = it) }, shown, onEvent)
+        ChromaSlider("Smoothness", shown.smoothness, { shown = shown.copy(smoothness = it) }, shown, onEvent)
+        ChromaSlider("Spill", shown.spill, { shown = shown.copy(spill = it) }, shown, onEvent)
+    }
+}
+
+@Composable
+private fun ChromaSlider(
+    label: String,
+    value: Int,
+    set: (Int) -> Unit,
+    key: ChromaKey,
+    onEvent: (EditorEvent) -> Unit,
+) {
+    SettingSlider(
+        label, "$value", value.toFloat(), 0f..PERCENT_MAX,
+        {
+            set(it.roundToInt())
+            onEvent(EditorEvent.ChromaPreview(key.copy(enabled = true)))
+        },
+        { onEvent(EditorEvent.ChromaCommit(key.copy(enabled = true))) },
+    )
 }
 
 private const val PERCENT_MAX = 100f

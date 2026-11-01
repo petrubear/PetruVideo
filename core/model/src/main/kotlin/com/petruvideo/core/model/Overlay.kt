@@ -22,6 +22,8 @@ data class OverlayClip(
     val widthPermille: Int = OVERLAY_WIDTH_DEFAULT,
     val opacityPercent: Int = 100,
     val keyframes: List<Keyframe> = emptyList(),
+    /** Removes a backdrop colour from the picture (feature 022). */
+    val chroma: ChromaKey = ChromaKey(),
 ) {
     val durationMs: Long get() = sourceEndMs - sourceStartMs
     val endMs: Long get() = startMs + durationMs
@@ -61,6 +63,7 @@ data class OverlayClip(
         widthPermille = widthPermille.coerceIn(OVERLAY_WIDTH_MIN, OVERLAY_WIDTH_MAX),
         opacityPercent = opacityPercent.coerceIn(0, 100),
         keyframes = Keyframes.normalized(keyframes, durationMs, OVERLAY_WIDTH_MIN..OVERLAY_WIDTH_MAX),
+        chroma = chroma.normalized(),
     )
 
     val inRange: Boolean get() = normalized() == this && durationMs >= OVERLAY_MIN_MS && sourceStartMs >= 0

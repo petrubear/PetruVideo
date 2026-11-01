@@ -73,6 +73,8 @@ fun InspectorPanel(
     transform: TransformPanelState? = null,
     freeze: FreezePanelState? = null,
     curve: SpeedCurvePanelState? = null,
+    chromaChecker: Boolean = false,
+    chromaPicking: Boolean = false,
 ) {
     Column(
         modifier.fillMaxHeight().background(PetruColors.Surface).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -118,7 +120,7 @@ fun InspectorPanel(
             }
             if (overlay != null) {
                 Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
-                OverlayControls(overlay, onEvent)
+                OverlayControls(overlay, onEvent, checker = chromaChecker, picking = chromaPicking)
             }
             VideoToolSections(freeze, transform, keyframes, curve, onEvent)
             if (filter != null) {

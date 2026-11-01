@@ -59,6 +59,9 @@ interface PreviewEngine {
     /** Changes the place or opacity of one overlay clip right away; the current frame is redrawn. */
     fun setOverlayLive(clip: OverlayClip)
 
+    /** Shows a checkerboard where keyed overlays are see-through; the preview only, never the export. */
+    fun setChromaChecker(on: Boolean) = Unit
+
     /** Changes one text clip right away (words, style, place, timing); the current frame is redrawn. */
     fun setTextLive(clip: TextClip)
 

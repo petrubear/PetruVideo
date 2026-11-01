@@ -2,6 +2,8 @@ package com.petruvideo.app.di
 
 import com.petruvideo.core.media.captions.CaptionMaker
 import com.petruvideo.core.media.captions.CaptionService
+import com.petruvideo.core.media.chroma.ChromaSampler
+import com.petruvideo.core.media.chroma.DeviceChromaSampler
 import com.petruvideo.core.media.freeze.FreezeStillMaker
 import com.petruvideo.core.media.freeze.FreezeStills
 import com.petruvideo.core.media.library.MediaLibrary
@@ -48,6 +50,9 @@ abstract class MediaModule {
 
     @Binds
     abstract fun reversePreparer(impl: ReverseService): ReversePreparer
+
+    @Binds
+    abstract fun chromaSampler(impl: DeviceChromaSampler): ChromaSampler
 
     @Binds
     abstract fun freezeStills(impl: FreezeStills): FreezeStillMaker

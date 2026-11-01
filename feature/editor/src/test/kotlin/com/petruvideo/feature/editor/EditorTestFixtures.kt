@@ -89,6 +89,10 @@ class FakePreviewEngine : PreviewEngine {
         calls += "overlay ${clip.id} ${clip.xPermille} ${clip.yPermille} ${clip.widthPermille} ${clip.opacityPercent}"
     }
 
+    override fun setChromaChecker(on: Boolean) {
+        calls += "checker $on"
+    }
+
     override fun setTextLive(clip: com.petruvideo.core.model.TextClip) {
         calls += "text ${clip.id} ${clip.text}"
     }

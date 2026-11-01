@@ -1,6 +1,10 @@
 package com.petruvideo.feature.editor
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import app.cash.paparazzi.DeviceConfig
@@ -742,6 +746,20 @@ class EditorScreenshotTest {
                     ),
                     player = null, onEvent = {}, onBack = {},
                 )
+            }
+        }
+    }
+
+    @Test
+    fun chromaKeyPanel() = paparazzi.snapshot {
+        PetruTheme {
+            com.petruvideo.core.designsystem.components.SheetSurface(Modifier.fillMaxWidth()) {
+                androidx.compose.foundation.layout.Box(Modifier.padding(16.dp)) {
+                    com.petruvideo.feature.editor.ui.OverlayControls(
+                        overlays[0].copy(chroma = com.petruvideo.core.model.ChromaKey(enabled = true)),
+                        onEvent = {}, checker = true, startOnChroma = true,
+                    )
+                }
             }
         }
     }

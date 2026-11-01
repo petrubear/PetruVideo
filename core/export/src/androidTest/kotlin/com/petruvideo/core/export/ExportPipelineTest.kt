@@ -1209,6 +1209,42 @@ class ExportPipelineTest {
         check(blurSide[0] in 60..125 && blurSide[0] > blurSide[2] + 30) { "blur bars are ${blurSide.toList()}" }
     }
 
+    private fun greenScreenPhoto(): MediaItem {
+        val file = File(context.cacheDir, "greenscreen.png")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 300, android.graphics.Bitmap.Config.ARGB_8888)
+        for (x in 0 until 400) for (y in 0 until 300) bitmap.setPixel(x, y, if (x < 200) 0xFF00B140.toInt() else 0xFF804000.toInt())
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        return runBlocking { MediaProbe(context).probe(Uri.fromFile(file), "greenscreen.png").getOrThrow() }
+    }
+
+    private fun keyedOverlayFrame(key: com.petruvideo.core.model.ChromaKey, name: String): android.graphics.Bitmap {
+        val base = solidPhoto("keybase", 0xFF0040C0.toInt())
+        val overlay = greenScreenPhoto()
+        val timeline = project(VideoClip("b1", base.id, 0, 2_000, false), media = listOf(base)).let {
+            it.copy(
+                media = it.media + (overlay.id to overlay),
+                overlayLane = listOf(OverlayClip("o1", overlay.id, 0, 2_000, 0, 500, 500, 600, chroma = key)),
+            )
+        }
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return frameAt(uri!!, 800)
+    }
+
+    /** SC-002 of feature 022: the keyed backdrop shows the layer beneath; the rest of the overlay is unchanged. */
+    @Test
+    fun aKeyedOverlayShowsTheLayerBeneathWhereItWasTheKeyColour() {
+        val keyed = keyedOverlayFrame(com.petruvideo.core.model.ChromaKey(enabled = true), "pipeline-chroma-on")
+        val gone = meanRgb(keyed, 0.25f, 0.45f)
+        check(gone[2] > 130 && gone[1] < 100) { "the green was not removed: ${gone.toList()}" }
+        val kept = meanRgb(keyed, 0.55f, 0.75f)
+        val plain = keyedOverlayFrame(com.petruvideo.core.model.ChromaKey(), "pipeline-chroma-off")
+        val plainKept = meanRgb(plain, 0.55f, 0.75f)
+        check(kept.indices.all { kotlin.math.abs(kept[it] - plainKept[it]) < 12 }) { "the kept side changed: ${kept.toList()} (no key ${plainKept.toList()})" }
+        val green = meanRgb(plain, 0.25f, 0.45f)
+        check(green[1] > 120 && green[2] < 110) { "a clip without the key changed: ${green.toList()}" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

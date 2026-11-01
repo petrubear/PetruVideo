@@ -1,6 +1,7 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
@@ -113,4 +114,9 @@ class TrimOverlay(clipId: String, private val startMs: Long, private val endMs: 
         val frames = Keyframes.window(clip.basePose, clip.keyframes, shift, shift + (endMs - start))
         return clip.copy(startMs = start, sourceStartMs = sourceStart, sourceEndMs = sourceEnd).withKeyframes(frames)
     }
+}
+
+/** Sets the chroma key of the overlay (feature 022). */
+class SetChromaKey(clipId: String, private val chroma: ChromaKey) : OverlayCommand(clipId, "Chroma key") {
+    override fun next(clip: OverlayClip, media: MediaItem?) = clip.copy(chroma = chroma.normalized())
 }

@@ -58,6 +58,8 @@ class Media3PreviewEngine @Inject constructor(
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     private var voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
     private var voiceFxAllowed = true
+    private var chromas: Map<String, com.petruvideo.core.media.effects.ChromaKeyHandle> = emptyMap()
+    private var chromaChecker = false
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
@@ -130,6 +132,7 @@ class Media3PreviewEngine @Inject constructor(
         voiceFxs = builder.voiceFxs
         textOverlays = builder.textOverlays
         overlayLayout = builder.overlayLayout
+        adoptChromas(builder.chromas)
         filters = builder.filters
         clipEffects = builder.clipEffects
         framings = builder.framings
@@ -249,12 +252,32 @@ class Media3PreviewEngine @Inject constructor(
         }
     }
 
+    override fun setChromaChecker(on: Boolean) {
+        chromaChecker = on
+        setChecker(on)
+        refreshSoon()
+    }
+
     override fun setOverlayLive(clip: OverlayClip) {
         overlayLayout?.update(clip)
+        chromas[clip.id]?.update(clip.chroma)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)
         }
+    }
+
+    private fun adoptChromas(found: Map<String, com.petruvideo.core.media.effects.ChromaKeyHandle>) {
+        chromas = found.toMap()
+        setChecker(chromaChecker)
+    }
+
+    private fun setChecker(on: Boolean) = chromas.values.forEach { it.checker = on }
+
+    private fun refreshSoon() {
+        if (polling) return
+        handler.removeCallbacks(refresh)
+        handler.postDelayed(refresh, REFRESH_MS)
     }
 
     override fun setTextLive(clip: TextClip) {
