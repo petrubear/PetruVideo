@@ -12,6 +12,13 @@
 
 The Filters tab of the main tool bar, disabled until now, becomes active. A filter look and five manual adjustments apply to one video or photo clip at a time. Not included: filters on text, audio, or the whole project at once, custom user looks or importable look files, keyframed (changing over time) adjustments, masks and selective color, and curves.
 
+## Clarifications
+
+### Session 2026-11-01
+
+- Q: Does the Filters tab offer Apply to all? → A: Yes, one tap, one undo step.
+- Q: How are looks previewed in the list? → A: On the selected clip's frame at the playhead, with each look applied.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Apply a look to a clip (Priority: P1)
