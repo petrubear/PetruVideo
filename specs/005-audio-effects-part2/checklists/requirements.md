@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Open points for /speckit-clarify: tool bar grouping (FR-022), noise reduction approach limits, fade curve, whether Pitch/Echo apply live or on release.
+- Clarified 2026-10-31: tool bar grouping, live Pitch/Echo, fade curve, effect stacking.

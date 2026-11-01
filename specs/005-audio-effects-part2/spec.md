@@ -12,6 +12,15 @@
 
 Mute, Volume and Reverb exist (features 001 to 003) and export already renders them (004). This feature adds five more audio tools to the same group: Fade, Noise reduction, Equalizer, and Voice effects (Echo, Robot, Pitch, Bass). Each applies to one clip, is heard live in the preview, is saved with the project, and is rendered by export exactly as heard.
 
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: How do the seven audio tools appear in the clip tool bar? → A: One Audio entry that opens a list of tools.
+- Q: How do Pitch and Echo behave while dragging? → A: Live within 100 ms; if the device cannot keep up, preview quality lowers and says so, as for reverb.
+- Q: What shape do fades have? → A: One smooth curve, no choice shown.
+- Q: Can voice effects stack? → A: Yes, each voice effect has its own on/off and settings and they combine.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Fade a clip in and out (Priority: P1)
@@ -69,18 +78,18 @@ A user opens the Equalizer, picks a preset (Flat, Voice boost, Bass boost, Trebl
 
 ### User Story 4 - Voice effects (Priority: P2)
 
-A user opens Voice effects and picks one effect for the clip: None, Echo, Robot, Pitch or Bass, adjusts its main setting, and hears it live.
+A user opens Voice effects and turns on any of Echo, Robot, Pitch and Bass for the clip, adjusts each one's main setting, and hears them live, alone or combined.
 
 **Why this priority**: These are the fun, creative effects people expect in a video editor, but they depend on the same panel and chain as the other tools.
 
-**Independent Test**: Apply Pitch up on a voice clip and hear a higher voice at the same speed, switch to Robot and hear a robotic voice, set Echo to a long delay and hear repeats, return to None and hear the original.
+**Independent Test**: Apply Pitch up on a voice clip and hear a higher voice at the same speed, also turn on Robot and hear a robotic high voice, set Echo to a long delay and hear repeats, turn all four off and hear the original.
 
 **Acceptance Scenarios**:
 
-1. **Given** a selected clip with sound, **When** the user opens Voice effects, **Then** they see None, Echo, Robot, Pitch and Bass, with None selected by default.
+1. **Given** a selected clip with sound, **When** the user opens Voice effects, **Then** they see Echo, Robot, Pitch and Bass, each with its own on/off switch, all off by default.
 2. **Given** an effect is selected, **When** the panel shows, **Then** it offers that effect's main settings: Echo (delay and repeats), Robot (intensity), Pitch (semitones from -12 to +12, speed unchanged), Bass (amount).
 3. **Given** playback, **When** the user drags an effect setting, **Then** the change is heard within 100 ms without a gap, except where documented.
-4. **Given** the user picks another effect, **When** it applies, **Then** the previous effect is replaced, not stacked, and its settings are kept for when the user returns to it.
+4. **Given** several effects are on, **When** the clip plays, **Then** they combine in a fixed order; turning one off keeps its settings for when it is turned on again.
 5. **Given** Pitch is used on a sped-up clip, **When** it plays, **Then** the pitch shift is measured against the natural pitch of the speed-adjusted sound, so +0 semitones leaves it as it is today.
 
 ---
@@ -110,7 +119,7 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 - Fade at volume 0%: silent, settings kept.
 - Split: the first half keeps the fade in and loses the fade out; the second half keeps the fade out and loses the fade in; other tools are copied to both halves.
 - Duplicate, detach audio, replace audio: all settings are kept (replace keeps them as for Reverb and Volume).
-- Echo repeats and Pitch tails end at the clip end and never sound over the next clip.
+- Echo repeats and effect tails end at the clip end and never sound over the next clip.
 - Several tools at once: they combine in a fixed order, and the result stays free of harsh clipping.
 - A project is saved and reopened, or the app is force-closed after a change: all settings come back exactly as set, with at most 5 seconds of work lost.
 - Many clips with effects on a mid-range device: preview stays smooth, or the app lowers preview quality and says so; export is not affected.
@@ -123,7 +132,7 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 **Fade**
 
 - **FR-001**: Users MUST be able to set a fade-in length and a fade-out length on any video clip with attached sound and any audio clip, each from 0 s to half the clip's timeline length, default 0 s.
-- **FR-002**: Fades MUST rise or fall smoothly with no audible click; the two fades MUST never overlap, and the second one set is limited with a short message.
+- **FR-002**: Fades MUST follow one smooth curve and rise or fall with no audible click; the two fades MUST never overlap, and the second one set is limited with a short message.
 - **FR-003**: Fades MUST stay anchored to the clip's start and end through trim, speed change, split and duplicate, and be limited if the clip becomes too short.
 
 **Noise reduction**
@@ -139,14 +148,14 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 
 **Voice effects**
 
-- **FR-009**: Users MUST be able to choose one voice effect per clip from None, Echo, Robot, Pitch and Bass, default None.
+- **FR-009**: Users MUST be able to turn each voice effect (Echo, Robot, Pitch, Bass) on or off independently per clip, all off by default, and several may be on at once.
 - **FR-010**: Each effect MUST expose its main setting(s): Echo (delay 50 ms to 1000 ms, repeats 1 to 5), Robot (intensity 0% to 100%), Pitch (-12 to +12 semitones, speed unchanged), Bass (amount 0% to 100%).
-- **FR-011**: Choosing another effect MUST replace the current one and keep the other effects' settings for when they are chosen again.
+- **FR-011**: Turning an effect off MUST keep its settings; effects combine in a fixed order that is the same in preview and export.
 - **FR-012**: Echo repeats and effect tails MUST be cut at the clip's end.
 
 **Shared behavior**
 
-- **FR-013**: For every tool, a setting change MUST be heard in the preview within 100 ms of the drag and playback MUST NOT pause for it; any setting that must apply on release is documented in the plan.
+- **FR-013**: For every tool, including Pitch and Echo, a setting change MUST be heard in the preview within 100 ms of the drag and playback MUST NOT pause for it; if the device cannot keep up, the app lowers preview quality and says so, as for reverb.
 - **FR-014**: Each tool MUST show its current values as numbers with units, have a Reset, and work with accessible labels, touch targets of at least 48 dp and scalable text.
 - **FR-015**: Tools MUST be unavailable (dimmed with a short reason) for clips without sound; they apply to one clip only and MUST NOT affect other clips.
 - **FR-016**: Tools MUST combine in a fixed order that is the same in preview and export, with Volume and Fade last; the plan documents the order.
@@ -158,7 +167,7 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 **Design and layout**
 
 - **FR-021**: The audio tools MUST follow the existing visual language and work in compact, medium, expanded (inspector from 840 dp) and tabletop arrangements, keep an open panel through fold, unfold and rotation, and keep nothing interactive under the hinge.
-- **FR-022**: The tool bar MUST stay usable with seven audio tools: grouped under one Audio entry that opens a list of tools if they do not fit, each at least 48 dp wide.
+- **FR-022**: The clip tool bar MUST show one Audio entry that opens a list of the audio tools (Volume, Mute, Fade, Noise reduction, Equalizer, Voice effects, Reverb), each at least 48 dp tall, with the tools' badges on the clip.
 - **FR-023**: A clip with any of these tools active MUST show compact badges on the timeline that never overflow the clip (extra badges collapse into a count).
 
 ### Key Entities
@@ -166,7 +175,7 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 - **Fade**: fade-in length and fade-out length on a clip, in timeline time.
 - **Noise reduction**: on/off state and a strength (Low, Medium, High).
 - **Equalizer**: a preset name (or Custom) and three band gains.
-- **Voice effect**: the chosen effect (None, Echo, Robot, Pitch, Bass) and a stored setting set per effect.
+- **Voice effect**: for each of Echo, Robot, Pitch and Bass, an on/off state and its settings.
 - **Clip** (from 001 to 003): gains fade, noise reduction, equalizer and voice effect alongside speed, volume, mute and reverb.
 
 ## Success Criteria *(mandatory)*
@@ -188,8 +197,7 @@ The clip tool bar shows Volume, Mute, Fade, Noise reduction, Equalizer, Voice an
 - Mute, Volume and Reverb (001 to 003) and Export (004) are in place and reused, including undo, autosave, the clip tool bar, inspector, fold layouts and the shared preview/export builder.
 - The designer's reference has no panels for these tools; they use the existing visual language and are reviewed with the designer, with deviations recorded.
 - Settings are fixed over the clip; changing them over time (automation, keyframes) is a later feature.
-- Only one voice effect is active per clip; stacking effects is out of scope.
 - Preset values, noise reduction strengths and effect ranges are a starting set tuned by ear during implementation.
 - Noise reduction is designed for steady noise (hiss, hum, fans), not for removing other voices or sudden sounds.
 - Fade and pitch tools use the clip's own sound only; no separate audio is generated.
-- Fades are linear or smooth-curve by default; a choice of curve shape is out of scope.
+- Fades use one smooth curve; a choice of curve shape is out of scope.
