@@ -106,7 +106,7 @@ class FoldScreenshotTest {
             canUndo = true,
             projectMedia = timeline.media.values.toList(),
             clipTools = listOf(
-                ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Detach,
+                ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Detach,
                 ClipTool.Duplicate, ClipTool.Delete,
             ),
             selectedReverb = hall,

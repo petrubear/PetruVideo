@@ -21,9 +21,10 @@ object TimelineInvariants {
             val media = timeline.media[clip.mediaItemId]
             addAll(
                 clipViolations(
-                    "video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb, clip.fx,
+                    "video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media,
                 ),
             )
+            addAll(soundViolations("video", clip.id, clip.reverb, clip.fx))
             if (media?.kind == MediaKind.Photo && clip.speedMilli != SPEED_UNIT) {
                 add("photo clip ${clip.id} has a speed")
             }
@@ -35,9 +36,10 @@ object TimelineInvariants {
             val media = timeline.media[clip.mediaItemId]
             addAll(
                 clipViolations(
-                    "audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb, clip.fx,
+                    "audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media,
                 ),
             )
+            addAll(soundViolations("audio", clip.id, clip.reverb, clip.fx))
             if (media != null && outsideSource(media, clip.sourceStartMs, clip.sourceEndMs)) {
                 add("audio clip ${clip.id} trim is outside its source")
             }
@@ -55,15 +57,16 @@ object TimelineInvariants {
         speedMilli: Int,
         volumePercent: Int,
         media: MediaItem?,
-        reverb: Reverb,
-        fx: AudioFx,
     ) = buildList {
-        if (!reverb.inRange) add("$kind clip $id reverb is out of range")
-        if (!fx.inRange) add("$kind clip $id audio effects are out of range")
         if (lengthMs < MIN_CLIP_MS) add("$kind clip $id is shorter than $MIN_CLIP_MS ms")
         if (media == null) add("$kind clip $id refers to unknown media")
         if (speedMilli !in SPEED_MIN_MILLI..SPEED_MAX_MILLI) add("$kind clip $id speed is out of range")
         if (volumePercent !in 0..VOLUME_MAX_PERCENT) add("$kind clip $id volume is out of range")
+    }
+
+    private fun soundViolations(kind: String, id: String, reverb: Reverb, fx: AudioFx) = buildList {
+        if (!reverb.inRange) add("$kind clip $id reverb is out of range")
+        if (!fx.inRange) add("$kind clip $id audio effects are out of range")
     }
 
     private fun outsideSource(media: MediaItem, startMs: Long, endMs: Long) =

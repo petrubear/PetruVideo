@@ -115,6 +115,7 @@ fun VideoLaneView(
                     clip.volumePercent.takeIf { clip.attachedAudio },
                     Modifier.align(Alignment.BottomStart).padding(start = 4.dp, bottom = 4.dp),
                     reverbOn = clip.attachedAudio && clip.reverb.enabled,
+                    fx = clip.fx.takeIf { clip.attachedAudio },
                 )
                 if (clip.muted && clip.attachedAudio && clip.id != selectedClipId) {
                     MutedBadge(Modifier.align(Alignment.BottomEnd).padding(4.dp))

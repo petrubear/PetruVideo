@@ -1,6 +1,7 @@
 package com.petruvideo.feature.editor
 
 import com.petruvideo.core.data.autosave.SaveStatus
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
@@ -29,6 +30,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Split("Split", true),
     Speed("Speed", true),
     Volume("Volume", true),
+    Audio("Audio", true),
     Detach("Detach", true),
     Duplicate("Duplicate", true),
     Delete("Delete", true),
@@ -48,6 +50,27 @@ data class SheetState(
     val value: Int,
     /** Trimmed source length of the clip, so the Speed readout can show the resulting timeline length. */
     val sourceLengthMs: Long,
+)
+
+/** The tools in the Audio list; [List] is the list itself. */
+enum class AudioToolKind(val label: String) {
+    List("Audio"),
+    Fade("Fade"),
+    Noise("Noise reduction"),
+    Eq("Equalizer"),
+    Voice("Voice effects"),
+}
+
+/** The open Audio list or one of its panels for one clip, with the values the rows and panels show. */
+data class AudioPanelState(
+    val kind: AudioToolKind,
+    val clipId: String,
+    val clipName: String,
+    val fx: AudioFx,
+    val clipLengthMs: Long,
+    val volumePercent: Int,
+    val muted: Boolean,
+    val reverb: Reverb,
 )
 
 /** The open reverb panel for one clip. */
@@ -77,10 +100,15 @@ data class EditorState(
     val disabledTools: Map<ClipTool, String> = emptyMap(),
     /** The open Speed or Volume control, if any. */
     val sheet: SheetState? = null,
+    /** The open Audio list or audio tool panel, if any. */
+    val audioPanel: AudioPanelState? = null,
     /** The open reverb panel, if any. */
     val reverbPanel: ReverbPanelState? = null,
     /** Reverb of the selected clip when it has sound (the inspector shows it). */
     val selectedReverb: Reverb? = null,
+    /** Fade, noise, equalizer and voice values of the selected clip when it has sound; the inspector shows them. */
+    val selectedFx: AudioFx? = null,
+    val selectedClipLengthMs: Long = 0,
     /** Whether the selected clip (audio, or video with sound) is muted; the Mute tool then shows Unmute. */
     val selectedAudioMuted: Boolean = false,
     val fullscreen: Boolean = false,
@@ -135,6 +163,14 @@ sealed interface EditorEvent {
     data class ReverbCommit(val reverb: Reverb) : EditorEvent
     data object ReverbReset : EditorEvent
     data object ReverbDismiss : EditorEvent
+    /** Opens one of the Audio tools (or the list) for the selected clip. */
+    data class OpenAudioTool(val kind: AudioToolKind) : EditorEvent
+    /** Fade, noise, equalizer, or voice values while dragging: heard live, not yet an edit. */
+    data class AudioFxPreview(val fx: AudioFx) : EditorEvent
+    /** The values on release or a tap: one edit per changed part, one undo step. */
+    data class AudioFxCommit(val fx: AudioFx) : EditorEvent
+    data class AudioFxReset(val kind: AudioToolKind) : EditorEvent
+    data object AudioDismiss : EditorEvent
 }
 
 sealed interface EditorEffect {

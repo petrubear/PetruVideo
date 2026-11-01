@@ -56,7 +56,9 @@ data class PreviewQuality(
 ) {
     companion object {
         val Full = PreviewQuality(previewScale = 1f, previewFps = 30, thumbnailPx = 256)
-        val Reduced = PreviewQuality(previewScale = 0.5f, previewFps = 24, thumbnailPx = 128, reverb = false, voiceFx = false)
+        val Reduced = PreviewQuality(
+            previewScale = 0.5f, previewFps = 24, thumbnailPx = 128, reverb = false, voiceFx = false,
+        )
     }
 }
 

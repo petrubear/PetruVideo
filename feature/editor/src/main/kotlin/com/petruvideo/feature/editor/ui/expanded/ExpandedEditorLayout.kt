@@ -28,6 +28,7 @@ import com.petruvideo.feature.editor.ClipSelection
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ui.ClipToolBar
+import com.petruvideo.feature.editor.ui.AudioPanel
 import com.petruvideo.feature.editor.ui.ReverbPanel
 import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ClipTool
@@ -79,6 +80,8 @@ fun ExpandedEditorLayout(
                         state.disabledTools,
                         state.selectedReverb,
                         state.selectedAudioMuted,
+                        state.selectedFx,
+                        state.selectedClipLengthMs,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                     )
@@ -99,6 +102,8 @@ fun ExpandedEditorLayout(
                             state.disabledTools,
                             state.selectedReverb,
                             state.selectedAudioMuted,
+                            state.selectedFx,
+                            state.selectedClipLengthMs,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                         )
@@ -111,6 +116,7 @@ fun ExpandedEditorLayout(
             if (!inspectorShown) {
                 SpeedVolumeSheet(state.sheet, onEvent)
                 ReverbPanel(state.reverbPanel, onEvent)
+                AudioPanel(state.audioPanel, onEvent)
             }
             ClipToolBar(
                     state.clipTools,

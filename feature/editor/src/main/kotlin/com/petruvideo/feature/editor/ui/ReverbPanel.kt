@@ -162,7 +162,7 @@ fun ReverbControls(
 }
 
 @Composable
-private fun TextAction(text: String, onClick: () -> Unit) {
+internal fun TextAction(text: String, onClick: () -> Unit) {
     Text(
         text,
         style = PetruType.Label,
@@ -175,7 +175,7 @@ private fun TextAction(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SettingSlider(
+internal fun SettingSlider(
     label: String,
     valueText: String,
     value: Float,

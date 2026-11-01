@@ -8,6 +8,7 @@ import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.designsystem.PetruTheme
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.feature.editor.ui.EditorScreen
 import com.petruvideo.feature.editor.ui.LocalMediaLoaders
@@ -42,6 +43,7 @@ class EditorScreenshotTest {
         edited: Boolean = false,
         sheet: SheetState? = null,
         reverbPanel: ReverbPanelState? = null,
+        audioPanel: AudioPanelState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -68,14 +70,13 @@ class EditorScreenshotTest {
             missingMedia = missing,
             sheet = sheet,
             reverbPanel = reverbPanel,
+            audioPanel = audioPanel,
             clipTools = when (selection) {
                 null -> emptyList()
                 is ClipSelection.Audio -> listOf(
                     ClipTool.Split,
                     ClipTool.Speed,
-                    ClipTool.Volume,
-                    ClipTool.Mute,
-                    ClipTool.Reverb,
+                    ClipTool.Audio,
                     ClipTool.Replace,
                     ClipTool.Duplicate,
                     ClipTool.Delete,
@@ -83,9 +84,7 @@ class EditorScreenshotTest {
                 is ClipSelection.Video -> listOf(
                     ClipTool.Split,
                     ClipTool.Speed,
-                    ClipTool.Volume,
-                    ClipTool.Mute,
-                    ClipTool.Reverb,
+                    ClipTool.Audio,
                     ClipTool.Detach,
                     ClipTool.Duplicate,
                     ClipTool.Delete,
@@ -217,6 +216,49 @@ class EditorScreenshotTest {
             }
         }
     }
+
+    private fun audioPanel(kind: AudioToolKind, fx: AudioFx = AudioFx()) =
+        AudioPanelState(kind, "c1", "m1.mp4", fx, 4_000, 80, false, com.petruvideo.core.model.Reverb())
+
+    private fun snapshotAudio(kind: AudioToolKind, fx: AudioFx = AudioFx()) {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c1"), audioPanel = audioPanel(kind, fx)),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    private val busyFx = AudioFx(
+        fade = com.petruvideo.core.model.Fade(1_500, 1_000),
+        noise = com.petruvideo.core.model.NoiseReduction(true),
+        eq = com.petruvideo.core.model.EqPresets.settings(com.petruvideo.core.model.EqPreset.BassBoost),
+        voice = com.petruvideo.core.model.VoiceFx(
+            echo = com.petruvideo.core.model.Echo(true, 300, 3),
+            pitch = com.petruvideo.core.model.Pitch(true, 4),
+        ),
+    )
+
+    @Test
+    fun audioToolList() = snapshotAudio(AudioToolKind.List, busyFx)
+
+    @Test
+    fun fadePanel() = snapshotAudio(AudioToolKind.Fade, busyFx)
+
+    @Test
+    fun noisePanel() = snapshotAudio(AudioToolKind.Noise, busyFx)
+
+    @Test
+    fun equalizerPanel() = snapshotAudio(AudioToolKind.Eq, busyFx)
+
+    @Test
+    fun voicePanel() = snapshotAudio(AudioToolKind.Voice, busyFx)
 
     @Test
     fun missingMediaShowsRelinkAndRemove() {

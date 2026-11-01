@@ -20,7 +20,8 @@ import org.junit.Test
 
 class AudioFxCommandsTest {
     private fun media(id: String, kind: MediaKind = MediaKind.Video) = MediaItem(
-        id, kind, "content://$id", id, 20_000, 1920.takeIf { kind != MediaKind.Audio }, 1080.takeIf { kind != MediaKind.Audio },
+        id, kind, "content://$id", id, 20_000,
+        1920.takeIf { kind != MediaKind.Audio }, 1080.takeIf { kind != MediaKind.Audio },
         30f, true, Fingerprint(1, 1, 20_000, "video/mp4"), Availability.Available,
     )
 
@@ -53,7 +54,8 @@ class AudioFxCommandsTest {
         applied(ApplyEqPreset("a1", EqPreset.BassBoost)).timeline.audioLane[0].fx.eq.preset shouldBe EqPreset.BassBoost
         applied(SetEqualizer("a1", Equalizer(EqPreset.Flat, 5, 0, 0))).timeline.audioLane[0].fx.eq.preset shouldBe
             EqPreset.Custom
-        applied(SetVoiceFx("a1", VoiceFx(pitch = Pitch(true, 40)))).timeline.audioLane[0].fx.voice.pitch.semitones shouldBe 12
+        applied(SetVoiceFx("a1", VoiceFx(pitch = Pitch(true, 40))))
+            .timeline.audioLane[0].fx.voice.pitch.semitones shouldBe 12
     }
 
     @Test

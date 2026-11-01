@@ -40,7 +40,7 @@ class CoverScreenshotTest {
     }
 
     private val audioTools = listOf(
-        ClipTool.Split, ClipTool.Speed, ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Replace,
+        ClipTool.Split, ClipTool.Speed, ClipTool.Audio, ClipTool.Replace,
         ClipTool.Duplicate, ClipTool.Delete,
     )
 

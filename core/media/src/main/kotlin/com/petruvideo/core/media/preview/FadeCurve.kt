@@ -9,7 +9,9 @@ object FadeCurve {
         var gain = 1f
         if (fadeInFrames > 0 && frame < fadeInFrames) gain *= ramp(frame.toFloat() / fadeInFrames)
         val untilEnd = totalFrames - frame
-        if (fadeOutFrames > 0 && untilEnd < fadeOutFrames) gain *= ramp(untilEnd.coerceAtLeast(0).toFloat() / fadeOutFrames)
+        if (fadeOutFrames > 0 && untilEnd < fadeOutFrames) {
+            gain *= ramp(untilEnd.coerceAtLeast(0).toFloat() / fadeOutFrames)
+        }
         return gain
     }
 

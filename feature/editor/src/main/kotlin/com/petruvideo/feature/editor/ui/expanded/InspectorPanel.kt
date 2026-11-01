@@ -16,15 +16,20 @@ import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.PetruChip
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.SheetState
+import com.petruvideo.feature.editor.ui.EqualizerControls
+import com.petruvideo.feature.editor.ui.FadeControls
+import com.petruvideo.feature.editor.ui.NoiseControls
 import com.petruvideo.feature.editor.ui.ReverbControls
 import com.petruvideo.feature.editor.ui.ReverbSwitch
 import com.petruvideo.feature.editor.ui.SpeedVolumeControls
+import com.petruvideo.feature.editor.ui.VoiceControls
 
 /** What the inspector shows about the selected clip. */
 data class InspectorClip(val name: String, val label: String, val lengthMs: Long, val startMs: Long)
@@ -40,6 +45,8 @@ fun InspectorPanel(
     unavailable: Map<ClipTool, String>,
     reverb: Reverb?,
     muted: Boolean,
+    fx: AudioFx?,
+    clipLengthMs: Long,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,6 +91,16 @@ fun InspectorPanel(
                     ReverbSwitch(reverb, onEvent)
                 }
                 ReverbControls(reverb, onEvent, showAll = true)
+            }
+            if (fx != null) {
+                Text("Fade", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                FadeControls(fx, clipLengthMs, onEvent)
+                Text("Noise reduction", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                NoiseControls(fx, onEvent)
+                Text("Equalizer", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                EqualizerControls(fx, onEvent)
+                Text("Voice effects", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                VoiceControls(fx, onEvent)
             }
             unavailable.forEach { (tool, reason) ->
                 Text("${tool.label}: $reason", style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
