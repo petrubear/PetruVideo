@@ -53,6 +53,8 @@ fun TimelineView(
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     onAddClip: () -> Unit,
+    onMoveOverlay: (clipId: String, startMs: Long) -> Unit = { _, _ -> },
+    onTrimOverlay: (clipId: String, startMs: Long, endMs: Long) -> Unit = { _, _, _ -> },
     onMoveText: (clipId: String, startMs: Long) -> Unit = { _, _ -> },
     onTrimText: (clipId: String, startMs: Long, endMs: Long) -> Unit = { _, _, _ -> },
     onDropMedia: (mediaItemId: String, atMs: Long) -> Unit = { _, _ -> },
@@ -114,6 +116,17 @@ fun TimelineView(
                         onTrim = onTrim,
                     )
                     AttachedAudioRow(timeline.videoLane, timeline.media, geometry)
+                    if (timeline.overlayLane.isNotEmpty()) {
+                        OverlayLaneView(
+                            clips = timeline.overlayLane,
+                            media = timeline.media,
+                            geometry = geometry,
+                            selectedClipId = (selection as? ClipSelection.Overlay)?.clipId,
+                            onSelect = { onSelect(ClipSelection.Overlay(it)) },
+                            onMove = onMoveOverlay,
+                            onTrim = onTrimOverlay,
+                        )
+                    }
                     if (timeline.textLane.isNotEmpty()) {
                         TextLaneView(
                             clips = timeline.textLane,
@@ -136,7 +149,9 @@ fun TimelineView(
             }
         }
         Playhead(Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
-        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty() && timeline.textLane.isEmpty()) {
+        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty() && timeline.textLane.isEmpty() &&
+            timeline.overlayLane.isEmpty()
+        ) {
             Text(
                 "Add your first clip",
                 style = PetruType.Body,

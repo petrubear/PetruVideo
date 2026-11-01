@@ -17,6 +17,7 @@ import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.NoiseReduction
 import com.petruvideo.core.model.NoiseStrength
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.Pitch
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectFormat
@@ -168,3 +169,9 @@ fun FilterColumns.toModel() = ClipFilter(
 )
 
 fun ClipFilter.toColumns() = FilterColumns(look.name, intensity, brightness, contrast, saturation, warmth, vignette)
+
+fun OverlayClipEntity.toModel() =
+    OverlayClip(id, mediaItemId, sourceStartMs, sourceEndMs, startMs, x, y, width, opacity)
+
+fun OverlayClip.toEntity(projectId: String) =
+    OverlayClipEntity(id, projectId, mediaItemId, startMs, sourceStartMs, sourceEndMs, xPermille, yPermille, widthPermille, opacityPercent)

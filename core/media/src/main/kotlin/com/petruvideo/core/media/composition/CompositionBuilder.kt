@@ -93,22 +93,33 @@ class CompositionBuilder(private val spec: BuildSpec) {
     /** The filter effects of each filtered clip after [build], so the preview can change them live. */
     val filters = mutableMapOf<String, ClipFilterEffects>()
 
+    /** The placement of the overlay clips after [build], so the preview can change one live; null without overlays. */
+    var overlayLayout: OverlayLayout? = null
+        private set
+
     /** The text lane's overlays after [build], so the preview can change a clip live; null without text clips. */
     var textOverlays: TextOverlaySet? = null
         private set
 
     /** The composition for [timeline], or null when there is nothing to play or render. */
     fun build(timeline: Timeline): Composition? {
-        val sequences = listOfNotNull(videoSequence(timeline), audioSequence(timeline))
+        val sequences = overlaySequences(timeline) + listOfNotNull(videoSequence(timeline), audioSequence(timeline))
         if (sequences.isEmpty()) return null
         val builder = Composition.Builder(sequences)
         textEffects(timeline)?.let { builder.setEffects(it) }
+        if (timeline.overlayLane.isNotEmpty()) {
+            val width = spec.width ?: timeline.format?.width ?: DEFAULT_WIDTH
+            val height = spec.height ?: timeline.format?.height ?: DEFAULT_HEIGHT
+            builder.setVideoCompositorSettings(
+                OverlayLayout(timeline.overlayLane, width, height).also { overlayLayout = it },
+            )
+        }
         if (spec.toneMapHdr) builder.setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_MEDIACODEC)
         return builder.build()
     }
 
     private fun videoSequence(timeline: Timeline): EditedMediaItemSequence? {
-        if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty()) return null
+        if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty() && timeline.overlayLane.isEmpty()) return null
         // A sequence with no picture-clip sound (photos only, silent or muted clips) would wait for an audio track
         // that never comes, which fails the export, so it only asks for video; sound comes from the audio lane.
         val hasSound = timeline.videoLane.any {
@@ -152,10 +163,40 @@ class CompositionBuilder(private val spec: BuildSpec) {
             }
         }
         // Text that ends after the video plays over black, so the video sequence runs on as a gap.
-        val textEndMs = timeline.textLane.maxOfOrNull { it.endMs } ?: 0L
-        if (textEndMs > timeline.videoLengthMs) builder.addGap((textEndMs - timeline.videoLengthMs) * US_PER_MS)
+        val extraEndMs = maxOf(
+            timeline.textLane.maxOfOrNull { it.endMs } ?: 0L,
+            timeline.overlayLane.maxOfOrNull { it.endMs } ?: 0L,
+        )
+        if (extraEndMs > timeline.videoLengthMs) builder.addGap((extraEndMs - timeline.videoLengthMs) * US_PER_MS)
         return builder.build()
     }
+
+    /**
+     * One video-only sequence per overlay clip: a gap up to its start, then the clip. The compositor draws input 0
+     * (the main video) first and each overlay over it, placed by [OverlayLayout]. Overlays have no sound.
+     */
+    private fun overlaySequences(timeline: Timeline): List<EditedMediaItemSequence> =
+        timeline.overlayLane.mapNotNull { clip ->
+            val media = timeline.media[clip.mediaItemId]
+            if (media == null || media.availability == Availability.Missing) return@mapNotNull null
+            val builder = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_VIDEO))
+            if (clip.startMs > 0) builder.addGap(clip.startMs * US_PER_MS)
+            val item = if (media.kind == MediaKind.Photo) {
+                EditedMediaItem.Builder(
+                    MediaItem.Builder().setUri(Uri.parse(media.uri)).setImageDurationMs(clip.durationMs).build(),
+                )
+                    .setDurationUs(clip.durationMs * US_PER_MS)
+                    .setFrameRate(spec.fps)
+            } else {
+                EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
+                    .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
+            }
+            builder.addItem(item.setRemoveAudio(true).build())
+            // An ended input would keep showing its last frame, so a gap runs on to the end of the project.
+            val tailMs = timeline.totalDurationMs - clip.endMs
+            if (tailMs > 0) builder.addGap(tailMs * US_PER_MS)
+            builder.build()
+        }
 
     /** [frame] plus the clip's color transform and vignette when it has a filter on. */
     private fun withFilter(clip: VideoClip, frame: Effects): Effects {

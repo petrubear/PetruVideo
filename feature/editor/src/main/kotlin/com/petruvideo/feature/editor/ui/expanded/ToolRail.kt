@@ -38,6 +38,7 @@ private val ENTRIES = listOf(
     RailEntry("Media", PetruIcons.ToolEdit, true, ToolbarTab.Edit),
     RailEntry("Audio", PetruIcons.ToolAudio, false),
     RailEntry("Text", PetruIcons.ToolText, true, ToolbarTab.Text),
+    RailEntry("Overlay", PetruIcons.ToolOverlay, true, ToolbarTab.Overlay),
     RailEntry("Effects", PetruIcons.ToolEffects, false),
     RailEntry("Filters", PetruIcons.ToolFilters, true, ToolbarTab.Filters),
 )

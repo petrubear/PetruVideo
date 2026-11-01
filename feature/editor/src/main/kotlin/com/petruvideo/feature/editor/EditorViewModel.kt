@@ -20,6 +20,7 @@ import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.NoiseReduction
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
@@ -32,6 +33,7 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
 import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.AddOverlay
 import com.petruvideo.core.model.engine.AddText
 import com.petruvideo.core.model.engine.AddVideoClips
 import com.petruvideo.core.model.engine.AddVideoItem
@@ -43,6 +45,7 @@ import com.petruvideo.core.model.engine.Delete
 import com.petruvideo.core.model.engine.DetachAudio
 import com.petruvideo.core.model.engine.Duplicate
 import com.petruvideo.core.model.engine.MoveAudioClip
+import com.petruvideo.core.model.engine.MoveOverlay
 import com.petruvideo.core.model.engine.MoveText
 import com.petruvideo.core.model.engine.MoveVideoClip
 import com.petruvideo.core.model.engine.Notice
@@ -58,6 +61,8 @@ import com.petruvideo.core.model.engine.SetFilterIntensity
 import com.petruvideo.core.model.engine.SetFilterLook
 import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
+import com.petruvideo.core.model.engine.SetOverlayOpacity
+import com.petruvideo.core.model.engine.SetOverlayPlacement
 import com.petruvideo.core.model.engine.SetReverbEnabled
 import com.petruvideo.core.model.engine.SetReverbSettings
 import com.petruvideo.core.model.engine.SetSpeed
@@ -70,6 +75,7 @@ import com.petruvideo.core.model.engine.SetVoiceFx
 import com.petruvideo.core.model.engine.SetVolume
 import com.petruvideo.core.model.engine.Split
 import com.petruvideo.core.model.engine.TrimEnd
+import com.petruvideo.core.model.engine.TrimOverlay
 import com.petruvideo.core.model.engine.TrimStart
 import com.petruvideo.core.model.engine.TrimText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -120,6 +126,8 @@ class EditorViewModel @Inject constructor(
         val text: OpenText? = null,
         /** The open filter panel: which tool and which clip. */
         val filter: OpenFilter? = null,
+        /** Whether the overlay panel is open (for the selected overlay clip). */
+        val overlayOpen: Boolean = false,
     )
 
     private data class Core(
@@ -138,11 +146,14 @@ class EditorViewModel @Inject constructor(
             other.timeline.audioLane == timeline.audioLane &&
             other.timeline.media == timeline.media &&
             other.timeline.textLane.map { it.id } == timeline.textLane.map { it.id } &&
+            other.timeline.overlayLane.map { it.structural() } == timeline.overlayLane.map { it.structural() } &&
             other.textBeyondVideo == textBeyondVideo
 
         /** Text past the end of the video makes the video sequence run on, which needs a rebuild. */
         private val textBeyondVideo: Long
             get() = (timeline.textLane.maxOfOrNull { it.endMs } ?: 0L).minus(timeline.videoLengthMs).coerceAtLeast(0)
+
+        private fun OverlayClip.structural() = copy(xPermille = 0, yPermille = 0, widthPermille = 0, opacityPercent = 0)
 
         override fun hashCode() = timeline.videoLane.hashCode() * HASH_MIX + timeline.media.hashCode()
     }
@@ -177,6 +188,10 @@ class EditorViewModel @Inject constructor(
         viewModelScope.launch {
             session.timeline.filterNotNull().map { it.textLane }.distinctUntilChanged()
                 .collect { lane -> lane.forEach(engine::setTextLive) }
+        }
+        viewModelScope.launch {
+            session.timeline.filterNotNull().map { it.overlayLane }.distinctUntilChanged()
+                .collect { lane -> lane.forEach(engine::setOverlayLive) }
         }
         viewModelScope.launch {
             session.timeline.filterNotNull().map { t -> t.videoLane.associate { it.id to it.filter } }
@@ -240,6 +255,14 @@ class EditorViewModel @Inject constructor(
             EditorEvent.AudioDismiss -> closeAudio()
             is EditorEvent.SelectTab -> selectTab(event.tab)
             EditorEvent.AddText -> addText()
+            EditorEvent.AddOverlay -> { pause(); effectChannel.trySend(EditorEffect.PickOverlayMedia) }
+            is EditorEvent.AddOverlayMedia -> addOverlay(event.media)
+            EditorEvent.OpenOverlayPanel -> openOverlay()
+            is EditorEvent.OverlayPreview -> engine.setOverlayLive(event.clip)
+            is EditorEvent.OverlayCommit -> commitOverlay(event.clip)
+            EditorEvent.OverlayDismiss -> closeOverlay()
+            is EditorEvent.MoveOverlayClip -> run(MoveOverlay(event.clipId, event.startMs))
+            is EditorEvent.TrimOverlayClip -> run(TrimOverlay(event.clipId, event.startMs, event.endMs))
             is EditorEvent.OpenFilterTool -> openFilter(event.kind)
             is EditorEvent.FilterPreview -> selectedPictureId()?.let { engine.setClipFilterLive(it, event.filter) }
             is EditorEvent.FilterCommit -> commitFilter(event.filter)
@@ -297,6 +320,7 @@ class EditorViewModel @Inject constructor(
         closeReverb()
         closeAudio()
         closeFilter()
+        closeOverlay()
         local.update { it.copy(selection = selection, text = null) }
     }
 
@@ -382,6 +406,71 @@ class EditorViewModel @Inject constructor(
         }
         val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
         if (!applied) restoreLiveFilter(id)
+    }
+
+    private fun selectedOverlayId(): String? = (local.value.selection as? ClipSelection.Overlay)?.clipId
+
+    private fun addOverlay(media: MediaItem) {
+        val at = engine.state.value.positionMs
+        val before = session.timeline.value?.overlayLane?.map { it.id }.orEmpty().toSet()
+        if (session.apply(AddOverlay(media, at)) !is CommandResult.Applied) {
+            say("This file cannot be used as an overlay")
+            return
+        }
+        val added = session.timeline.value?.overlayLane?.firstOrNull { it.id !in before } ?: return
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        local.update { it.copy(selection = ClipSelection.Overlay(added.id), overlayOpen = false, text = null) }
+    }
+
+    private fun openOverlay() {
+        if (selectedOverlayId() == null) return
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        local.update { it.copy(overlayOpen = true, sheet = null, text = null) }
+    }
+
+    private fun closeOverlay() {
+        val id = selectedOverlayId()
+        if (!local.value.overlayOpen) return
+        local.update { it.copy(overlayOpen = false) }
+        id?.let { restoreLiveOverlay(it) }
+    }
+
+    private fun restoreLiveOverlay(id: String) {
+        session.timeline.value?.overlayLane?.firstOrNull { it.id == id }?.let(engine::setOverlayLive)
+    }
+
+    /** Applies the placement and opacity of [clip] as separate edits; one gesture changes one of them. */
+    private fun commitOverlay(clip: OverlayClip) {
+        val current = session.timeline.value?.overlayLane?.firstOrNull { it.id == clip.id } ?: return
+        val commands = listOfNotNull(
+            SetOverlayPlacement(clip.id, clip.xPermille, clip.yPermille, clip.widthPermille).takeIf {
+                clip.xPermille != current.xPermille || clip.yPermille != current.yPermille ||
+                    clip.widthPermille != current.widthPermille
+            },
+            SetOverlayOpacity(clip.id, clip.opacityPercent).takeIf { clip.opacityPercent != current.opacityPercent },
+        )
+        val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
+        if (!applied) engine.setOverlayLive(current)
+    }
+
+    private fun overlayPanelFor(timeline: Timeline?, selection: ClipSelection?, open: Boolean): OverlayPanelState? {
+        if (!open || timeline == null || selection == null) return null
+        val clip = timeline.overlayLane.firstOrNull { it.id == selection.clipId } ?: return null
+        return OverlayPanelState(clip, timeline.media[clip.mediaItemId]?.displayName.orEmpty())
+    }
+
+    private fun overlayAspect(timeline: Timeline?, id: String?): Float {
+        val clip = timeline?.overlayLane?.firstOrNull { it.id == id } ?: return DEFAULT_ASPECT
+        val media = timeline.media[clip.mediaItemId]
+        val w = media?.width ?: return DEFAULT_ASPECT
+        val h = media.height ?: return DEFAULT_ASPECT
+        return if (h > 0) w.toFloat() / h else DEFAULT_ASPECT
     }
 
     private var pendingText: TextClip? = null
@@ -602,6 +691,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.Reverb -> openReverb(timeline, selection)
             ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
             ClipTool.FilterLooks -> openFilter(FilterToolKind.Looks)
+            ClipTool.OverlayOpacity -> openOverlay()
             ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
             ClipTool.TextStyle -> openText(TextToolKind.Style)
@@ -712,6 +802,9 @@ class EditorViewModel @Inject constructor(
             reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
             audioPanel = audioPanelFor(timeline, selection, local.audio),
             toolbarTab = local.tab,
+            overlayPanel = overlayPanelFor(timeline, selection, local.overlayOpen),
+            selectedOverlay = timeline?.overlayLane?.firstOrNull { it.id == selection?.clipId },
+            selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),
             textPanel = textPanelFor(timeline, selection, local.text),
             filterPanel = filterPanelFor(timeline, selection, local.filter, core.preview.positionMs),
             selectedFilter = selection?.let {
@@ -730,6 +823,7 @@ class EditorViewModel @Inject constructor(
 
     private companion object {
         const val DEFAULT_FPS = 30
+        const val DEFAULT_ASPECT = 16f / 9f
         const val HASH_MIX = 31
         const val BOUNDARY_SLACK_MS = 300L
     }

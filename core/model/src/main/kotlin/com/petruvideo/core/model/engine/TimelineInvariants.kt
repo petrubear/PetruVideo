@@ -45,6 +45,10 @@ object TimelineInvariants {
                 add("audio clip ${clip.id} trim is outside its source")
             }
         }
+        for (clip in timeline.overlayLane) {
+            if (!clip.inRange) add("overlay clip ${clip.id} is out of range")
+            if (clip.mediaItemId !in timeline.media) add("overlay clip ${clip.id} refers to unknown media")
+        }
         for (clip in timeline.textLane) {
             if (!clip.inRange) add("text clip ${clip.id} is out of range")
         }

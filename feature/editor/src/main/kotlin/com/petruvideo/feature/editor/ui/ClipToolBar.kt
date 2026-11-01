@@ -32,6 +32,7 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.Replace -> PetruIcons.Replace
     ClipTool.TextEdit -> PetruIcons.ToolText
     ClipTool.FilterLooks -> PetruIcons.ToolFilters
+    ClipTool.OverlayOpacity -> PetruIcons.ToolOverlay
     ClipTool.FilterAdjust -> PetruIcons.Settings
     ClipTool.TextStyle -> PetruIcons.ToolFilters
     ClipTool.TextAnim -> PetruIcons.ToolEffects

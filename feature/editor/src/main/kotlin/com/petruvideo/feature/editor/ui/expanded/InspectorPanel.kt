@@ -18,6 +18,7 @@ import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.PetruChip
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.formatDuration
@@ -29,6 +30,7 @@ import com.petruvideo.feature.editor.ui.AdjustControls
 import com.petruvideo.feature.editor.ui.EqualizerControls
 import com.petruvideo.feature.editor.ui.FadeControls
 import com.petruvideo.feature.editor.ui.LooksControls
+import com.petruvideo.feature.editor.ui.OverlayControls
 import com.petruvideo.feature.editor.ui.NoiseControls
 import com.petruvideo.feature.editor.ui.ReverbControls
 import com.petruvideo.feature.editor.ui.ReverbSwitch
@@ -56,6 +58,7 @@ fun InspectorPanel(
     clipLengthMs: Long,
     text: TextClip?,
     filter: FilterPanelState?,
+    overlay: OverlayClip?,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,6 +103,10 @@ fun InspectorPanel(
                     ReverbSwitch(reverb, onEvent)
                 }
                 ReverbControls(reverb, onEvent, showAll = true)
+            }
+            if (overlay != null) {
+                Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                OverlayControls(overlay, onEvent)
             }
             if (filter != null) {
                 Text("Filters", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)

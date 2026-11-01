@@ -61,12 +61,18 @@ class RelinkMedia(private val mediaItemId: String, private val replacement: Medi
             val (start, end) = clamp(clip.sourceStartMs, clip.sourceEndMs)
             clip.copy(sourceStartMs = start, sourceEndMs = end)
         }
+        val overlay = timeline.overlayLane.map { clip ->
+            if (clip.mediaItemId != mediaItemId) return@map clip
+            val (start, end) = clamp(clip.sourceStartMs, clip.sourceEndMs)
+            clip.copy(sourceStartMs = start, sourceEndMs = end)
+        }
         val relinked = replacement.copy(id = mediaItemId, availability = Availability.Available)
         return CommandResult.Applied(
             timeline = timeline.copy(
                 media = timeline.media + (mediaItemId to relinked),
                 videoLane = video,
                 audioLane = audio,
+                overlayLane = overlay,
             ),
             label = "Relink media",
             notices = if (shrunk) listOf(Notice.LengthChanged) else emptyList(),
@@ -84,6 +90,7 @@ class RemoveMissingMedia(private val mediaItemId: String) : Command {
                 media = timeline.media - mediaItemId,
                 videoLane = timeline.videoLane.filterNot { it.mediaItemId == mediaItemId },
                 audioLane = timeline.audioLane.filterNot { it.mediaItemId == mediaItemId },
+                overlayLane = timeline.overlayLane.filterNot { it.mediaItemId == mediaItemId },
             ),
             label = "Remove missing media",
         )

@@ -31,6 +31,8 @@ import com.petruvideo.feature.editor.ui.PreviewSurface
 import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
 import com.petruvideo.feature.editor.ui.FilterPanel
+import com.petruvideo.feature.editor.ui.OverlayPanel
+import com.petruvideo.feature.editor.ui.OverlayTabBar
 import com.petruvideo.feature.editor.ui.FiltersTabBar
 import com.petruvideo.feature.editor.ui.TextPanel
 import com.petruvideo.feature.editor.ui.TextTabBar
@@ -116,6 +118,8 @@ fun TabletopControlsHalf(
                     onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
                     onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
                     onAddClip = { onEvent(EditorEvent.AddClip) },
+                    onMoveOverlay = { id, start -> onEvent(EditorEvent.MoveOverlayClip(id, start)) },
+                    onTrimOverlay = { id, start, end -> onEvent(EditorEvent.TrimOverlayClip(id, start, end)) },
                     onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
                     onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
                     onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
@@ -128,11 +132,17 @@ fun TabletopControlsHalf(
             AudioPanel(state.audioPanel, onEvent)
             TextPanel(state.textPanel, onEvent)
             FilterPanel(state.filterPanel, onEvent)
+            OverlayPanel(state.overlayPanel, onEvent)
             ClipToolBar(
                     state.clipTools,
                     state.selectedAudioMuted,
                     onTool = { onEvent(EditorEvent.UseTool(it)) },
                     disabled = state.disabledTools.keys,
+            )
+        } else if (state.toolbarTab == ToolbarTab.Overlay) {
+            OverlayTabBar(
+                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
+                onAdd = { onEvent(EditorEvent.AddOverlay) },
             )
         } else if (state.toolbarTab == ToolbarTab.Filters) {
             FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })

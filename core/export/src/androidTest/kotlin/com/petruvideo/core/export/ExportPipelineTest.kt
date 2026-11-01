@@ -37,6 +37,7 @@ import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.FilterLook
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.export.DeviceLimits
@@ -568,6 +569,112 @@ class ExportPipelineTest {
         check(s2 is ExportState.Finished) { "plain photo export: $s2" }
         check(s1 is ExportState.Finished) { "filtered photo export: $s1" }
         check(meanLuma(frameAt(u1!!, 700)) > meanLuma(frameAt(u2!!, 700)) + 25)
+    }
+
+    /** Bounding box (as shares of the frame) of the pixels that differ between two frames, or null when none do. */
+    private fun changedBox(a: android.graphics.Bitmap, b: android.graphics.Bitmap): FloatArray? {
+        var minX = Int.MAX_VALUE; var maxX = -1; var minY = Int.MAX_VALUE; var maxY = -1
+        for (y in 0 until a.height step 2) for (x in 0 until a.width step 2) {
+            val p = a.getPixel(x, y)
+            val q = b.getPixel(x, y)
+            val d = kotlin.math.abs(android.graphics.Color.red(p) - android.graphics.Color.red(q)) +
+                kotlin.math.abs(android.graphics.Color.green(p) - android.graphics.Color.green(q)) +
+                kotlin.math.abs(android.graphics.Color.blue(p) - android.graphics.Color.blue(q))
+            if (d > 90) { minX = minOf(minX, x); maxX = maxOf(maxX, x); minY = minOf(minY, y); maxY = maxOf(maxY, y) }
+        }
+        if (maxX < 0) return null
+        return floatArrayOf(
+            minX.toFloat() / a.width, minY.toFloat() / a.height, maxX.toFloat() / a.width, maxY.toFloat() / a.height,
+        )
+    }
+
+    private val MIN_OVERLAY_PIXELS = 3_000
+
+    /** A solid brown picture (no footage color is close), so an overlay can be told apart from any footage. */
+    private fun magentaPhoto(): MediaItem {
+        val file = File(context.cacheDir, "magenta.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 300, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(0xFF804000.toInt())
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        return runBlocking { MediaProbe(context).probe(Uri.fromFile(file), "magenta.jpg").getOrThrow() }
+    }
+
+    /** Box (shares of the frame) around the brown pixels, ignoring stray ones, or null when there are too few. */
+    private fun magentaBox(frame: android.graphics.Bitmap): FloatArray? {
+        val xs = ArrayList<Int>()
+        val ys = ArrayList<Int>()
+        for (y in 0 until frame.height step 2) for (x in 0 until frame.width step 2) {
+            val c = frame.getPixel(x, y)
+            if (android.graphics.Color.red(c) in 100..160 && android.graphics.Color.green(c) in 40..90 &&
+                android.graphics.Color.blue(c) < 40
+            ) {
+                xs += x
+                ys += y
+            }
+        }
+        if (xs.size < MIN_OVERLAY_PIXELS) return null
+        xs.sort()
+        ys.sort()
+        fun at(list: List<Int>, share: Double) = list[((list.size - 1) * share).toInt()]
+        return floatArrayOf(
+            at(xs, 0.02).toFloat() / frame.width, at(ys, 0.02).toFloat() / frame.height,
+            at(xs, 0.98).toFloat() / frame.width, at(ys, 0.98).toFloat() / frame.height,
+        )
+    }
+
+    @Test
+    fun overlaysAreDrawnOverTheMainVideoInTheirWindowAtTheirPlaceAndSize() {
+        val base = item("video_silent.mp4")
+        val photo = magentaPhoto()
+        val timeline = project(VideoClip("c1", base.id, 0, 3_000, false), media = listOf(base)).let {
+            it.copy(
+                media = it.media + (photo.id to photo),
+                overlayLane = listOf(
+                    OverlayClip("o1", photo.id, 0, 2_000, 500, xPermille = 250, yPermille = 300, widthPermille = 400),
+                ),
+            )
+        }
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-ov")
+        check(state is ExportState.Finished) { "overlay export: $state" }
+        val before = magentaBox(frameAt(uri!!, 250))
+        val during = magentaBox(frameAt(uri, 1_500))
+        val after = magentaBox(frameAt(uri, 2_800))
+        check(during != null) { "overlay not visible in its window" }
+        val centerX = (during[0] + during[2]) / 2
+        val centerY = (during[1] + during[3]) / 2
+        val width = during[2] - during[0]
+        check(kotlin.math.abs(centerX - 0.25f) < 0.04f && kotlin.math.abs(centerY - 0.3f) < 0.05f) {
+            "overlay center $centerX,$centerY box ${during.toList()}"
+        }
+        check(width in 0.36f..0.44f) { "overlay width $width of the frame" }
+        check(before == null) { "overlay shows before its start: ${before?.toList()}" }
+        check(after == null) { "overlay shows after its end: ${after?.toList()}" }
+    }
+
+    @Test
+    fun twoOverlaysKeepTheirOwnPlaceAndOpacityAndAVideoOverlayPlays() {
+        val base = item("video_silent.mp4")
+        val photo = magentaPhoto()
+        val clip = item("video_portrait.mp4")
+        val timeline = project(VideoClip("c1", base.id, 0, 3_000, false), media = listOf(base)).let {
+            it.copy(
+                media = it.media + (photo.id to photo) + (clip.id to clip),
+                overlayLane = listOf(
+                    OverlayClip("o1", photo.id, 0, 2_500, 0, xPermille = 200, yPermille = 250, widthPermille = 250),
+                    OverlayClip("o2", clip.id, 0, 2_000, 500, xPermille = 800, yPermille = 700, widthPermille = 300),
+                ),
+            )
+        }
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-ov2")
+        check(state is ExportState.Finished) { "two overlays export: $state" }
+        val frame = frameAt(uri!!, 1_500)
+        val magenta = magentaBox(frame)
+        check(magenta != null && (magenta[0] + magenta[2]) / 2 < 0.35f) { "first overlay at ${magenta?.toList()}" }
+        // The second overlay is a video: the frame around (80%, 70%) differs from the footage without it.
+        val plain = project(VideoClip("c1", base.id, 0, 3_000, false), media = listOf(base))
+        val (ps, pu) = export(plain, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-ov2-plain")
+        check(ps is ExportState.Finished)
+        check(changedPixels(frameAt(pu!!, 1_500), frame, 0.7f, 0.9f) > 500) { "video overlay not drawn near 80%, 70%" }
     }
 
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {

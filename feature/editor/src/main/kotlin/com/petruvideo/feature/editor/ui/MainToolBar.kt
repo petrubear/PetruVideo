@@ -95,6 +95,25 @@ internal fun ToolButton(
     }
 }
 
+/** The bar of the Overlay tab with no overlay selected: back to Edit, and Add overlay from a file. */
+@Composable
+fun OverlayTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        ToolButton(label = "Add overlay", icon = PetruIcons.Add, active = true, onClick = onAdd)
+    }
+}
+
 /** The bar of the Filters tab with no picture clip selected. */
 @Composable
 fun FiltersTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {

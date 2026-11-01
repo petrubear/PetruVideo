@@ -266,4 +266,32 @@ class OriginalsUnchangedTest {
         loaded.videoLane.first().filter.look shouldBe com.petruvideo.core.model.FilterLook.Vintage
         checksums() shouldBe before
     }
+
+    /** SC-005, SC-007 of feature 010: overlays reload exactly with their media and leave the sources alone. */
+    @Test
+    fun overlaysSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip10.mp4", MediaKind.Video, 10_000)
+        val pip = source("pip10.mp4", MediaKind.Video, 8_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(com.petruvideo.core.model.engine.AddOverlay(pip, 1_500, { "ov1" }))
+        session.apply(com.petruvideo.core.model.engine.SetOverlayPlacement("ov1", 210, 640, 420))
+        session.apply(com.petruvideo.core.model.engine.SetOverlayOpacity("ov1", 55))
+        session.apply(com.petruvideo.core.model.engine.TrimOverlay("ov1", 2_000, 7_000))
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.overlayLane shouldBe saved.overlayLane
+        loaded.overlayLane.single().opacityPercent shouldBe 55
+        loaded.overlayLane.single().durationMs shouldBe 5_000
+        loaded.media.containsKey(pip.id) shouldBe true
+        checksums() shouldBe before
+    }
 }

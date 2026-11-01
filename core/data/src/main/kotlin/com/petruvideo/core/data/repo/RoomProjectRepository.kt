@@ -42,6 +42,7 @@ class RoomProjectRepository @Inject constructor(
             videoLane = timelines.videoClips(id).map { it.toModel() },
             audioLane = timelines.audioClips(id).map { it.toModel() },
             textLane = timelines.textClips(id).map { it.toModel() },
+            overlayLane = timelines.overlayClips(id).map { it.toModel() },
             playheadMs = entity.playheadMs,
         )
         return LoadedProject(project, timeline)
@@ -75,15 +76,19 @@ class RoomProjectRepository @Inject constructor(
             timelines.deleteVideoClips(projectId)
             timelines.deleteAudioClips(projectId)
             timelines.deleteTextClips(projectId)
+            timelines.deleteOverlayClips(projectId)
             timelines.deleteMedia(projectId)
-            val referenced = (timeline.videoLane.map { it.mediaItemId } + timeline.audioLane.map { it.mediaItemId })
-                .toSet()
+            val referenced = (
+                timeline.videoLane.map { it.mediaItemId } + timeline.audioLane.map { it.mediaItemId } +
+                    timeline.overlayLane.map { it.mediaItemId }
+                ).toSet()
             timelines.insertMedia(
                 timeline.media.values.filter { it.id in referenced }.map { it.toEntity(projectId) },
             )
             timelines.insertVideoClips(timeline.videoLane.mapIndexed { i, c -> c.toEntity(projectId, i) })
             timelines.insertAudioClips(timeline.audioLane.map { it.toEntity(projectId) })
             timelines.insertTextClips(timeline.textLane.map { it.toEntity(projectId) })
+            timelines.insertOverlayClips(timeline.overlayLane.map { it.toEntity(projectId) })
         }
     }
 
@@ -102,7 +107,7 @@ class RoomProjectRepository @Inject constructor(
         val mediaIds = source.timeline.media.keys.associateWith { newId() }
         val clipIds = (
             source.timeline.videoLane.map { it.id } + source.timeline.audioLane.map { it.id } +
-                source.timeline.textLane.map { it.id }
+                source.timeline.textLane.map { it.id } + source.timeline.overlayLane.map { it.id }
             )
             .associateWith { newId() }
         val timeline = source.timeline.copy(
@@ -118,6 +123,9 @@ class RoomProjectRepository @Inject constructor(
                 it.copy(id = clipIds.getValue(it.id), mediaItemId = mediaIds.getValue(it.mediaItemId))
             },
             textLane = source.timeline.textLane.map { it.copy(id = clipIds.getValue(it.id)) },
+            overlayLane = source.timeline.overlayLane.map {
+                it.copy(id = clipIds.getValue(it.id), mediaItemId = mediaIds.getValue(it.mediaItemId))
+            },
         )
         saveTimeline(copy.id, timeline)
         copy

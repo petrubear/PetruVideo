@@ -14,6 +14,7 @@ import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Timeline
@@ -44,6 +45,7 @@ class Media3PreviewEngine @Inject constructor(
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     private var voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
     private var voiceFxAllowed = true
+    private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var textOverlays: com.petruvideo.core.media.text.TextOverlaySet? = null
     private val refresh = Runnable { refreshFrame() }
@@ -77,6 +79,23 @@ class Media3PreviewEngine @Inject constructor(
     private fun isDebuggable() =
         context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
 
+    private var multipleInputs = false
+    private var endedByPosition = false
+
+    private fun playerBuilder(multi: Boolean): CompositionPlayer.Builder {
+        val builder = CompositionPlayer.Builder(context)
+        if (multi) builder.setVideoGraphFactory(androidx.media3.effect.MultipleInputVideoGraph.Factory())
+        return builder
+    }
+
+    private fun discardPlayer() {
+        polling = false
+        handler.removeCallbacks(poll)
+        compositionPlayer?.release()
+        compositionPlayer = null
+        hasComposition = false
+    }
+
     override fun load(timeline: Timeline, quality: PreviewQuality) {
         totalMs = timeline.totalDurationMs
         val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality))
@@ -85,10 +104,16 @@ class Media3PreviewEngine @Inject constructor(
         reverbs = builder.reverbs
         voiceFxs = builder.voiceFxs
         textOverlays = builder.textOverlays
+        overlayLayout = builder.overlayLayout
         filters = builder.filters
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
-        val player = compositionPlayer ?: CompositionPlayer.Builder(context).build()
+        // Overlay clips are separate video inputs, which needs the multiple-input video graph; the player is made again
+        // when that need changes.
+        val multi = timeline.overlayLane.isNotEmpty()
+        if (compositionPlayer != null && multi != multipleInputs) discardPlayer()
+        multipleInputs = multi
+        val player = compositionPlayer ?: playerBuilder(multi).build()
             .also {
                 it.addListener(listener)
                 if (isDebuggable()) PlaybackStats().let { stats ->
@@ -115,6 +140,7 @@ class Media3PreviewEngine @Inject constructor(
     // With nothing to play (an empty project) the player has no composition and rejects play and seek.
     override fun play() {
         if (hasComposition) {
+            endedByPosition = false
             playbackStats?.playRequested()
             compositionPlayer?.play()
         }
@@ -125,6 +151,7 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     override fun seekTo(positionMs: Long) {
+        endedByPosition = false
         if (hasComposition) compositionPlayer?.seekTo(positionMs.coerceIn(0, totalMs))
         publish()
     }
@@ -138,6 +165,14 @@ class Media3PreviewEngine @Inject constructor(
 
     override fun setClipFilterLive(clipId: String, filter: ClipFilter) {
         filters[clipId]?.update(filter)
+        if (!polling) {
+            handler.removeCallbacks(refresh)
+            handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
+
+    override fun setOverlayLive(clip: OverlayClip) {
+        overlayLayout?.update(clip)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)
@@ -178,11 +213,18 @@ class Media3PreviewEngine @Inject constructor(
 
     private fun publish(error: String? = null) {
         val player = compositionPlayer
+        // With several video inputs the player can reach the end of the timeline without reporting it, so the end is
+        // taken from the position: the player is paused there and the preview reports the end.
+        val atEnd = multipleInputs && totalMs > 0 && player != null && player.isPlaying &&
+            player.currentPosition >= totalMs
+        if (atEnd) player?.pause()
+        val reachedEnd = player?.playbackState == Player.STATE_ENDED || atEnd || (multipleInputs && endedByPosition)
+        endedByPosition = reachedEnd && multipleInputs
         _state.value = PreviewState(
             isPlaying = player?.isPlaying == true,
             positionMs = player?.currentPosition?.coerceIn(0, totalMs) ?: 0,
             durationMs = totalMs,
-            ended = player?.playbackState == Player.STATE_ENDED,
+            ended = reachedEnd,
             error = error ?: _state.value.error.takeIf { player?.playerError != null },
         )
     }

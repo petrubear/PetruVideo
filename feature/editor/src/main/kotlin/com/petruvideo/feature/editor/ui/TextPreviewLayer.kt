@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.media.text.TextRenderer
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TEXT_PERMILLE
 import com.petruvideo.core.model.TEXT_SIZE_MAX
 import com.petruvideo.core.model.TEXT_SIZE_MIN
@@ -50,11 +51,27 @@ fun PreviewWithText(
 ) {
     Box(modifier) {
         PreviewSurface(player, Modifier.fillMaxSize())
+        val overlay = state.selectedOverlay
         val clip = state.selectedText
         val format = state.timeline?.format
         val playhead = state.playback.positionMs
         if (clip != null && format != null && playhead in clip.startMs until clip.endMs) {
             TextPreviewLayer(clip, format.width.toFloat() / format.height, onEvent)
+        }
+        if (overlay != null && format != null && playhead in overlay.startMs until overlay.endMs) {
+            OverlayPreviewLayer(overlay, state.selectedOverlayAspect, format.width.toFloat() / format.height, onEvent)
+        }
+    }
+}
+
+/** The video frame is fitted inside this layer; the selected overlay's box is placed on that frame. */
+@Composable
+private fun OverlayPreviewLayer(clip: OverlayClip, overlayAspect: Float, aspect: Float, onEvent: (EditorEvent) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val frameWidth: Dp = min(maxWidth.value, maxHeight.value * aspect).dp
+        val frameHeight: Dp = frameWidth / aspect
+        Box(Modifier.align(androidx.compose.ui.Alignment.Center).width(frameWidth).height(frameHeight)) {
+            OverlaySelectionBox(clip, overlayAspect, frameWidth, frameHeight, onEvent)
         }
     }
 }

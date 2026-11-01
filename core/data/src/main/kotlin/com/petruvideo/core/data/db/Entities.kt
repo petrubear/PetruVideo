@@ -165,6 +165,37 @@ data class AudioFxColumns(
 )
 
 @Entity(
+    tableName = "overlay_clip",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProjectEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["projectId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = MediaItemEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["mediaItemId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["projectId", "startMs"]), Index("mediaItemId")],
+)
+data class OverlayClipEntity(
+    @PrimaryKey val id: String,
+    val projectId: String,
+    val mediaItemId: String,
+    val startMs: Long,
+    val sourceStartMs: Long,
+    val sourceEndMs: Long,
+    val x: Int,
+    val y: Int,
+    val width: Int,
+    val opacity: Int,
+)
+
+@Entity(
     tableName = "text_clip",
     foreignKeys = [
         ForeignKey(

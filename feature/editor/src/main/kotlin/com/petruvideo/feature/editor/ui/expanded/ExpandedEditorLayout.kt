@@ -32,6 +32,8 @@ import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
 import com.petruvideo.feature.editor.ui.TextTabBar
 import com.petruvideo.feature.editor.ui.FilterPanel
+import com.petruvideo.feature.editor.ui.OverlayPanel
+import com.petruvideo.feature.editor.ui.OverlayTabBar
 import com.petruvideo.feature.editor.ui.FiltersTabBar
 import com.petruvideo.feature.editor.ui.TextPanel
 import com.petruvideo.feature.editor.ui.PreviewWithText
@@ -93,6 +95,7 @@ fun ExpandedEditorLayout(
                         state.selectedClipLengthMs,
                         state.selectedText,
                         state.selectedFilter,
+                        state.selectedOverlay,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                     )
@@ -117,6 +120,7 @@ fun ExpandedEditorLayout(
                             state.selectedClipLengthMs,
                             state.selectedText,
                             state.selectedFilter,
+                            state.selectedOverlay,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                         )
@@ -132,12 +136,18 @@ fun ExpandedEditorLayout(
                 AudioPanel(state.audioPanel, onEvent)
                 TextPanel(state.textPanel, onEvent)
                 FilterPanel(state.filterPanel, onEvent)
+                OverlayPanel(state.overlayPanel, onEvent)
             }
             ClipToolBar(
                     state.clipTools,
                     state.selectedAudioMuted,
                     onTool = { onEvent(EditorEvent.UseTool(it)) },
                     disabled = state.disabledTools.keys,
+            )
+        } else if (state.toolbarTab == ToolbarTab.Overlay) {
+            OverlayTabBar(
+                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
+                onAdd = { onEvent(EditorEvent.AddOverlay) },
             )
         } else if (state.toolbarTab == ToolbarTab.Filters) {
             FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
@@ -201,6 +211,8 @@ private fun TimelineWithLabels(state: EditorState, onEvent: (EditorEvent) -> Uni
             onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
             onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
             onAddClip = { onEvent(EditorEvent.AddClip) },
+            onMoveOverlay = { id, start -> onEvent(EditorEvent.MoveOverlayClip(id, start)) },
+            onTrimOverlay = { id, start, end -> onEvent(EditorEvent.TrimOverlayClip(id, start, end)) },
             onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
             onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
             onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
@@ -256,6 +268,9 @@ private fun selectedClip(state: EditorState): InspectorClip? {
         }
         is ClipSelection.Audio -> timeline.audioLane.firstOrNull { it.id == selection.clipId }?.let {
             inspectorClip(it.mediaItemId, "Audio", it.lengthMs, it.timelineStartMs, timeline.media[it.mediaItemId])
+        }
+        is ClipSelection.Overlay -> timeline.overlayLane.firstOrNull { it.id == selection.clipId }?.let {
+            inspectorClip(it.mediaItemId, "Overlay", it.durationMs, it.startMs, timeline.media[it.mediaItemId])
         }
         is ClipSelection.Text -> timeline.textLane.firstOrNull { it.id == selection.clipId }?.let {
             inspectorClip(it.text.lineSequence().firstOrNull().orEmpty(), "Text", it.durationMs, it.startMs, null)

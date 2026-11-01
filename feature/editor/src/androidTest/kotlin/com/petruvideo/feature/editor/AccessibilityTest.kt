@@ -48,6 +48,7 @@ class AccessibilityTest {
         audioPanel: AudioPanelState? = null,
         textPanel: TextPanelState? = null,
         filterPanel: FilterPanelState? = null,
+        overlayPanel: OverlayPanelState? = null,
         fontScale: Float = 1f,
     ) {
         val state = EditorState(
@@ -62,6 +63,7 @@ class AccessibilityTest {
             audioPanel = audioPanel,
             textPanel = textPanel,
             filterPanel = filterPanel,
+            overlayPanel = overlayPanel,
             selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
@@ -194,5 +196,19 @@ class AccessibilityTest {
         ClipSelection.Video("c1"), listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust),
         filterPanel = FilterPanelState(FilterToolKind.Adjust, "c1", com.petruvideo.core.model.ClipFilter(), null, 0, true),
         fontScale = 2f,
+    )
+
+    private val overlayClip = com.petruvideo.core.model.OverlayClip("o1", "m", 0, 3_000, 0)
+
+    @Test
+    fun overlayPanel() = check(
+        ClipSelection.Overlay("o1"), listOf(ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete),
+        overlayPanel = OverlayPanelState(overlayClip, "pip.mp4"),
+    )
+
+    @Test
+    fun overlayPanelWithLargeFont() = check(
+        ClipSelection.Overlay("o1"), listOf(ClipTool.OverlayOpacity, ClipTool.Split),
+        overlayPanel = OverlayPanelState(overlayClip, "pip.mp4"), fontScale = 2f,
     )
 }

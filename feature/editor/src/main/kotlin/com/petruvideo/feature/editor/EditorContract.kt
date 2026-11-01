@@ -4,6 +4,7 @@ import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
@@ -16,6 +17,7 @@ sealed interface ClipSelection {
     data class Video(override val clipId: String) : ClipSelection
     data class Audio(override val clipId: String) : ClipSelection
     data class Text(override val clipId: String) : ClipSelection
+    data class Overlay(override val clipId: String) : ClipSelection
 }
 
 /** Main tool bar tabs as designed. Only Edit is active in this feature; the rest show "coming soon". */
@@ -23,7 +25,7 @@ enum class ToolbarTab(val label: String, val active: Boolean) {
     Edit("Edit", true),
     Audio("Audio", false),
     Text("Text", true),
-    Overlay("Overlay", false),
+    Overlay("Overlay", true),
     Effects("Effects", false),
     Filters("Filters", true),
 }
@@ -45,6 +47,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     TextAnim("Animation", true),
     FilterLooks("Looks", true),
     FilterAdjust("Adjust", true),
+    OverlayOpacity("Opacity", true),
 }
 
 /**
@@ -91,6 +94,9 @@ enum class TextToolKind(val label: String) {
 /** The open text panel with the committed values of the selected text clip. */
 data class TextPanelState(val kind: TextToolKind, val clip: TextClip)
 
+/** The open overlay panel: the selected overlay clip and the name of its media. */
+data class OverlayPanelState(val clip: OverlayClip, val name: String)
+
 /** The two filter panels. */
 enum class FilterToolKind(val label: String) { Looks("Looks"), Adjust("Adjust") }
 
@@ -136,6 +142,11 @@ data class EditorState(
     val audioPanel: AudioPanelState? = null,
     /** Which main tool bar tab is open: Edit (default) or Text, which offers Add text. */
     val toolbarTab: ToolbarTab = ToolbarTab.Edit,
+    /** The open overlay panel, if any. */
+    val overlayPanel: OverlayPanelState? = null,
+    /** The selected overlay clip and the shape of its picture (width over height), for the preview box. */
+    val selectedOverlay: OverlayClip? = null,
+    val selectedOverlayAspect: Float = 1.78f,
     /** The open filter panel, if any. */
     val filterPanel: FilterPanelState? = null,
     /** The selected picture clip's filter with its look tiles (the inspector shows its controls). */
@@ -218,6 +229,17 @@ sealed interface EditorEvent {
     data class SelectTab(val tab: ToolbarTab) : EditorEvent
     /** Adds a text clip at the playhead, selects it, and opens its edit panel. */
     data object AddText : EditorEvent
+    /** The Add overlay button: opens a file picker for a video or photo. */
+    data object AddOverlay : EditorEvent
+    data class AddOverlayMedia(val media: MediaItem) : EditorEvent
+    data object OpenOverlayPanel : EditorEvent
+    /** An overlay's place or opacity while dragging: seen live, not yet an edit. */
+    data class OverlayPreview(val clip: OverlayClip) : EditorEvent
+    /** The overlay on release or a tap: one edit per changed part. */
+    data class OverlayCommit(val clip: OverlayClip) : EditorEvent
+    data object OverlayDismiss : EditorEvent
+    data class MoveOverlayClip(val clipId: String, val startMs: Long) : EditorEvent
+    data class TrimOverlayClip(val clipId: String, val startMs: Long, val endMs: Long) : EditorEvent
     data class OpenFilterTool(val kind: FilterToolKind) : EditorEvent
     /** A look strength or adjustment while dragging: seen live, not yet an edit. */
     data class FilterPreview(val filter: ClipFilter) : EditorEvent
@@ -243,4 +265,5 @@ sealed interface EditorEffect {
     data object OpenExport : EditorEffect
     data class PickRelinkFile(val mediaItemId: String) : EditorEffect
     data class PickReplacementAudio(val clipId: String) : EditorEffect
+    data object PickOverlayMedia : EditorEffect
 }

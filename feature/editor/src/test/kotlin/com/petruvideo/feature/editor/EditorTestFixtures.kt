@@ -73,6 +73,10 @@ class FakePreviewEngine : PreviewEngine {
         calls += "filter $clipId ${filter.look} ${filter.intensity} ${filter.brightness}"
     }
 
+    override fun setOverlayLive(clip: com.petruvideo.core.model.OverlayClip) {
+        calls += "overlay ${clip.id} ${clip.xPermille} ${clip.yPermille} ${clip.widthPermille} ${clip.opacityPercent}"
+    }
+
     override fun setTextLive(clip: com.petruvideo.core.model.TextClip) {
         calls += "text ${clip.id} ${clip.text}"
     }

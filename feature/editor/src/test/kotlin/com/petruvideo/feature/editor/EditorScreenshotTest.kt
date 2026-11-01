@@ -50,6 +50,8 @@ class EditorScreenshotTest {
         textPanel: TextPanelState? = null,
         tab: ToolbarTab = ToolbarTab.Edit,
         filterPanel: FilterPanelState? = null,
+        overlays: List<com.petruvideo.core.model.OverlayClip> = emptyList(),
+        overlayPanel: OverlayPanelState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -70,6 +72,7 @@ class EditorScreenshotTest {
             },
             playheadMs = playheadMs,
             textLane = texts,
+            overlayLane = overlays,
             audioLane = if (edited) {
                 loaded.timeline.audioLane.map { it.copy(fx = AudioFx(fade = com.petruvideo.core.model.Fade(500, 500))) }
             } else {
@@ -90,10 +93,15 @@ class EditorScreenshotTest {
             audioPanel = audioPanel,
             textPanel = textPanel,
             filterPanel = filterPanel,
+            overlayPanel = overlayPanel,
+            selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
             selectedText = texts.firstOrNull { it.id == selection?.clipId },
             clipTools = when (selection) {
                 null -> emptyList()
+                is ClipSelection.Overlay -> listOf(
+                    ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
+                )
                 is ClipSelection.Text -> listOf(
                     ClipTool.TextEdit,
                     ClipTool.TextStyle,
@@ -389,6 +397,45 @@ class EditorScreenshotTest {
             PetruTheme {
                 EditorScreen(state(tab = ToolbarTab.Filters), player = null, onEvent = {}, onBack = {})
             }
+        }
+    }
+
+    private val overlays = listOf(
+        com.petruvideo.core.model.OverlayClip("v1", "m1", 0, 4_000, 1_000),
+        com.petruvideo.core.model.OverlayClip("v2", "m3", 0, 3_000, 2_500, xPermille = 300, yPermille = 700),
+    )
+
+    @Test
+    fun overlayLaneWithOverlappingClips() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(selection = ClipSelection.Overlay("v1"), overlays = overlays, playheadMs = 3_000),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun overlayPanel() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Overlay("v1"), overlays = overlays, playheadMs = 3_000,
+                        overlayPanel = OverlayPanelState(overlays[0], "m1.mp4"),
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun overlayTabOffersAddOverlay() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme { EditorScreen(state(tab = ToolbarTab.Overlay), player = null, onEvent = {}, onBack = {}) }
         }
     }
 

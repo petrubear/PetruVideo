@@ -7,6 +7,7 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
+import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Timeline
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +46,9 @@ interface PreviewEngine {
 
     /** Changes the fade, noise reduction, equalizer, and voice effects of one clip right away, without a rebuild. */
     fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long)
+
+    /** Changes the place or opacity of one overlay clip right away; the current frame is redrawn. */
+    fun setOverlayLive(clip: OverlayClip)
 
     /** Changes one text clip right away (words, style, place, timing); the current frame is redrawn. */
     fun setTextLive(clip: TextClip)

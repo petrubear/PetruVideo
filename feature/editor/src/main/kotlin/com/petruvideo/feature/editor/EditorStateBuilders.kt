@@ -135,6 +135,7 @@ internal fun exists(timeline: Timeline, selection: ClipSelection) = when (select
     is ClipSelection.Video -> timeline.videoLane.any { it.id == selection.clipId }
     is ClipSelection.Audio -> timeline.audioLane.any { it.id == selection.clipId }
     is ClipSelection.Text -> timeline.textLane.any { it.id == selection.clipId }
+    is ClipSelection.Overlay -> timeline.overlayLane.any { it.id == selection.clipId }
 }
 
 internal fun clipToolsFor(
@@ -144,6 +145,7 @@ internal fun clipToolsFor(
 ): List<ClipTool> = when (selection) {
     null -> emptyList()
     is ClipSelection.Video -> if (tab == ToolbarTab.Filters) FILTER_TOOLS else videoTools(timeline, selection)
+    is ClipSelection.Overlay -> listOf(ClipTool.OverlayOpacity, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete)
     is ClipSelection.Text -> listOf(
         ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate,
         ClipTool.Delete,

@@ -71,7 +71,7 @@ private fun CompactEditor(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
             val panelOpen = state.sheet != null || state.reverbPanel != null || state.audioPanel != null ||
-                state.textPanel != null || state.filterPanel != null
+                state.textPanel != null || state.filterPanel != null || state.overlayPanel != null
             PreviewWithText(state, player, onEvent, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,
@@ -93,6 +93,8 @@ private fun CompactEditor(
                     onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
                     onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
                     onAddClip = { onEvent(EditorEvent.AddClip) },
+                    onMoveOverlay = { id, start -> onEvent(EditorEvent.MoveOverlayClip(id, start)) },
+                    onTrimOverlay = { id, start, end -> onEvent(EditorEvent.TrimOverlayClip(id, start, end)) },
                     onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
                     onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
                     modifier = Modifier.weight(1f),
@@ -107,12 +109,18 @@ private fun CompactEditor(
                 AudioPanel(state.audioPanel, onEvent)
                 TextPanel(state.textPanel, onEvent)
                 FilterPanel(state.filterPanel, onEvent)
+                OverlayPanel(state.overlayPanel, onEvent)
                 ClipToolBar(
                         state.clipTools,
                         state.selectedAudioMuted,
                         onTool = { onEvent(EditorEvent.UseTool(it)) },
                         disabled = state.disabledTools.keys,
                     )
+            } else if (state.toolbarTab == ToolbarTab.Overlay) {
+                OverlayTabBar(
+                    onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
+                    onAdd = { onEvent(EditorEvent.AddOverlay) },
+                )
             } else if (state.toolbarTab == ToolbarTab.Filters) {
                 FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
             } else if (state.toolbarTab == ToolbarTab.Text) {

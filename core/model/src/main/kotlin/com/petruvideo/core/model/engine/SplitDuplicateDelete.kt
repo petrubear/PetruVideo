@@ -3,6 +3,7 @@ package com.petruvideo.core.model.engine
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.AnimKind
+import com.petruvideo.core.model.OVERLAY_MIN_MS
 import com.petruvideo.core.model.PHOTO_MIN_MS
 import com.petruvideo.core.model.TEXT_MIN_MS
 import com.petruvideo.core.model.SPEED_UNIT
@@ -34,7 +35,28 @@ class Split(
         if (audioIndex >= 0) return splitAudio(timeline, audioIndex)
         val textIndex = timeline.textLane.indexOfFirst { it.id == clipId }
         if (textIndex >= 0) return splitText(timeline, textIndex)
+        val overlayIndex = timeline.overlayLane.indexOfFirst { it.id == clipId }
+        if (overlayIndex >= 0) return splitOverlay(timeline, overlayIndex)
         return CommandResult.Rejected(RejectReason.NotFound)
+    }
+
+    private fun splitOverlay(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.overlayLane[index]
+        val offset = atMs - clip.startMs
+        if (offset <= 0 || offset >= clip.durationMs) return CommandResult.Rejected(RejectReason.OutOfRange)
+        if (offset < OVERLAY_MIN_MS || clip.durationMs - offset < OVERLAY_MIN_MS) {
+            return CommandResult.Rejected(RejectReason.BelowMinimumLength)
+        }
+        val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
+        val cut = clip.sourceStartMs + offset
+        val first = clip.copy(id = newClipId(), sourceEndMs = if (photo) offset else cut)
+        val second = clip.copy(
+            id = newClipId(), startMs = atMs,
+            sourceStartMs = if (photo) 0 else cut,
+            sourceEndMs = if (photo) clip.durationMs - offset else clip.sourceEndMs,
+        )
+        val lane = timeline.overlayLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
+        return CommandResult.Applied(timeline.copy(overlayLane = lane), "Split overlay")
     }
 
     private fun splitText(timeline: Timeline, index: Int): CommandResult {
@@ -108,6 +130,11 @@ class Duplicate(private val clipId: String, private val newClipId: () -> String 
             lane.add(videoIndex + 1, lane[videoIndex].copy(id = newClipId()))
             return CommandResult.Applied(timeline.copy(videoLane = lane), "Duplicate clip")
         }
+        timeline.overlayLane.firstOrNull { it.id == clipId }?.let { overlay ->
+            val copy = overlay.copy(id = newClipId(), startMs = overlay.endMs)
+            val lane = (timeline.overlayLane + copy).sortedBy { it.startMs }
+            return CommandResult.Applied(timeline.copy(overlayLane = lane), "Duplicate overlay")
+        }
         timeline.textLane.firstOrNull { it.id == clipId }?.let { text ->
             val lane = (timeline.textLane + text.copy(id = newClipId(), startMs = text.endMs)).sortedBy { it.startMs }
             return CommandResult.Applied(timeline.copy(textLane = lane), "Duplicate text")
@@ -131,6 +158,10 @@ class Delete(private val clipId: String) : Command {
         timeline.audioLane.any { it.id == clipId } -> CommandResult.Applied(
             timeline.copy(audioLane = timeline.audioLane.filterNot { it.id == clipId }),
             "Delete audio",
+        )
+        timeline.overlayLane.any { it.id == clipId } -> CommandResult.Applied(
+            timeline.copy(overlayLane = timeline.overlayLane.filterNot { it.id == clipId }),
+            "Delete overlay",
         )
         timeline.textLane.any { it.id == clipId } -> CommandResult.Applied(
             timeline.copy(textLane = timeline.textLane.filterNot { it.id == clipId }),

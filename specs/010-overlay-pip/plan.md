@@ -1,0 +1,7 @@
+# Implementation Plan: Overlay (Picture in Picture)
+
+**Summary**: `OverlayClip` lane on `Timeline`; pure commands (add, placement, opacity, move, trim, split, duplicate, delete); Room v9 table `overlay_clip`; the shared `CompositionBuilder` makes one video-only sequence per overlay (gap, clip, gap to the end of the project) placed BEFORE the main sequences, and `OverlayLayout` (a `VideoCompositorSettings`) gives each input its anchor, scale (corrected for the input's own size), and alpha (0 outside the clip's time); the preview uses `MultipleInputVideoGraph` only while overlays exist and reports the end from the position; the editor gets an Overlay tab bar, picker, panel, lane, and a preview box for drag and pinch.
+
+**Findings (spikes on the emulator)**: the compositor draws sequence inputs in order with the primary last, so overlays must come first; an overlay is drawn at its own pixel size relative to the frame, so the scale is `width share x frame width / input width` (the input width comes from `getOutputSize`); gap frames are 16 by 16 and must be hidden by alpha; an ended input keeps its last frame, so a trailing gap runs to the project end; `CompositionPlayer` with several video inputs never reports ENDED, so the engine pauses and reports the end at the last position.
+
+**Constitution**: all PASS. **Risks**: compositor cost with several inputs (measured later on device, up to 3 visible); preview end detection (handled by position).

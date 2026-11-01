@@ -101,6 +101,7 @@ data class Timeline(
     val videoLane: List<VideoClip> = emptyList(),
     val audioLane: List<AudioClip> = emptyList(),
     val textLane: List<TextClip> = emptyList(),
+    val overlayLane: List<OverlayClip> = emptyList(),
     val playheadMs: Long = 0,
 ) {
     val videoLengthMs: Long get() = videoLane.sumOf { it.lengthMs }
@@ -110,6 +111,7 @@ data class Timeline(
             videoLengthMs,
             audioLane.maxOfOrNull { it.timelineEndMs } ?: 0L,
             textLane.maxOfOrNull { it.endMs } ?: 0L,
+            overlayLane.maxOfOrNull { it.endMs } ?: 0L,
         )
 
     /** Start of each video clip on the timeline, derived from order (the lane is gapless). */

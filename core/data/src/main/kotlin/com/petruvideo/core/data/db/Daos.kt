@@ -65,6 +65,15 @@ interface TimelineDao {
     @Query("SELECT * FROM audio_clip WHERE projectId = :projectId ORDER BY timelineStartMs")
     suspend fun audioClips(projectId: String): List<AudioClipEntity>
 
+    @Query("SELECT * FROM overlay_clip WHERE projectId = :projectId ORDER BY startMs")
+    suspend fun overlayClips(projectId: String): List<OverlayClipEntity>
+
+    @Insert
+    suspend fun insertOverlayClips(clips: List<OverlayClipEntity>)
+
+    @Query("DELETE FROM overlay_clip WHERE projectId = :projectId")
+    suspend fun deleteOverlayClips(projectId: String)
+
     @Query("SELECT * FROM text_clip WHERE projectId = :projectId ORDER BY startMs")
     suspend fun textClips(projectId: String): List<TextClipEntity>
 
