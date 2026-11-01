@@ -53,6 +53,8 @@ fun TimelineView(
     onMoveClip: (clipId: String, newIndex: Int) -> Unit,
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     onAddClip: () -> Unit,
+    onMoveText: (clipId: String, startMs: Long) -> Unit = { _, _ -> },
+    onTrimText: (clipId: String, startMs: Long, endMs: Long) -> Unit = { _, _, _ -> },
     onDropMedia: (mediaItemId: String, atMs: Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
     geometry: TimelineGeometry = remember { TimelineGeometry() },
@@ -112,6 +114,16 @@ fun TimelineView(
                         onTrim = onTrim,
                     )
                     AttachedAudioRow(timeline.videoLane, timeline.media, geometry)
+                    if (timeline.textLane.isNotEmpty()) {
+                        TextLaneView(
+                            clips = timeline.textLane,
+                            geometry = geometry,
+                            selectedClipId = (selection as? ClipSelection.Text)?.clipId,
+                            onSelect = { onSelect(ClipSelection.Text(it)) },
+                            onMove = onMoveText,
+                            onTrim = onTrimText,
+                        )
+                    }
                     AudioClipsRow(
                         clips = timeline.audioLane,
                         media = timeline.media,
@@ -124,7 +136,7 @@ fun TimelineView(
             }
         }
         Playhead(Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
-        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty()) {
+        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty() && timeline.textLane.isEmpty()) {
             Text(
                 "Add your first clip",
                 style = PetruType.Body,

@@ -192,4 +192,48 @@ class OriginalsUnchangedTest {
         loaded.audioLane.first().fx.eq.preset shouldBe EqPreset.Custom
         checksums() shouldBe before
     }
+
+    /** SC-005, SC-009 of feature 006: text clips reload exactly and leave the sources alone. */
+    @Test
+    fun textClipsSurviveAReloadAndLeaveTheSourcesUntouched() = runBlocking<Unit> {
+        val video = source("clip6.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        session.apply(com.petruvideo.core.model.engine.AddText(1_000, { "t1" }))
+        session.apply(com.petruvideo.core.model.engine.SetTextContent("t1", "Line one\nLine two \u00e9\ud83d\ude00"))
+        session.apply(
+            com.petruvideo.core.model.engine.SetTextStyle(
+                "t1",
+                com.petruvideo.core.model.TextStyle(
+                    font = com.petruvideo.core.model.TextFont.Serif,
+                    colorArgb = 0xFFFFCC00.toInt(),
+                    align = com.petruvideo.core.model.TextAlign.Right,
+                    background = com.petruvideo.core.model.TextBackground(true, 0xFF112233.toInt(), 35),
+                    outline = com.petruvideo.core.model.TextOutline(true, 0xFF000000.toInt(), 20),
+                ),
+            ),
+        )
+        session.apply(com.petruvideo.core.model.engine.SetTextPlacement("t1", 250, 800, 90))
+        session.apply(
+            com.petruvideo.core.model.engine.SetTextAnimation(
+                "t1",
+                com.petruvideo.core.model.TextAnimation(com.petruvideo.core.model.AnimKind.SlideUp, 700),
+                com.petruvideo.core.model.TextAnimation(com.petruvideo.core.model.AnimKind.Pop, 300),
+            ),
+        )
+        session.flush()
+        val saved = session.timeline.value!!
+        session.close()
+
+        val loaded = repo.loadProject(project.id)!!.timeline
+        loaded.textLane shouldBe saved.textLane
+        loaded.textLane.single().text shouldBe "Line one\nLine two \u00e9\ud83d\ude00"
+        loaded.textLane.single().xPermille shouldBe 250
+        checksums() shouldBe before
+    }
 }

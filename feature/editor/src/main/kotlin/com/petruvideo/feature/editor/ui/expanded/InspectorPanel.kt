@@ -18,6 +18,7 @@ import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.PetruChip
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
@@ -29,6 +30,9 @@ import com.petruvideo.feature.editor.ui.NoiseControls
 import com.petruvideo.feature.editor.ui.ReverbControls
 import com.petruvideo.feature.editor.ui.ReverbSwitch
 import com.petruvideo.feature.editor.ui.SpeedVolumeControls
+import com.petruvideo.feature.editor.ui.TextAnimationControls
+import com.petruvideo.feature.editor.ui.TextEditControls
+import com.petruvideo.feature.editor.ui.TextStyleControls
 import com.petruvideo.feature.editor.ui.VoiceControls
 
 /** What the inspector shows about the selected clip. */
@@ -47,6 +51,7 @@ fun InspectorPanel(
     muted: Boolean,
     fx: AudioFx?,
     clipLengthMs: Long,
+    text: TextClip?,
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,6 +96,14 @@ fun InspectorPanel(
                     ReverbSwitch(reverb, onEvent)
                 }
                 ReverbControls(reverb, onEvent, showAll = true)
+            }
+            if (text != null) {
+                Text("Text", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                TextEditControls(text, onEvent)
+                Text("Style", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                TextStyleControls(text, onEvent)
+                Text("Animation", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                TextAnimationControls(text, onEvent)
             }
             if (fx != null) {
                 Text("Fade", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)

@@ -3,6 +3,7 @@ package com.petruvideo.feature.editor
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.Timeline
@@ -13,13 +14,14 @@ sealed interface ClipSelection {
 
     data class Video(override val clipId: String) : ClipSelection
     data class Audio(override val clipId: String) : ClipSelection
+    data class Text(override val clipId: String) : ClipSelection
 }
 
 /** Main tool bar tabs as designed. Only Edit is active in this feature; the rest show "coming soon". */
 enum class ToolbarTab(val label: String, val active: Boolean) {
     Edit("Edit", true),
     Audio("Audio", false),
-    Text("Text", false),
+    Text("Text", true),
     Overlay("Overlay", false),
     Effects("Effects", false),
     Filters("Filters", false),
@@ -37,6 +39,9 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Mute("Mute", true),
     Reverb("Reverb", true),
     Replace("Replace", true),
+    TextEdit("Edit", true),
+    TextStyle("Style", true),
+    TextAnim("Animation", true),
 }
 
 /**
@@ -73,6 +78,16 @@ data class AudioPanelState(
     val reverb: Reverb,
 )
 
+/** The tools of a text clip; each opens its panel. */
+enum class TextToolKind(val label: String) {
+    Edit("Edit text"),
+    Style("Text style"),
+    Animation("Text animation"),
+}
+
+/** The open text panel with the committed values of the selected text clip. */
+data class TextPanelState(val kind: TextToolKind, val clip: TextClip)
+
 /** The open reverb panel for one clip. */
 data class ReverbPanelState(val clipId: String, val clipName: String, val reverb: Reverb)
 
@@ -102,6 +117,12 @@ data class EditorState(
     val sheet: SheetState? = null,
     /** The open Audio list or audio tool panel, if any. */
     val audioPanel: AudioPanelState? = null,
+    /** Which main tool bar tab is open: Edit (default) or Text, which offers Add text. */
+    val toolbarTab: ToolbarTab = ToolbarTab.Edit,
+    /** The open text panel, if any. */
+    val textPanel: TextPanelState? = null,
+    /** The selected text clip (the inspector shows its controls). */
+    val selectedText: TextClip? = null,
     /** The open reverb panel, if any. */
     val reverbPanel: ReverbPanelState? = null,
     /** Reverb of the selected clip when it has sound (the inspector shows it). */
@@ -117,7 +138,9 @@ data class EditorState(
     /** A short non-blocking message, e.g. an audio clip that snapped to the next free spot. */
     val message: String? = null,
 ) {
-    val isEmpty: Boolean get() = timeline?.videoLane.isNullOrEmpty() && timeline?.audioLane.isNullOrEmpty()
+    val isEmpty: Boolean
+        get() = timeline?.videoLane.isNullOrEmpty() && timeline?.audioLane.isNullOrEmpty() &&
+            timeline?.textLane.isNullOrEmpty()
 }
 
 sealed interface EditorEvent {
@@ -171,6 +194,18 @@ sealed interface EditorEvent {
     data class AudioFxCommit(val fx: AudioFx) : EditorEvent
     data class AudioFxReset(val kind: AudioToolKind) : EditorEvent
     data object AudioDismiss : EditorEvent
+    data class SelectTab(val tab: ToolbarTab) : EditorEvent
+    /** Adds a text clip at the playhead, selects it, and opens its edit panel. */
+    data object AddText : EditorEvent
+    data class OpenTextTool(val kind: TextToolKind) : EditorEvent
+    /** A text clip value while typing or dragging: seen live, not yet an edit. */
+    data class TextPreview(val clip: TextClip) : EditorEvent
+    /** The text clip value on release, a tap or a pause in typing: one edit per changed part. */
+    data class TextCommit(val clip: TextClip) : EditorEvent
+    data class TextReset(val kind: TextToolKind) : EditorEvent
+    data object TextDismiss : EditorEvent
+    data class MoveTextClip(val clipId: String, val startMs: Long) : EditorEvent
+    data class TrimTextClip(val clipId: String, val startMs: Long, val endMs: Long) : EditorEvent
 }
 
 sealed interface EditorEffect {

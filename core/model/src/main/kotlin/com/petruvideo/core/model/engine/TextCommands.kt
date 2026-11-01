@@ -67,7 +67,8 @@ class SetTextPlacement(
     private val yPermille: Int,
     private val sizePermille: Int,
 ) : TextClipCommand(clipId, "Move text") {
-    override fun next(clip: TextClip) = clip.copy(xPermille = xPermille, yPermille = yPermille, sizePermille = sizePermille)
+    override fun next(clip: TextClip) =
+        clip.copy(xPermille = xPermille, yPermille = yPermille, sizePermille = sizePermille)
 }
 
 class SetTextAnimation(clipId: String, private val animIn: TextAnimation, private val animOut: TextAnimation) :

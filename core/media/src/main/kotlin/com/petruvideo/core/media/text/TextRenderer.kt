@@ -81,7 +81,8 @@ object TextRenderer {
                 color = style.background.colorArgb
                 alpha = (255 * style.background.opacityPercent / 100f).roundToInt()
             }
-            canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), textSize * RADIUS_SHARE, textSize * RADIUS_SHARE, bg)
+            val radius = textSize * RADIUS_SHARE
+            canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), radius, radius, bg)
         }
         canvas.save()
         canvas.translate(edge.toFloat(), edge.toFloat())
@@ -99,7 +100,7 @@ object TextRenderer {
         return bitmap
     }
 
-    /** The box of a [bitmapWidth] by [bitmapHeight] bitmap centered at the clip's place, kept inside the safe margin. */
+    /** The box of a bitmap of [bitmapWidth] by [bitmapHeight] at the clip's place, kept inside the safe margin. */
     fun place(clip: TextClip, bitmapWidth: Int, bitmapHeight: Int, frameWidth: Int, frameHeight: Int): TextBox {
         val marginX = frameWidth * MARGIN_SHARE
         val marginY = frameHeight * MARGIN_SHARE

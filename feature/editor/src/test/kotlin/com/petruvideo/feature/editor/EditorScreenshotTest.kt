@@ -37,6 +37,7 @@ class EditorScreenshotTest {
             FloatArray(400) { abs(sin(it * 0.45f)) * 0.7f + 0.1f }
     }
 
+    @Suppress("LongMethod")
     private fun state(
         missing: Set<String> = emptySet(),
         selection: ClipSelection? = null,
@@ -45,6 +46,9 @@ class EditorScreenshotTest {
         reverbPanel: ReverbPanelState? = null,
         audioPanel: AudioPanelState? = null,
         playheadMs: Long = 6_200,
+        texts: List<com.petruvideo.core.model.TextClip> = emptyList(),
+        textPanel: TextPanelState? = null,
+        tab: ToolbarTab = ToolbarTab.Edit,
     ): EditorState {
         val loaded = sampleLoaded()
         val timeline = loaded.timeline.copy(
@@ -64,6 +68,7 @@ class EditorScreenshotTest {
                 if (id in missing) item.copy(availability = Availability.Missing) else item
             },
             playheadMs = playheadMs,
+            textLane = texts,
             audioLane = if (edited) {
                 loaded.timeline.audioLane.map { it.copy(fx = AudioFx(fade = com.petruvideo.core.model.Fade(500, 500))) }
             } else {
@@ -82,8 +87,19 @@ class EditorScreenshotTest {
             sheet = sheet,
             reverbPanel = reverbPanel,
             audioPanel = audioPanel,
+            textPanel = textPanel,
+            toolbarTab = tab,
+            selectedText = texts.firstOrNull { it.id == selection?.clipId },
             clipTools = when (selection) {
                 null -> emptyList()
+                is ClipSelection.Text -> listOf(
+                    ClipTool.TextEdit,
+                    ClipTool.TextStyle,
+                    ClipTool.TextAnim,
+                    ClipTool.Split,
+                    ClipTool.Duplicate,
+                    ClipTool.Delete,
+                )
                 is ClipSelection.Audio -> listOf(
                     ClipTool.Split,
                     ClipTool.Speed,
@@ -286,6 +302,54 @@ class EditorScreenshotTest {
             }
         }
     }
+
+    private val titles = listOf(
+        com.petruvideo.core.model.TextClip("t1", "Day one", 1_000, 4_000),
+        com.petruvideo.core.model.TextClip("t2", "Coast road at dawn", 3_000, 5_000, yPermille = 850),
+        com.petruvideo.core.model.TextClip("t3", "The end", 9_000, 2_000),
+    )
+
+    private fun snapshotText(
+        kind: TextToolKind?,
+        selected: String? = "t1",
+        tab: ToolbarTab = ToolbarTab.Edit,
+        playheadMs: Long = 2_000,
+    ) {
+        val clip = titles.firstOrNull { it.id == selected }
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(
+                            selection = selected?.let { ClipSelection.Text(it) },
+                            texts = titles,
+                            textPanel = if (kind != null && clip != null) TextPanelState(kind, clip) else null,
+                            tab = tab,
+                            playheadMs = playheadMs,
+                        ),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun textLaneWithOverlappingClips() = snapshotText(null, selected = "t2", playheadMs = 4_000)
+
+    @Test
+    fun textTabOffersAddText() = snapshotText(null, selected = null, tab = ToolbarTab.Text)
+
+    @Test
+    fun textEditPanel() = snapshotText(TextToolKind.Edit)
+
+    @Test
+    fun textStylePanel() = snapshotText(TextToolKind.Style)
+
+    @Test
+    fun textAnimationPanel() = snapshotText(TextToolKind.Animation)
 
     @Test
     fun missingMediaShowsRelinkAndRemove() {

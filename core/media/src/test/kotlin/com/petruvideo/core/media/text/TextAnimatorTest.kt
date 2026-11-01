@@ -28,7 +28,9 @@ class TextAnimatorTest {
 
     @Test
     fun `slides move vertically and pop scales`() {
-        val c = base.copy(animIn = TextAnimation(AnimKind.SlideUp, 500), animOut = TextAnimation(AnimKind.SlideDown, 500))
+        val c = base.copy(
+            animIn = TextAnimation(AnimKind.SlideUp, 500), animOut = TextAnimation(AnimKind.SlideDown, 500),
+        )
         (TextAnimator.at(c, 1_000).offsetY > 0.07f) shouldBe true
         TextAnimator.at(c, 3_000).offsetY shouldBe 0f
         (TextAnimator.at(c, 4_990).offsetY > 0.07f) shouldBe true
@@ -39,7 +41,8 @@ class TextAnimatorTest {
 
     @Test
     fun `short clips limit the animations to half each`() {
-        val c = TextClip("a", "x", 0, 400, animIn = TextAnimation(AnimKind.Fade, 1_500), animOut = TextAnimation(AnimKind.Fade, 1_500))
+        val long = TextAnimation(AnimKind.Fade, 1_500)
+        val c = TextClip("a", "x", 0, 400, animIn = long, animOut = long)
         TextAnimator.at(c, 200).alpha shouldBe 1f
         (TextAnimator.at(c, 100).alpha < 1f) shouldBe true
     }

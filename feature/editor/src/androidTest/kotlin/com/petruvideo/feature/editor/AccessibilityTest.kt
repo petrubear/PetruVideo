@@ -46,6 +46,7 @@ class AccessibilityTest {
         sheet: SheetState? = null,
         reverbPanel: ReverbPanelState? = null,
         audioPanel: AudioPanelState? = null,
+        textPanel: TextPanelState? = null,
         fontScale: Float = 1f,
     ) {
         val state = EditorState(
@@ -58,6 +59,7 @@ class AccessibilityTest {
             sheet = sheet,
             reverbPanel = reverbPanel,
             audioPanel = audioPanel,
+            textPanel = textPanel,
             selectedReverb = reverbPanel?.reverb,
         )
         runAndroidComposeUiTest<ComponentActivity> {
@@ -149,5 +151,28 @@ class AccessibilityTest {
     @Test
     fun equalizerPanelWithLargeFont() = check(
         ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.Eq), fontScale = 2f,
+    )
+
+    private val textClip = com.petruvideo.core.model.TextClip("t1", "Hello", 0, 3_000)
+
+    private fun text(kind: TextToolKind) = check(
+        ClipSelection.Text("t1"),
+        listOf(ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete),
+        textPanel = TextPanelState(kind, textClip),
+    )
+
+    @Test
+    fun textEditPanel() = text(TextToolKind.Edit)
+
+    @Test
+    fun textStylePanel() = text(TextToolKind.Style)
+
+    @Test
+    fun textAnimationPanel() = text(TextToolKind.Animation)
+
+    @Test
+    fun textStylePanelWithLargeFont() = check(
+        ClipSelection.Text("t1"), listOf(ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim),
+        textPanel = TextPanelState(TextToolKind.Style, textClip), fontScale = 2f,
     )
 }

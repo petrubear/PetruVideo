@@ -187,7 +187,7 @@ fun FadeControls(fx: AudioFx, clipLengthMs: Long, onEvent: (EditorEvent) -> Unit
 }
 
 @Composable
-private fun FxSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun FxSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

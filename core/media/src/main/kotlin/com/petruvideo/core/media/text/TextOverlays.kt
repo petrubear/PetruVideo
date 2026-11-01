@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.OverlayEffect
 import com.petruvideo.core.model.TextClip
+import com.petruvideo.core.model.TextStyle
 
 /**
  * The overlay of one text clip. It reads [clip] each frame, so a live edit only replaces the value; the bitmap is
@@ -24,7 +25,7 @@ class TextClipOverlay(initial: TextClip, private val fallbackWidth: Int, private
     private var cacheKey: Key? = null
     private var cached: Bitmap? = null
 
-    private data class Key(val text: String, val style: com.petruvideo.core.model.TextStyle, val size: Int, val w: Int, val h: Int)
+    private data class Key(val text: String, val style: TextStyle, val size: Int, val w: Int, val h: Int)
 
     override fun configure(videoSize: Size) {
         frame = videoSize

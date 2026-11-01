@@ -41,7 +41,11 @@ private fun iconFor(tab: ToolbarTab): ImageVector = when (tab) {
 
 /** The main tool bar: Edit is active, every other entry is dimmed and shows "coming soon" when tapped. */
 @Composable
-fun MainToolBar(onInactiveTap: (String) -> Unit, modifier: Modifier = Modifier) {
+fun MainToolBar(
+    onInactiveTap: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    onTab: (ToolbarTab) -> Unit = {},
+) {
     Row(
         modifier
             .fillMaxWidth()
@@ -58,7 +62,7 @@ fun MainToolBar(onInactiveTap: (String) -> Unit, modifier: Modifier = Modifier) 
                 label = tab.label,
                 icon = iconFor(tab),
                 active = tab.active,
-                onClick = { if (!tab.active) onInactiveTap(tab.label) },
+                onClick = { if (tab.active) onTab(tab) else onInactiveTap(tab.label) },
             )
         }
     }
@@ -88,5 +92,24 @@ internal fun ToolButton(
     ) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
         Text(label, style = PetruType.Tiny, color = color)
+    }
+}
+
+/** The bar of the Text tab with nothing selected: back to the Edit tools, and Add text at the playhead. */
+@Composable
+fun TextTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(PetruColors.Background)
+            .border(1.dp, PetruColors.SurfaceHigh)
+            .navigationBarsPadding()
+            .height(76.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        ToolButton(label = "Add text", icon = PetruIcons.Add, active = true, onClick = onAdd)
     }
 }

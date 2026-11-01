@@ -23,10 +23,14 @@ import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.ReverbPresets
 import com.petruvideo.core.model.SPEED_UNIT
+import com.petruvideo.core.model.TextAnimation
+import com.petruvideo.core.model.TextClip
+import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
 import com.petruvideo.core.model.engine.AddAudioClips
+import com.petruvideo.core.model.engine.AddText
 import com.petruvideo.core.model.engine.AddVideoClips
 import com.petruvideo.core.model.engine.AddVideoItem
 import com.petruvideo.core.model.engine.ApplyReverbPreset
@@ -36,6 +40,7 @@ import com.petruvideo.core.model.engine.Delete
 import com.petruvideo.core.model.engine.DetachAudio
 import com.petruvideo.core.model.engine.Duplicate
 import com.petruvideo.core.model.engine.MoveAudioClip
+import com.petruvideo.core.model.engine.MoveText
 import com.petruvideo.core.model.engine.MoveVideoClip
 import com.petruvideo.core.model.engine.Notice
 import com.petruvideo.core.model.engine.RelinkMedia
@@ -48,13 +53,19 @@ import com.petruvideo.core.model.engine.SetNoiseReduction
 import com.petruvideo.core.model.engine.SetReverbEnabled
 import com.petruvideo.core.model.engine.SetReverbSettings
 import com.petruvideo.core.model.engine.SetSpeed
+import com.petruvideo.core.model.engine.SetTextAnimation
+import com.petruvideo.core.model.engine.SetTextContent
+import com.petruvideo.core.model.engine.SetTextPlacement
+import com.petruvideo.core.model.engine.SetTextStyle
 import com.petruvideo.core.model.engine.SetVideoMuted
 import com.petruvideo.core.model.engine.SetVoiceFx
 import com.petruvideo.core.model.engine.SetVolume
 import com.petruvideo.core.model.engine.Split
 import com.petruvideo.core.model.engine.TrimEnd
 import com.petruvideo.core.model.engine.TrimStart
+import com.petruvideo.core.model.engine.TrimText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.min
 import kotlinx.coroutines.channels.Channel
@@ -96,11 +107,16 @@ class EditorViewModel @Inject constructor(
         val reverbClipId: String? = null,
         /** The open Audio list or tool panel: which clip and which tool. */
         val audio: OpenAudio? = null,
+        val tab: ToolbarTab = ToolbarTab.Edit,
+        /** The open text panel: which tool and which clip. */
+        val text: OpenText? = null,
     )
 
     private data class OpenSheet(val tool: ClipTool, val clipId: String)
 
     private data class OpenAudio(val kind: AudioToolKind, val clipId: String)
+
+    private data class OpenText(val kind: TextToolKind, val clipId: String)
 
     private data class Core(
         val project: Project?,
@@ -115,7 +131,14 @@ class EditorViewModel @Inject constructor(
         override fun equals(other: Any?) = other is Content &&
             other.timeline.videoLane == timeline.videoLane &&
             other.timeline.audioLane == timeline.audioLane &&
-            other.timeline.media == timeline.media
+            other.timeline.media == timeline.media &&
+            other.timeline.textLane.map { it.id } == timeline.textLane.map { it.id } &&
+            other.textBeyondVideo == textBeyondVideo
+
+        /** Text past the end of the video makes the video sequence run on, which needs a rebuild. */
+        private val textBeyondVideo: Long
+            get() = (timeline.textLane.maxOfOrNull { it.endMs } ?: 0L).minus(timeline.videoLengthMs).coerceAtLeast(0)
+
         override fun hashCode() = timeline.videoLane.hashCode() * HASH_MIX + timeline.media.hashCode()
     }
 
@@ -145,6 +168,10 @@ class EditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             pressure.quality.drop(1).collect { quality -> session.timeline.value?.let { engine.load(it, quality) } }
+        }
+        viewModelScope.launch {
+            session.timeline.filterNotNull().map { it.textLane }.distinctUntilChanged()
+                .collect { lane -> lane.forEach(engine::setTextLive) }
         }
         viewModelScope.launch { pressure.notices.collect(::onPressureNotice) }
     }
@@ -177,8 +204,8 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.ReplaceAudio -> run(ReplaceAudio(event.clipId, event.replacement))
             EditorEvent.AddClip -> { pause(); effectChannel.trySend(EditorEffect.OpenAddMedia) }
             is EditorEvent.RequestRelink -> effectChannel.trySend(EditorEffect.PickRelinkFile(event.mediaItemId))
-            EditorEvent.Undo -> session.undo()
-            EditorEvent.Redo -> session.redo()
+            EditorEvent.Undo -> { flushText(); session.undo() }
+            EditorEvent.Redo -> { flushText(); session.redo() }
             is EditorEvent.SetFullscreen -> local.update { it.copy(fullscreen = event.on) }
             is EditorEvent.Relink -> relink(event.mediaItemId, event.replacement)
             is EditorEvent.RemoveMissing -> session.apply(RemoveMissingMedia(event.mediaItemId))
@@ -201,6 +228,15 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.AudioFxCommit -> commitFx(event.fx)
             is EditorEvent.AudioFxReset -> resetFx(event.kind)
             EditorEvent.AudioDismiss -> closeAudio()
+            is EditorEvent.SelectTab -> selectTab(event.tab)
+            EditorEvent.AddText -> addText()
+            is EditorEvent.OpenTextTool -> openText(event.kind)
+            is EditorEvent.TextPreview -> previewText(event.clip)
+            is EditorEvent.TextCommit -> commitText(event.clip)
+            is EditorEvent.TextReset -> resetText(event.kind)
+            EditorEvent.TextDismiss -> closeText()
+            is EditorEvent.MoveTextClip -> run(MoveText(event.clipId, event.startMs))
+            is EditorEvent.TrimTextClip -> run(TrimText(event.clipId, event.startMs, event.endMs))
         }
     }
 
@@ -239,10 +275,11 @@ class EditorViewModel @Inject constructor(
     private fun select(selection: ClipSelection?) {
         val timeline = session.timeline.value
         if (selection != null && (timeline == null || !exists(timeline, selection))) return
+        flushText()
         closeSheet()
         closeReverb()
         closeAudio()
-        local.update { it.copy(selection = selection) }
+        local.update { it.copy(selection = selection, text = null) }
     }
 
     private fun selectedClipId(): String? = local.value.selection?.clipId
@@ -289,6 +326,87 @@ class EditorViewModel @Inject constructor(
     private fun restoreLiveReverb(clipId: String) {
         val timeline = session.timeline.value ?: return
         soundClipReverb(timeline, clipId)?.let { engine.setClipReverbLive(clipId, it) }
+    }
+
+    private var pendingText: TextClip? = null
+
+    private fun selectTab(tab: ToolbarTab) {
+        if (!tab.active) return
+        local.update { it.copy(tab = tab) }
+    }
+
+    private fun addText() {
+        flushText()
+        val id = UUID.randomUUID().toString()
+        val at = engine.state.value.positionMs
+        if (session.apply(AddText(at, { id })) !is CommandResult.Applied) return
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        local.update { it.copy(selection = ClipSelection.Text(id), text = OpenText(TextToolKind.Edit, id)) }
+    }
+
+    private fun openText(kind: TextToolKind) {
+        val selection = local.value.selection as? ClipSelection.Text ?: return
+        flushText()
+        local.update { it.copy(text = OpenText(kind, selection.clipId)) }
+    }
+
+    private fun closeText() {
+        flushText()
+        local.update { it.copy(text = null) }
+    }
+
+    private fun previewText(clip: TextClip) {
+        pendingText = clip
+        engine.setTextLive(clip)
+    }
+
+    /** Commits typing or a drag that was only previewed, so nothing is lost when the panel or selection changes. */
+    private fun flushText() {
+        val pending = pendingText ?: return
+        pendingText = null
+        commitText(pending)
+    }
+
+    /** Applies each changed part of [clip] to the stored clip; a gesture changes one part, so it is one undo step. */
+    private fun commitText(clip: TextClip) {
+        pendingText = null
+        val current = session.timeline.value?.textLane?.firstOrNull { it.id == clip.id } ?: return
+        val id = clip.id
+        val commands = listOfNotNull(
+            SetTextContent(id, clip.text).takeIf { clip.text != current.text },
+            SetTextStyle(id, clip.style).takeIf { clip.style != current.style },
+            SetTextPlacement(id, clip.xPermille, clip.yPermille, clip.sizePermille).takeIf {
+                clip.xPermille != current.xPermille || clip.yPermille != current.yPermille ||
+                    clip.sizePermille != current.sizePermille
+            },
+            SetTextAnimation(id, clip.animIn, clip.animOut).takeIf {
+                clip.animIn != current.animIn || clip.animOut != current.animOut
+            },
+            TrimText(id, clip.startMs, clip.endMs).takeIf {
+                clip.startMs != current.startMs || clip.durationMs != current.durationMs
+            },
+        )
+        val applied = commands.map { session.apply(it) }.any { it is CommandResult.Applied }
+        if (!applied) engine.setTextLive(current)
+    }
+
+    private fun resetText(kind: TextToolKind) {
+        val id = (local.value.selection as? ClipSelection.Text)?.clipId ?: return
+        val current = session.timeline.value?.textLane?.firstOrNull { it.id == id } ?: return
+        when (kind) {
+            TextToolKind.Style -> commitText(current.copy(style = TextStyle()))
+            TextToolKind.Animation -> commitText(current.copy(animIn = TextAnimation(), animOut = TextAnimation()))
+            TextToolKind.Edit -> Unit
+        }
+    }
+
+    private fun textPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenText?): TextPanelState? {
+        if (timeline == null || selection == null || open == null) return null
+        if (open.clipId != selection.clipId) return null
+        val clip = timeline.textLane.firstOrNull { it.id == open.clipId } ?: return null
+        return TextPanelState(open.kind, clip)
     }
 
     private fun soundClip(timeline: Timeline, id: String): Pair<AudioFx, Long>? =
@@ -437,6 +555,9 @@ class EditorViewModel @Inject constructor(
             ClipTool.Mute -> toggleMute(timeline, id)
             ClipTool.Reverb -> openReverb(timeline, selection)
             ClipTool.Replace -> effectChannel.trySend(EditorEffect.PickReplacementAudio(id))
+            ClipTool.TextEdit -> openText(TextToolKind.Edit)
+            ClipTool.TextStyle -> openText(TextToolKind.Style)
+            ClipTool.TextAnim -> openText(TextToolKind.Animation)
         }
     }
 
@@ -546,6 +667,9 @@ class EditorViewModel @Inject constructor(
             selectedAudioMuted = isMuted(timeline, selection?.clipId),
             reverbPanel = reverbPanelFor(timeline, selection, local.reverbClipId),
             audioPanel = audioPanelFor(timeline, selection, local.audio),
+            toolbarTab = local.tab,
+            textPanel = textPanelFor(timeline, selection, local.text),
+            selectedText = timeline?.textLane?.firstOrNull { it.id == selection?.clipId },
             selectedReverb = selection?.let { sel -> timeline?.let { soundClipReverb(it, sel.clipId) } },
             selectedFx = sound?.first,
             selectedClipLengthMs = sound?.second ?: 0,
@@ -630,10 +754,15 @@ class EditorViewModel @Inject constructor(
     private fun exists(timeline: Timeline, selection: ClipSelection) = when (selection) {
         is ClipSelection.Video -> timeline.videoLane.any { it.id == selection.clipId }
         is ClipSelection.Audio -> timeline.audioLane.any { it.id == selection.clipId }
+        is ClipSelection.Text -> timeline.textLane.any { it.id == selection.clipId }
     }
 
     private fun clipToolsFor(timeline: Timeline?, selection: ClipSelection?): List<ClipTool> = when (selection) {
         null -> emptyList()
+        is ClipSelection.Text -> listOf(
+            ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Split, ClipTool.Duplicate,
+            ClipTool.Delete,
+        )
         is ClipSelection.Audio ->
             listOf(
                 ClipTool.Split,

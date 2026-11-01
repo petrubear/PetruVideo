@@ -30,6 +30,9 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.Mute -> if (muted) PetruIcons.Volume else PetruIcons.Mute
     ClipTool.Reverb -> PetruIcons.Reverb
     ClipTool.Replace -> PetruIcons.Replace
+    ClipTool.TextEdit -> PetruIcons.ToolText
+    ClipTool.TextStyle -> PetruIcons.ToolFilters
+    ClipTool.TextAnim -> PetruIcons.ToolEffects
 }
 
 /**

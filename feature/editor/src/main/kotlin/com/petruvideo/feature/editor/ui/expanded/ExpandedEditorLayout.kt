@@ -28,7 +28,11 @@ import com.petruvideo.feature.editor.ClipSelection
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ui.ClipToolBar
+import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
+import com.petruvideo.feature.editor.ui.TextTabBar
+import com.petruvideo.feature.editor.ui.TextPanel
+import com.petruvideo.feature.editor.ui.PreviewWithText
 import com.petruvideo.feature.editor.ui.ReverbPanel
 import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ClipTool
@@ -67,7 +71,10 @@ fun ExpandedEditorLayout(
                 Column(Modifier.fillMaxSize()) {
                     EditorTopBar(state.header, onBack, { onEvent(EditorEvent.OpenExport) })
                     Row(Modifier.weight(1f)) {
-                        ToolRail({ onEvent(EditorEvent.TapInactiveTool(it)) })
+                        ToolRail(
+                            { onEvent(EditorEvent.TapInactiveTool(it)) },
+                            onTab = { onEvent(EditorEvent.SelectTab(it)) },
+                        )
                         MediaColumn(state, onEvent, Modifier.weight(1f))
                     }
                     PreviewColumn(state, player, onEvent, Modifier.height(PREVIEW_HEIGHT))
@@ -82,6 +89,7 @@ fun ExpandedEditorLayout(
                         state.selectedAudioMuted,
                         state.selectedFx,
                         state.selectedClipLengthMs,
+                        state.selectedText,
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                     )
@@ -104,6 +112,7 @@ fun ExpandedEditorLayout(
                             state.selectedAudioMuted,
                             state.selectedFx,
                             state.selectedClipLengthMs,
+                            state.selectedText,
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                         )
@@ -117,12 +126,18 @@ fun ExpandedEditorLayout(
                 SpeedVolumeSheet(state.sheet, onEvent)
                 ReverbPanel(state.reverbPanel, onEvent)
                 AudioPanel(state.audioPanel, onEvent)
+                TextPanel(state.textPanel, onEvent)
             }
             ClipToolBar(
                     state.clipTools,
                     state.selectedAudioMuted,
                     onTool = { onEvent(EditorEvent.UseTool(it)) },
                     disabled = state.disabledTools.keys,
+            )
+        } else if (state.toolbarTab == ToolbarTab.Text) {
+            TextTabBar(
+                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
+                onAdd = { onEvent(EditorEvent.AddText) },
             )
         }
     }
@@ -142,7 +157,7 @@ private fun MediaColumn(state: EditorState, onEvent: (EditorEvent) -> Unit, modi
 @Composable
 private fun PreviewColumn(state: EditorState, player: Player?, onEvent: (EditorEvent) -> Unit, modifier: Modifier) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        PreviewSurface(player, Modifier.weight(1f).fillMaxWidth())
+        PreviewWithText(state, player, onEvent, Modifier.weight(1f).fillMaxWidth())
         TransportRow(
             playback = state.playback,
             canUndo = state.canUndo,
@@ -165,6 +180,10 @@ private fun TimelineWithLabels(state: EditorState, onEvent: (EditorEvent) -> Uni
             LaneLabel("V1", 56.dp)
             Spacer(Modifier.height(LANE_LABEL_GAP_DP.dp))
             LaneLabel("A1", 32.dp)
+            if (timeline.textLane.isNotEmpty()) {
+                Spacer(Modifier.height(LANE_LABEL_GAP_DP.dp))
+                LaneLabel("T1", textLaneHeight(timeline.textLane))
+            }
         }
         TimelineView(
             timeline = timeline,
@@ -175,10 +194,17 @@ private fun TimelineWithLabels(state: EditorState, onEvent: (EditorEvent) -> Uni
             onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
             onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
             onAddClip = { onEvent(EditorEvent.AddClip) },
+            onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
+            onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
             onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
             modifier = Modifier.weight(1f),
         )
     }
+}
+
+private fun textLaneHeight(clips: List<com.petruvideo.core.model.TextClip>): androidx.compose.ui.unit.Dp {
+    val rows = com.petruvideo.core.model.engine.TextRows.rowCount(clips).coerceAtLeast(1)
+    return 36.dp * rows + 4.dp * (rows - 1)
 }
 
 @Composable
@@ -223,6 +249,9 @@ private fun selectedClip(state: EditorState): InspectorClip? {
         }
         is ClipSelection.Audio -> timeline.audioLane.firstOrNull { it.id == selection.clipId }?.let {
             inspectorClip(it.mediaItemId, "Audio", it.lengthMs, it.timelineStartMs, timeline.media[it.mediaItemId])
+        }
+        is ClipSelection.Text -> timeline.textLane.firstOrNull { it.id == selection.clipId }?.let {
+            inspectorClip(it.text.lineSequence().firstOrNull().orEmpty(), "Text", it.durationMs, it.startMs, null)
         }
     }
 }

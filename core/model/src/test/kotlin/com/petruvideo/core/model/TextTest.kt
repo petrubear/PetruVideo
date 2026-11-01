@@ -37,7 +37,8 @@ class TextTest {
 
     @Test
     fun `animations are limited to half the clip each and none counts as zero`() {
-        val c = clip("a", 0, 1_000).copy(animIn = TextAnimation(AnimKind.Fade, 900), animOut = TextAnimation(AnimKind.Pop, 400))
+        val c = clip("a", 0, 1_000)
+            .copy(animIn = TextAnimation(AnimKind.Fade, 900), animOut = TextAnimation(AnimKind.Pop, 400))
         c.effectiveAnimMs() shouldBe (500L to 400L)
         c.copy(animIn = TextAnimation()).effectiveAnimMs() shouldBe (0L to 400L)
         c.animIn.lengthMs shouldBe 900
@@ -50,7 +51,9 @@ class TextTest {
 
     @Test
     fun `overlapping clips get separate rows by first fit`() {
-        val rows = TextRows.assign(listOf(clip("a", 0, 4_000), clip("b", 1_000, 2_000), clip("c", 4_000, 1_000), clip("d", 2_000, 3_000)))
+        val rows = TextRows.assign(
+            listOf(clip("a", 0, 4_000), clip("b", 1_000, 2_000), clip("c", 4_000, 1_000), clip("d", 2_000, 3_000)),
+        )
         rows["a"] shouldBe 0
         rows["b"] shouldBe 1
         rows["c"] shouldBe 0

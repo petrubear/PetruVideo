@@ -3,7 +3,7 @@ package com.petruvideo.core.media.text
 import com.petruvideo.core.model.AnimKind
 import com.petruvideo.core.model.TextClip
 
-/** What a text clip looks like at one moment: whether it shows, its opacity, vertical shift (share of frame) and scale. */
+/** What a text clip looks like at one moment: if it shows, its opacity, vertical shift (frame share), and scale. */
 data class TextLook(val visible: Boolean, val alpha: Float, val offsetY: Float, val scale: Float) {
     companion object {
         val Hidden = TextLook(false, 0f, 0f, 1f)

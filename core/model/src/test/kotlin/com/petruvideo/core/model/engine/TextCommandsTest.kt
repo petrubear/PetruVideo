@@ -37,8 +37,10 @@ class TextCommandsTest {
     @Test
     fun `content style placement and animation commands change one clip each`() {
         val t = withText()
-        applied(SetTextContent("t1", "Day one\nline two"), t).timeline.textLane.single().text shouldBe "Day one\nline two"
-        applied(SetTextStyle("t1", TextStyle(font = TextFont.Mono)), t).timeline.textLane.single().style.font shouldBe TextFont.Mono
+        applied(SetTextContent("t1", "Day one\nline two"), t)
+            .timeline.textLane.single().text shouldBe "Day one\nline two"
+        applied(SetTextStyle("t1", TextStyle(font = TextFont.Mono)), t)
+            .timeline.textLane.single().style.font shouldBe TextFont.Mono
         applied(SetTextPlacement("t1", 9_999, -4, 5), t).timeline.textLane.single().let {
             it.xPermille shouldBe 1000
             it.yPermille shouldBe 0

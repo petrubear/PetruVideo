@@ -28,7 +28,11 @@ import com.petruvideo.feature.editor.ui.ClipToolBar
 import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.MainToolBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
+import com.petruvideo.feature.editor.ToolbarTab
 import com.petruvideo.feature.editor.ui.AudioPanel
+import com.petruvideo.feature.editor.ui.TextPanel
+import com.petruvideo.feature.editor.ui.TextTabBar
+import com.petruvideo.feature.editor.ui.PreviewWithText
 import com.petruvideo.feature.editor.ui.ReverbPanel
 import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ui.TimelineView
@@ -45,7 +49,7 @@ fun TabletopPreviewHalf(
 ) {
     Column(modifier.fillMaxSize().statusBarsPadding()) {
         EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
-        PreviewSurface(player, Modifier.weight(1f).fillMaxWidth())
+        PreviewWithText(state, player, onEvent, Modifier.weight(1f).fillMaxWidth())
     }
 }
 
@@ -110,6 +114,8 @@ fun TabletopControlsHalf(
                     onMoveClip = { id, index -> onEvent(EditorEvent.MoveClip(id, index)) },
                     onTrim = { id, start, ms -> onEvent(EditorEvent.TrimClip(id, start, ms)) },
                     onAddClip = { onEvent(EditorEvent.AddClip) },
+                    onMoveText = { id, start -> onEvent(EditorEvent.MoveTextClip(id, start)) },
+                    onTrimText = { id, start, end -> onEvent(EditorEvent.TrimTextClip(id, start, end)) },
                     onDropMedia = { id, atMs -> onEvent(EditorEvent.AddMediaAt(id, atMs)) },
                 )
             }
@@ -118,14 +124,23 @@ fun TabletopControlsHalf(
             SpeedVolumeSheet(state.sheet, onEvent)
             ReverbPanel(state.reverbPanel, onEvent)
             AudioPanel(state.audioPanel, onEvent)
+            TextPanel(state.textPanel, onEvent)
             ClipToolBar(
                     state.clipTools,
                     state.selectedAudioMuted,
                     onTool = { onEvent(EditorEvent.UseTool(it)) },
                     disabled = state.disabledTools.keys,
             )
+        } else if (state.toolbarTab == ToolbarTab.Text) {
+            TextTabBar(
+                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
+                onAdd = { onEvent(EditorEvent.AddText) },
+            )
         } else {
-            MainToolBar(onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) })
+            MainToolBar(
+                onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },
+                onTab = { onEvent(EditorEvent.SelectTab(it)) },
+            )
         }
     }
 }
