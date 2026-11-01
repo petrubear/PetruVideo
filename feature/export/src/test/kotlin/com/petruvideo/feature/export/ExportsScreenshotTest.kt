@@ -11,6 +11,8 @@ import com.petruvideo.core.model.export.FrameRate
 import com.petruvideo.core.model.export.Quality
 import com.petruvideo.core.model.export.Resolution
 import com.petruvideo.feature.export.ui.ExportsScreen
+import java.util.TimeZone
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 
@@ -32,6 +34,13 @@ class ExportsScreenshotTest {
         ExportRow(record("b", "Birthday", 1_792_000_000_000, big), true),
         ExportRow(record("c", "Hike", 1_790_000_000_000, settings(Resolution.R720, FrameRate.F24, Quality.Smaller))),
     )
+
+    companion object {
+        /** The dates in the list follow the time zone, so the goldens are made in one on every machine. */
+        @JvmStatic
+        @BeforeClass
+        fun fixTimeZone() = TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+    }
 
     @Composable
     private fun Show(state: ExportsUiState) {
