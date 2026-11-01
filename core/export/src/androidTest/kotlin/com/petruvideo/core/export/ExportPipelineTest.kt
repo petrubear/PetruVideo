@@ -71,6 +71,10 @@ class ExportPipelineTest {
         override suspend fun job(projectId: String): StoredJob? = null
         override suspend fun saveJob(job: StoredJob) = Unit
         override suspend fun markInterrupted() = 0
+        val records = mutableListOf<com.petruvideo.core.model.export.ExportRecord>()
+        override suspend fun addRecord(record: com.petruvideo.core.model.export.ExportRecord) {
+            records += record
+        }
     }
 
     private val encoders = object : EncoderCapabilities {
@@ -108,8 +112,10 @@ class ExportPipelineTest {
         audioLane = audio,
     )
 
+    private val repo = Repo()
+
     private fun coordinator(saver: ExportSaver = GallerySaver(context)) =
-        ExportCoordinator(TransformerRunner(context), saver, Repo(), encoders, { Long.MAX_VALUE }, cache, scope)
+        ExportCoordinator(TransformerRunner(context), saver, repo, encoders, { Long.MAX_VALUE }, cache, scope)
 
     private fun waitForEnd(c: ExportCoordinator, timeoutMs: Long = 120_000): ExportState {
         val end = System.currentTimeMillis() + timeoutMs
@@ -237,6 +243,19 @@ class ExportPipelineTest {
         }
         File(cache, "${(state as ExportState.Finished).uri.hashCode()}").exists() shouldBe false
         cache.listFiles().orEmpty().none { it.name.endsWith(".mp4") } shouldBe true
+    }
+
+    @Test
+    fun aFinishedExportAddsOneHistoryRecordWithTheSavedVideo() {
+        val a = item("video_with_audio.mp4")
+        val timeline = project(VideoClip("c1", a.id, 0, 1_000, true), media = listOf(a))
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-history")
+        state.shouldBeFinished()
+        val record = repo.records.single()
+        record.uri shouldBe uri
+        record.projectName shouldBe "pipeline-history"
+        (record.bytes > 0 && record.durationMs in 900..1_200) shouldBe true
+        record.settings.quality shouldBe Quality.Smaller
     }
 
     @Test

@@ -107,6 +107,15 @@ interface ExportDao {
     @Query("SELECT * FROM export_job WHERE projectId = :projectId")
     suspend fun job(projectId: String): ExportJobEntity?
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun putRecord(record: ExportRecordEntity)
+
+    @Query("SELECT * FROM export_record ORDER BY finishedAt DESC")
+    fun observeRecords(): kotlinx.coroutines.flow.Flow<List<ExportRecordEntity>>
+
+    @Query("DELETE FROM export_record WHERE id = :id")
+    suspend fun deleteRecord(id: String)
+
     @Query("UPDATE export_job SET state = 'Failed', reason = 'Interrupted' WHERE state IN ('Waiting', 'Rendering')")
     suspend fun markInterrupted(): Int
 }

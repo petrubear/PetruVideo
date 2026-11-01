@@ -208,6 +208,20 @@ data class ExportSettingsEntity(
     val quality: String,
 )
 
+/** A finished export kept in the history (feature 008); independent of the project it came from. */
+@Entity(tableName = "export_record", indices = [Index("finishedAt")])
+data class ExportRecordEntity(
+    @PrimaryKey val id: String,
+    val projectName: String,
+    val uri: String,
+    val durationMs: Long,
+    val bytes: Long,
+    val resolution: String,
+    val frameRate: Int,
+    val quality: String,
+    val finishedAt: Long,
+)
+
 /** The latest export of a project; [state] and the result columns are the flat form of an export state. */
 @Entity(tableName = "export_job")
 data class ExportJobEntity(

@@ -183,7 +183,7 @@ private fun BottomNavigation(onEvent: (ProjectsEvent) -> Unit, modifier: Modifie
         NavEntry("Templates", PetruIcons.NavTemplates, active = false) {
             onEvent(ProjectsEvent.TapInactive("Templates"))
         }
-        NavEntry("Exports", PetruIcons.NavExports, active = false) { onEvent(ProjectsEvent.TapInactive("Exports")) }
+        NavEntry("Exports", PetruIcons.NavExports, active = true) { onEvent(ProjectsEvent.OpenExports) }
     }
 }
 

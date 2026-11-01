@@ -32,6 +32,10 @@ import org.junit.Test
 class ExportCoordinatorTest {
     private class FakeRepo : ExportRepository {
         val jobs = mutableListOf<StoredJob>()
+        val records = mutableListOf<com.petruvideo.core.model.export.ExportRecord>()
+        override suspend fun addRecord(record: com.petruvideo.core.model.export.ExportRecord) {
+            records += record
+        }
         override suspend fun settings(projectId: String) = null
         override suspend fun saveSettings(projectId: String, settings: ExportSettings) = Unit
         override suspend fun job(projectId: String) = jobs.lastOrNull { it.projectId == projectId }
@@ -97,6 +101,44 @@ class ExportCoordinatorTest {
         e.coordinator.job.value!!.state shouldBe ExportState.Finished("content://media/9", 5, 10_000)
         File(e.dir, "job0.mp4").exists() shouldBe false
         e.repo.jobs.last().state.shouldBeInstanceOf<ExportState.Finished>()
+    }
+
+    @Test
+    fun `a finished export adds one record and a failed or cancelled one adds none`() = runTest {
+        val e = env()
+        e.coordinator.start("p", "Trip", timeline(), settings) shouldBe null
+        advanceUntilIdle()
+        e.runner.gate.complete(RunResult.Done(5, 10_000))
+        advanceUntilIdle()
+        val record = e.repo.records.single()
+        record.projectName shouldBe "Trip"
+        record.uri shouldBe "content://media/9"
+        record.bytes shouldBe 5
+        record.durationMs shouldBe 10_000
+        record.settings shouldBe settings
+        record.finishedAt shouldBe 1000L
+        record.formatLabel shouldBe "1080p, 30 fps, Recommended"
+
+        val failing = env()
+        failing.coordinator.start("p", "Trip", timeline(), settings)
+        advanceUntilIdle()
+        failing.runner.gate.complete(RunResult.Error("boom"))
+        advanceUntilIdle()
+        failing.repo.records shouldBe emptyList()
+
+        val cancelled = env()
+        cancelled.coordinator.start("p", "Trip", timeline(), settings)
+        advanceUntilIdle()
+        cancelled.coordinator.cancel()
+        advanceUntilIdle()
+        cancelled.repo.records shouldBe emptyList()
+
+        val unsaved = env(saver = FakeSaver(null))
+        unsaved.coordinator.start("p", "Trip", timeline(), settings)
+        advanceUntilIdle()
+        unsaved.runner.gate.complete(RunResult.Done(5, 10_000))
+        advanceUntilIdle()
+        unsaved.repo.records shouldBe emptyList()
     }
 
     @Test

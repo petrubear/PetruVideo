@@ -7,6 +7,7 @@ import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.export.BitrateTable
 import com.petruvideo.core.model.export.ExportFailure
+import com.petruvideo.core.model.export.ExportRecord
 import com.petruvideo.core.model.export.ExportSettings
 import com.petruvideo.core.model.export.ExportState
 import kotlinx.coroutines.CancellationException
@@ -137,6 +138,11 @@ class ExportCoordinator(
 
     private suspend fun publish(job: ExportJob, file: File, durationMs: Long) {
         val saved = saver.save(file, "${job.projectName.ifBlank { "PetruVideo" }}-${job.startedAt}.mp4")
+        if (saved != null) {
+            repository.addRecord(
+                ExportRecord(job.id, job.projectName, saved.uri, durationMs, saved.bytes, job.settings, clock()),
+            )
+        }
         finish(
             job,
             if (saved == null) {

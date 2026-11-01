@@ -23,6 +23,7 @@ import com.petruvideo.feature.projects.ui.ProjectsScreen
 fun ProjectsRoute(
     onOpenEditor: (projectId: String) -> Unit,
     onOpenExport: (projectId: String) -> Unit,
+    onOpenExports: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProjectsViewModel = hiltViewModel(),
 ) {
@@ -33,6 +34,7 @@ fun ProjectsRoute(
             when (effect) {
                 is ProjectsEffect.OpenEditor -> onOpenEditor(effect.projectId)
                 is ProjectsEffect.OpenExport -> onOpenExport(effect.projectId)
+                ProjectsEffect.OpenExports -> onOpenExports()
             }
         }
     }
