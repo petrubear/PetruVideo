@@ -7,8 +7,10 @@ import com.petruvideo.core.data.importing.ImportMediaUseCase
 import com.petruvideo.core.data.importing.MediaImporter
 import com.petruvideo.core.data.repo.ExportRepository
 import com.petruvideo.core.data.repo.ProjectRepository
+import com.petruvideo.core.data.repo.PrefsSettingsRepository
 import com.petruvideo.core.data.repo.RoomExportRepository
 import com.petruvideo.core.data.repo.RoomProjectRepository
+import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.media.probe.MediaProber
 import dagger.Module
@@ -46,6 +48,11 @@ object DataModule {
     @Provides
     @Singleton
     fun exportRepository(db: PetruDatabase): ExportRepository = RoomExportRepository(db.exportDao())
+
+    @Provides
+    @Singleton
+    fun settingsRepository(@ApplicationContext context: Context): SettingsRepository =
+        PrefsSettingsRepository(context.getSharedPreferences("petruvideo-settings", Context.MODE_PRIVATE))
 
     @Provides
     fun mediaImporter(prober: MediaProber): MediaImporter = ImportMediaUseCase(prober)

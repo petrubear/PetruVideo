@@ -16,6 +16,34 @@ class ResourcePressureMonitorTest {
     }
 
     @Test
+    fun theUsersSwitchKeepsQualityReducedWithoutAnyPressureOrNotice() = runBlocking<Unit> {
+        val monitor = ResourcePressureMonitor()
+        monitor.notices.test {
+            monitor.setForcedReduced(true)
+            monitor.quality.value shouldBe PreviewQuality.Reduced
+            monitor.level.value shouldBe PressureLevel.Normal
+            monitor.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+            awaitItem() shouldBe PressureNotice.QualityReduced
+            monitor.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE)
+            monitor.level.value shouldBe PressureLevel.Normal
+            monitor.quality.value shouldBe PreviewQuality.Reduced
+            awaitItem() shouldBe PressureNotice.QualityRestored
+            monitor.setForcedReduced(false)
+            monitor.quality.value shouldBe PreviewQuality.Full
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun turningTheSwitchOffKeepsReducedWhilePressureRemains() {
+        val monitor = ResourcePressureMonitor()
+        monitor.setForcedReduced(true)
+        monitor.onThermalStatus(PowerManager.THERMAL_STATUS_MODERATE)
+        monitor.setForcedReduced(false)
+        monitor.quality.value shouldBe PreviewQuality.Reduced
+    }
+
+    @Test
     fun memoryAndThermalSignalsMapToLevels() {
         PressureLevel.from(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW, null) shouldBe PressureLevel.Reduced
         PressureLevel.from(ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL, null) shouldBe PressureLevel.Critical

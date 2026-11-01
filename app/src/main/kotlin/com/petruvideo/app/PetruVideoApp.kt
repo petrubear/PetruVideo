@@ -2,6 +2,7 @@ package com.petruvideo.app
 
 import android.app.Application
 import com.petruvideo.app.di.ApplicationScope
+import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.export.ExportCoordinator
 import com.petruvideo.core.export.ExportRecovery
 import com.petruvideo.core.media.pressure.ResourcePressureMonitor
@@ -15,6 +16,7 @@ class PetruVideoApp : Application() {
     @Inject lateinit var pressure: ResourcePressureMonitor
     @Inject lateinit var exportCoordinator: ExportCoordinator
     @Inject lateinit var exportRecovery: ExportRecovery
+    @Inject lateinit var settings: SettingsRepository
     @Inject @ApplicationScope lateinit var scope: CoroutineScope
 
     override fun onCreate() {
@@ -22,6 +24,7 @@ class PetruVideoApp : Application() {
         // A render cut short by the app being closed is reported as interrupted; its leftovers are removed.
         scope.launch { exportRecovery.run() }
         scope.launch { pressure.level.collect(exportCoordinator::onPressure) }
+        scope.launch { settings.settings.collect { pressure.setForcedReduced(it.lowerPreview) } }
     }
 
     override fun onTrimMemory(level: Int) {

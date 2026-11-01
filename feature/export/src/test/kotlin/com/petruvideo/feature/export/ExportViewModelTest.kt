@@ -5,7 +5,10 @@ import com.petruvideo.core.data.repo.LoadedProject
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.repo.StoredJob
+import com.petruvideo.core.model.AppSettings
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.export.Blocker
 import com.petruvideo.core.export.EncoderCapabilities
@@ -104,6 +107,7 @@ class ExportViewModelTest {
         project: LoadedProject,
         device: DeviceLimits = DeviceLimits(2160, 60),
         exports: Exports = Exports(),
+        app: AppSettings = AppSettings(),
     ): Env {
         Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
         val session = ProjectSession(Projects(project), backgroundScope)
@@ -118,7 +122,12 @@ class ExportViewModelTest {
             CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
         )
         lateinit var env: Env
-        val vm = ExportViewModel(session, coordinator, encoders, exports) { env.started++ }
+        val settingsRepo = object : SettingsRepository {
+            override val settings = MutableStateFlow(app)
+            override fun setDefaultQuality(quality: Quality) = Unit
+            override fun setLowerPreview(on: Boolean) = Unit
+        }
+        val vm = ExportViewModel(session, coordinator, encoders, exports, { env.started++ }, settingsRepo)
         env = Env(vm, runner, exports, 0)
         vm.open("p")
         return env
@@ -166,6 +175,16 @@ class ExportViewModelTest {
         val saved = ExportSettings(Resolution.R4K, FrameRate.F60, Quality.Smaller)
         val e = env(loaded(media(1920, 1080, 30f)), exports = Exports(saved))
         e.state.settings shouldBe ExportSettings(Resolution.R1080, FrameRate.F30, Quality.Smaller)
+    }
+
+    @Test
+    fun `the Settings default quality starts a new project and a saved choice wins`() = runTest {
+        val fresh = env(loaded(media(1920, 1080, 30f)), app = AppSettings(defaultQuality = Quality.Smaller))
+        fresh.state.settings shouldBe ExportSettings(Resolution.R1080, FrameRate.F30, Quality.Smaller)
+        fresh.state.videoBitrate shouldBe 7_200_000
+        val saved = ExportSettings(Resolution.R1080, FrameRate.F30, Quality.Higher)
+        val own = env(loaded(media(1920, 1080, 30f)), exports = Exports(saved), app = AppSettings(Quality.Smaller))
+        own.state.settings shouldBe saved
     }
 
     @Test

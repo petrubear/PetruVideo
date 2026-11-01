@@ -72,6 +72,7 @@ enum class PressureNotice { QualityReduced, PlaybackPaused, QualityRestored }
 class ResourcePressureMonitor {
     private var trimLevel: Int? = null
     private var thermalStatus: Int? = null
+    private var forcedReduced = false
     private val _level = MutableStateFlow(PressureLevel.Normal)
     private val _quality = MutableStateFlow(PreviewQuality.Full)
     private val _notices = MutableSharedFlow<PressureNotice>(
@@ -83,6 +84,15 @@ class ResourcePressureMonitor {
     val notices: SharedFlow<PressureNotice> = _notices
 
     val quality: StateFlow<PreviewQuality> = _quality
+
+    /** The user's Lower preview quality switch: quality stays reduced while it is on, with or without pressure. */
+    fun setForcedReduced(on: Boolean) {
+        forcedReduced = on
+        _quality.value = quality()
+    }
+
+    private fun quality() =
+        if (forcedReduced || _level.value != PressureLevel.Normal) PreviewQuality.Reduced else PreviewQuality.Full
 
     fun onTrimMemory(level: Int) {
         trimLevel = level
@@ -107,7 +117,7 @@ class ResourcePressureMonitor {
         val next = PressureLevel.from(trimLevel, thermalStatus)
         if (next == previous) return
         _level.value = next
-        _quality.value = if (next == PressureLevel.Normal) PreviewQuality.Full else PreviewQuality.Reduced
+        _quality.value = quality()
         _notices.tryEmit(
             when {
                 next == PressureLevel.Critical -> PressureNotice.PlaybackPaused

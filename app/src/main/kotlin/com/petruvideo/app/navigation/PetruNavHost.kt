@@ -13,6 +13,7 @@ import com.petruvideo.feature.export.ExportRoute
 import com.petruvideo.feature.export.ExportsRoute
 import com.petruvideo.feature.importmedia.AddMediaRoute
 import com.petruvideo.feature.projects.ProjectsRoute
+import com.petruvideo.feature.projects.settings.SettingsRoute
 
 object Routes {
     const val PROJECTS = "projects"
@@ -20,6 +21,7 @@ object Routes {
     const val EDITOR = "editor/{projectId}"
     const val EXPORT = "export/{projectId}"
     const val EXPORTS = "exports"
+    const val SETTINGS = "settings"
 
     fun editor(projectId: String) = "editor/$projectId"
 
@@ -36,6 +38,7 @@ fun PetruNavHost(modifier: Modifier = Modifier) {
                 onOpenEditor = { navController.navigate(Routes.editor(it)) },
                 onOpenExport = { navController.navigate(Routes.export(it)) },
                 onOpenExports = { navController.navigate(Routes.EXPORTS) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
         composable(Routes.ADD_MEDIA) {
@@ -57,6 +60,9 @@ fun PetruNavHost(modifier: Modifier = Modifier) {
                     entry.arguments?.getString("projectId")?.let { navController.navigate(Routes.export(it)) }
                 },
             )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsRoute(onBack = { navController.popBackStack() })
         }
         composable(Routes.EXPORTS) {
             ExportsRoute(onBack = { navController.popBackStack() })

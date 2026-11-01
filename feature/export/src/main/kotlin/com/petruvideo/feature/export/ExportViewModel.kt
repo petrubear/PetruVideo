@@ -3,6 +3,7 @@ package com.petruvideo.feature.export
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.petruvideo.core.data.repo.ExportRepository
+import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.export.EncoderCapabilities
 import com.petruvideo.core.export.ExportCoordinator
@@ -34,6 +35,7 @@ class ExportViewModel @Inject constructor(
     private val encoders: EncoderCapabilities,
     private val repository: ExportRepository,
     private val starter: ExportServiceStarter,
+    private val appSettings: SettingsRepository,
 ) : ViewModel() {
     private val projectId = MutableStateFlow<String?>(null)
     private val chosen = MutableStateFlow<ExportSettings?>(null)
@@ -52,7 +54,9 @@ class ExportViewModel @Inject constructor(
         if (project == null || timeline == null || project.id != projectId.value) return@combine ExportUiState()
         val caps = ExportCaps.from(timeline)
         val device = encoders.limits
-        val settings = caps.clamp(picked ?: caps.defaults(timeline.format?.fps ?: DEFAULT_FPS, device), device)
+        val first = caps.defaults(timeline.format?.fps ?: DEFAULT_FPS, device)
+            .copy(quality = appSettings.settings.value.defaultQuality)
+        val settings = caps.clamp(picked ?: first, device)
         val plan = coordinator.plan(timeline, settings)
         ExportUiState(
             loaded = true,

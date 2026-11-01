@@ -68,6 +68,7 @@ class ProjectsViewModel @Inject constructor(
             is ProjectsEvent.OpenProject -> effectChannel.trySend(ProjectsEffect.OpenEditor(event.id))
             is ProjectsEvent.ExportProject -> effectChannel.trySend(ProjectsEffect.OpenExport(event.id))
             ProjectsEvent.OpenExports -> effectChannel.trySend(ProjectsEffect.OpenExports)
+            ProjectsEvent.OpenSettings -> effectChannel.trySend(ProjectsEffect.OpenSettings)
             is ProjectsEvent.SelectProject -> ui.update { it.copy(selectedProjectId = event.id) }
             is ProjectsEvent.SetFilter -> ui.update { it.copy(filter = event.filter) }
             is ProjectsEvent.SetQuery -> ui.update { it.copy(query = event.query) }

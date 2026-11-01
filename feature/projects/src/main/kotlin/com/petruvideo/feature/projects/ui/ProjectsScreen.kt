@@ -114,7 +114,7 @@ private fun Header(state: ProjectsState, onEvent: (ProjectsEvent) -> Unit) {
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HeaderButton(PetruIcons.Search, "Search") { onEvent(ProjectsEvent.OpenSearch) }
-                HeaderButton(PetruIcons.Settings, "Settings") { onEvent(ProjectsEvent.TapInactive("Settings")) }
+                HeaderButton(PetruIcons.Settings, "Settings") { onEvent(ProjectsEvent.OpenSettings) }
             }
         }
         if (state.searchOpen) {
