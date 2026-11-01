@@ -220,3 +220,14 @@ fun EffectColumns.toModel(): ClipEffect? =
     EffectKind.entries.firstOrNull { it.name == kind }?.let { ClipEffect(it, strength) }
 
 fun ClipEffect?.toColumns() = if (this == null) EffectColumns() else EffectColumns(kind.name, strength)
+
+/** A reversed clip of any project: its media and the source range it plays. */
+class ReversedRange(val media: com.petruvideo.core.model.MediaItem, val startMs: Long, val endMs: Long)
+
+/** Every reversed clip of every project, so unused backwards copies can be removed. */
+suspend fun PetruDatabase.reversedRanges(): List<ReversedRange> {
+    val media = timelineDao().allMediaItems().associate { it.id to it.toModel() }
+    return timelineDao().reversedClips().mapNotNull { clip ->
+        media[clip.mediaItemId]?.let { ReversedRange(it, clip.sourceStartMs, clip.sourceEndMs) }
+    }
+}

@@ -18,6 +18,7 @@ import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.effects.ClipEffectHandle
 import com.petruvideo.core.media.effects.ClipFramingHandle
 import com.petruvideo.core.media.effects.transformEffects
+import com.petruvideo.core.media.reverse.ReversedSource
 import com.petruvideo.core.media.filter.ClipFilterEffects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
@@ -94,6 +95,7 @@ class CompositionBuilder(
     private val spec: BuildSpec,
     private val framingIds: Set<String> = emptySet(),
     private val duckEnvelopes: Map<String, DuckEnvelope> = emptyMap(),
+    private val reversed: Map<String, ReversedSource> = emptyMap(),
 ) {
     val gains = mutableMapOf<String, GainAudioProcessor>()
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
@@ -215,8 +217,8 @@ class CompositionBuilder(
                     .build(),
             )
             else -> builder.addItem(
-                EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
-                    .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
+                EditedMediaItem.Builder(videoSource(clip, media))
+                    .setDurationUs(videoSourceDurationUs(clip, media))
                     .setRemoveAudio(!clip.attachedAudio || clip.muted)
                     .setSpeed(speedOf(clip.speedMilli))
                     .setEffects(
@@ -374,6 +376,15 @@ class CompositionBuilder(
 
     /** CompositionPlayer needs each item's full source duration up front (it cannot prepare to find out). */
     private fun sourceDurationUs(durationMs: Long?, fallbackEndMs: Long) = (durationMs ?: fallbackEndMs) * US_PER_MS
+
+    /** The media of a video clip: the prepared backwards copy for a reversed clip, else the original range. */
+    private fun videoSource(clip: VideoClip, media: com.petruvideo.core.model.MediaItem): MediaItem {
+        val copy = reversed[clip.id] ?: return clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs)
+        return clipped(copy.uri, copy.startMs, copy.endMs)
+    }
+
+    private fun videoSourceDurationUs(clip: VideoClip, media: com.petruvideo.core.model.MediaItem): Long =
+        reversed[clip.id]?.let { it.fileDurationMs * US_PER_MS } ?: sourceDurationUs(media.durationMs, clip.sourceEndMs)
 
     private fun clipped(uri: String, startMs: Long, endMs: Long): MediaItem =
         MediaItem.Builder()

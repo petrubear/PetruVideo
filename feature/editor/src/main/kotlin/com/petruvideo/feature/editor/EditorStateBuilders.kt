@@ -4,6 +4,7 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.DuckingPlanner
 import com.petruvideo.core.model.FREEZE_DEFAULT_MS
+import com.petruvideo.core.model.REVERSE_MAX_MS
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.TRANSITION_MIN_MS
@@ -188,10 +189,16 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
         transitionLimit(timeline, index) == 0L -> "These clips are too short for a transition"
         else -> null
     }?.let { mapOf(ClipTool.EffectTransition to it) }.orEmpty()
-    return noTransition + when {
+    val tooLong = if (clip.sourceLengthMs > REVERSE_MAX_MS && !clip.reversed) {
+        mapOf(ClipTool.Reverse to "Too long to reverse: trim or split the clip first")
+    } else {
+        emptyMap()
+    }
+    return noTransition + tooLong + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
             ClipTool.Speed to "Photos have no speed",
             ClipTool.Freeze to "A photo is already a still",
+            ClipTool.Reverse to "Photos cannot be reversed",
             ClipTool.Volume to "Photos have no sound",
             ClipTool.Mute to "Photos have no sound",
             ClipTool.Reverb to "Photos have no sound",
@@ -272,6 +279,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Keyframes,
         ClipTool.Transform,
         ClipTool.Freeze,
+        ClipTool.Reverse,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
         ClipTool.Duplicate,

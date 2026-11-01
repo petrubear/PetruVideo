@@ -23,6 +23,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.petruvideo.core.media.ducking.DuckingAnalyzer
+import com.petruvideo.core.media.reverse.ReversePreparer
+import com.petruvideo.core.media.reverse.ReverseService
 import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +44,10 @@ import kotlinx.coroutines.launch
 @Singleton
 class Media3PreviewEngine @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val reverse: ReversePreparer,
 ) : PreviewEngine {
+    constructor(context: Context) : this(context, ReverseService.forContext(context))
+
     private val handler = Handler(Looper.getMainLooper())
     private val _state = MutableStateFlow(PreviewState())
     private var compositionPlayer: CompositionPlayer? = null
@@ -59,6 +64,7 @@ class Media3PreviewEngine @Inject constructor(
     private val analyzer = DuckingAnalyzer(WaveformPeaksGenerator(context))
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var duckJob: Job? = null
+    private var reverseJob: Job? = null
     private val armedFraming = mutableSetOf<String>()
     private var lastTimeline: Timeline? = null
     private var lastQuality: PreviewQuality? = null
@@ -116,7 +122,8 @@ class Media3PreviewEngine @Inject constructor(
         totalMs = timeline.totalDurationMs
         lastTimeline = timeline
         lastQuality = quality
-        val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality), armedFraming)
+        val sources = reverse.sources(timeline)
+        val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality), armedFraming, reversed = sources)
         val composition = builder.build(timeline)
         gains = builder.gains
         reverbs = builder.reverbs
@@ -127,6 +134,7 @@ class Media3PreviewEngine @Inject constructor(
         clipEffects = builder.clipEffects
         framings = builder.framings
         applyDucking(timeline)
+        prepareReversed(timeline, sources.keys)
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         // Overlays and transitions are separate video inputs, which needs the multiple-input video graph. That player
@@ -202,6 +210,18 @@ class Media3PreviewEngine @Inject constructor(
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)
+        }
+    }
+
+    /**
+     * A reversed clip without a prepared copy plays forwards until its copy is made in the background; when it is done
+     * the latest content is loaded again. One preparation runs at a time and a failure is not retried.
+     */
+    private fun prepareReversed(timeline: Timeline, ready: Set<String>) {
+        if (timeline.videoLane.none { it.reversed && it.id !in ready } || reverseJob?.isActive == true) return
+        reverseJob = scope.launch {
+            val ok = reverse.ensure(timeline)
+            if (ok) handler.post { lastTimeline?.let { load(it, lastQuality ?: return@post) } }
         }
     }
 

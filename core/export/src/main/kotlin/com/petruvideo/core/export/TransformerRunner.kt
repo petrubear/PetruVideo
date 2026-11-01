@@ -18,6 +18,8 @@ import androidx.media3.transformer.VideoEncoderSettings
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.ducking.DuckingAnalyzer
+import com.petruvideo.core.media.reverse.ReversePreparer
+import com.petruvideo.core.media.reverse.ReverseService
 import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import com.petruvideo.core.model.export.BitrateTable
 import com.petruvideo.core.model.export.ExportCaps
@@ -32,7 +34,10 @@ import kotlin.coroutines.resume
  * thread itself because the Transformer's callbacks and progress belong there.
  */
 @OptIn(UnstableApi::class)
-class TransformerRunner(private val context: Context) : ExportRunner {
+class TransformerRunner(
+    private val context: Context,
+    private val reverse: ReversePreparer = ReverseService.forContext(context),
+) : ExportRunner {
     private val analyzer = DuckingAnalyzer(WaveformPeaksGenerator(context))
 
     override suspend fun run(request: ExportRequest, onProgress: (Int) -> Unit): RunResult =
@@ -43,8 +48,12 @@ class TransformerRunner(private val context: Context) : ExportRunner {
                 request.settings.frameRate.fps,
                 ExportCaps.from(request.timeline).maxFrameRate.fps,
             )
+            val prepared = withContext(Dispatchers.Default) { reverse.ensure(request.timeline) }
+            if (!prepared) return@withContext RunResult.Error("A reversed clip could not be prepared")
             val ducking = withContext(Dispatchers.Default) { analyzer.envelopes(request.timeline) }
-            val composition = CompositionBuilder(spec, duckEnvelopes = ducking).build(request.timeline)
+            val composition = CompositionBuilder(
+                spec, duckEnvelopes = ducking, reversed = reverse.sources(request.timeline),
+            ).build(request.timeline)
                 ?: return@withContext RunResult.Error("Nothing to export")
             render(composition, request, onProgress)
         }

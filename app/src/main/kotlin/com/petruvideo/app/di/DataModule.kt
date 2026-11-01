@@ -14,6 +14,9 @@ import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.media.probe.MediaProber
 import com.petruvideo.core.media.voiceover.VoiceOverStore
+import com.petruvideo.core.data.db.reversedRanges
+import com.petruvideo.core.media.reverse.ReverseNeed
+import com.petruvideo.core.media.reverse.ReversePreparer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,8 +47,17 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun projectRepository(db: PetruDatabase, recordings: VoiceOverStore): ProjectRepository =
-        RoomProjectRepository(db, onDeleted = { used -> recordings.sweep(used) })
+    fun projectRepository(
+        db: PetruDatabase,
+        recordings: VoiceOverStore,
+        reverse: ReversePreparer,
+    ): ProjectRepository = RoomProjectRepository(
+        db,
+        onDeleted = { used ->
+            recordings.sweep(used)
+            reverse.sweep(db.reversedRanges().map { ReverseNeed(it.media, it.startMs, it.endMs) })
+        },
+    )
 
     @Provides
     @Singleton

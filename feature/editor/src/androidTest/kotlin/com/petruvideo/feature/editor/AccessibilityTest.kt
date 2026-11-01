@@ -54,6 +54,7 @@ class AccessibilityTest {
         overlayPanel: OverlayPanelState? = null,
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
+        reverseProgress: Int? = null,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
     ) {
@@ -75,6 +76,7 @@ class AccessibilityTest {
             overlayPanel = overlayPanel,
             transformPanel = transformPanel,
             freezePanel = freezePanel,
+            reverseProgress = reverseProgress,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -143,6 +145,12 @@ class AccessibilityTest {
     private fun audio(kind: AudioToolKind) = AudioPanelState(
         kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
     )
+
+    @Test
+    fun reverseProgress() = check(ClipSelection.Video("c1"), videoTools, reverseProgress = 45)
+
+    @Test
+    fun reverseProgressWithLargeFont() = check(ClipSelection.Video("c1"), videoTools, reverseProgress = 45, fontScale = 2f)
 
     @Test
     fun freezePanel() = check(

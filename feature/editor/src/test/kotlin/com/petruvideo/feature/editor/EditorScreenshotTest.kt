@@ -22,6 +22,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Goldens for the compact editor; reviewed against design/reference/Editor.png before approval. */
+@Suppress("LargeClass")
 class EditorScreenshotTest {
     @get:Rule
     val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 2_000))
@@ -62,6 +63,7 @@ class EditorScreenshotTest {
         overlayPanel: OverlayPanelState? = null,
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
+        reverseProgress: Int? = null,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -121,6 +123,7 @@ class EditorScreenshotTest {
             overlayPanel = overlayPanel,
             transformPanel = transformPanel,
             freezePanel = freezePanel,
+            reverseProgress = reverseProgress,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -298,6 +301,18 @@ class EditorScreenshotTest {
                             "c1", turnedClip.copy(crop = com.petruvideo.core.model.CropBox(100, 100, 800, 800)),
                         ),
                     ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun reversingShowsProgressWithCancel() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(selection = ClipSelection.Video("c1"), reverseProgress = 45),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

@@ -39,6 +39,7 @@ private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.Keyframes -> PetruIcons.ToolEffects
     ClipTool.Transform -> PetruIcons.ToolOverlay
     ClipTool.Freeze -> PetruIcons.ToolFilters
+    ClipTool.Reverse -> PetruIcons.Replace
     ClipTool.TextStyle -> PetruIcons.ToolFilters
     ClipTool.TextAnim -> PetruIcons.ToolEffects
 }
@@ -55,6 +56,7 @@ fun ClipToolBar(
     onTool: (ClipTool) -> Unit,
     modifier: Modifier = Modifier,
     disabled: Set<ClipTool> = emptySet(),
+    reversed: Boolean = false,
 ) {
     Row(
         modifier
@@ -69,7 +71,11 @@ fun ClipToolBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tools.forEach { tool ->
-            val label = if (tool == ClipTool.Mute && muted) "Unmute" else tool.label
+            val label = when {
+                tool == ClipTool.Mute && muted -> "Unmute"
+                tool == ClipTool.Reverse && reversed -> "Forwards"
+                else -> tool.label
+            }
             ToolButton(
                 label = label,
                 icon = iconFor(tool, muted),

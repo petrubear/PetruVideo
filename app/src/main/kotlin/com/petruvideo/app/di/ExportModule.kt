@@ -13,6 +13,7 @@ import com.petruvideo.core.export.GallerySaver
 import com.petruvideo.core.export.MediaCodecEncoderCapabilities
 import com.petruvideo.core.export.StorageInfo
 import com.petruvideo.core.export.TransformerRunner
+import com.petruvideo.core.media.reverse.ReversePreparer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +32,8 @@ object ExportModule {
     fun encoderCapabilities(): EncoderCapabilities = MediaCodecEncoderCapabilities()
 
     @Provides
-    fun exportRunner(@ApplicationContext context: Context): ExportRunner = TransformerRunner(context)
+    fun exportRunner(@ApplicationContext context: Context, reverse: ReversePreparer): ExportRunner =
+        TransformerRunner(context, reverse)
 
     @Provides
     fun exportSaver(@ApplicationContext context: Context): ExportSaver = GallerySaver(context)

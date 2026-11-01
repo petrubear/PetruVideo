@@ -16,20 +16,20 @@ Format: `- [ ] ID [P] [Story] description with path`. Stories: US1 freeze a fram
 
 ## Phase 3: US2 Reverse a clip (P2)
 
-- [ ] T007 [US2] Spike and `ReverseRenderer`: all-intra Transformer pass, reverse remux of the video samples, reversed audio encoded to AAC, progress and cancel that leave nothing behind; androidTest on a synthetic clip with a marked first and last frame and a rising tone (`core/media/.../reverse/ReverseRenderer.kt`, `ReverseRendererTest`); record findings in plan.md
-- [ ] T008 [US2] `ReverseStore` (file name by fingerprint and range, covering lookup, cleanup of unused files, free-space check); tests (`core/media/.../reverse/ReverseStore.kt`, `ReverseStoreTest`)
-- [ ] T009 [US2] Command `SetReversed` (video-kind clips up to 30 s as trimmed); reversed split, trim (mirrored), duplicate; tests first (`core/model/.../engine/ReverseCommands.kt`, `SplitDuplicateDelete.kt`, `TrimCommands.kt`, `ReverseCommandsTest`)
-- [ ] T010 [US2] Builder reads the reversed file with the mapped range; preview and export make sure files exist first (render missing ones); export test: frames and sound of a reversed clip are in reverse order (`CompositionBuilder.kt`, `Media3PreviewEngine.kt`, `TransformerRunner.kt`, `ExportPipelineTest`)
-- [ ] T011 [US2] Editor: Reverse tool, progress with Cancel, unavailable reasons, "preparing" note, view model events and tests (`ReverseFreezeEditing.kt`, `ui/ReversePanel.kt`, `ui/ReverseProgress.kt`, `EditorViewModel.kt`)
-- [ ] T012 [US2] Goldens, accessibility and Compose tests for the freeze panel and reverse progress in compact, unfolded and tabletop
+- [X] T007 [US2] Spike and `ReverseRenderer`: all-intra Transformer pass, reverse remux of the video samples, reversed audio encoded to AAC, progress and cancel that leave nothing behind; androidTest on a synthetic clip with a marked first and last frame and a rising tone (`core/media/.../reverse/ReverseRenderer.kt`, `ReverseRendererTest`); record findings in plan.md
+- [X] T008 [US2] `ReverseStore` (file name by fingerprint and range, covering lookup, cleanup of unused files, free-space check); tests (`core/media/.../reverse/ReverseStore.kt`, `ReverseStoreTest`)
+- [X] T009 [US2] Command `SetReversed` (video-kind clips up to 30 s as trimmed); reversed split, trim (mirrored), duplicate; tests first (`core/model/.../engine/ReverseCommands.kt`, `SplitDuplicateDelete.kt`, `TrimCommands.kt`, `ReverseCommandsTest`)
+- [X] T010 [US2] Builder reads the reversed file with the mapped range; preview and export make sure files exist first (render missing ones); export test: frames and sound of a reversed clip are in reverse order (`CompositionBuilder.kt`, `Media3PreviewEngine.kt`, `TransformerRunner.kt`, `ExportPipelineTest`)
+- [X] T011 [US2] Editor: Reverse tool, progress with Cancel, unavailable reasons, "preparing" note, view model events and tests (`ReverseFreezeEditing.kt`, `ui/ReversePanel.kt`, `ui/ReverseProgress.kt`, `EditorViewModel.kt`)
+- [X] T012 [US2] Goldens, accessibility and Compose tests for the freeze panel and reverse progress in compact, unfolded and tabletop
 
 ## Phase 4: US3 Kept, saved, exported (P3)
 
-- [ ] T013 [US3] Relink, remove-missing, project duplicate and process-death recovery keep reversed state and freezes; reversed files rebuilt when missing and swept when unused; tests (`MoveAndRelink.kt`, `ReverseStore.kt`)
+- [X] T013 [US3] Relink, remove-missing, project duplicate and process-death recovery keep reversed state and freezes; reversed files rebuilt when missing and swept when unused; tests (`MoveAndRelink.kt`, `ReverseStore.kt`)
 
 ## Phase 5: Polish
 
-- [ ] T014 Run `testDebugUnitTest verifyPaparazziDebug detekt lintDebug` and `connectedDebugAndroidTest` (no build cache); stop the emulator; fix findings; record results in quickstart.md
+- [X] T014 Run `testDebugUnitTest verifyPaparazziDebug detekt lintDebug` and `connectedDebugAndroidTest` (no build cache); stop the emulator; fix findings; record results in quickstart.md
 - [ ] T015 Device checks (fold, reverse timing on the phone) and designer review: deferred until the user is back
 
 ## Dependencies

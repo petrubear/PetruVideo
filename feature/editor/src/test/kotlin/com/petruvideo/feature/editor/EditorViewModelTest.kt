@@ -115,14 +115,15 @@ class EditorViewModelTest {
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
         e.state.clipTools shouldContainExactly listOf(
             ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
-            ClipTool.Audio, ClipTool.Detach,
+            ClipTool.Reverse, ClipTool.Audio, ClipTool.Detach,
             ClipTool.Duplicate, ClipTool.Delete,
         )
 
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
         e.state.clipTools shouldContainExactly
             listOf(
-                ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze, ClipTool.Audio,
+                ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
+                ClipTool.Reverse, ClipTool.Audio,
                 ClipTool.Duplicate, ClipTool.Delete,
             )
     }

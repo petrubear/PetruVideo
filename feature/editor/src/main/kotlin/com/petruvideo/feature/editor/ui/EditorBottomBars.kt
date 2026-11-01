@@ -30,11 +30,13 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             FreezePanel(state.freezePanel, onEvent)
             OverlayPanel(state.overlayPanel, onEvent)
         }
+        ReverseProgress(state.reverseProgress, onCancel = { onEvent(EditorEvent.ReverseCancel) })
         ClipToolBar(
             state.clipTools,
             state.selectedAudioMuted,
             onTool = { onEvent(EditorEvent.UseTool(it)) },
             disabled = state.disabledTools.keys,
+            reversed = state.selectedReversed,
         )
     } else {
         when (state.toolbarTab) {

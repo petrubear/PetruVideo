@@ -73,3 +73,9 @@ feature/editor/.../ui/FreezePanel.kt, ReversePanel.kt, ReverseProgress.kt
 ## Complexity Tracking
 
 None.
+
+## Spike findings
+
+- Media3 `setiFrameIntervalSeconds(0f)` produced all-sync, independent frames on the emulator's encoder: copying the compressed samples backwards into a new MP4 (no re-encode) plays correctly. The renderer test checks that the first and last frames swap and that the sound track is present; the export test checks the same through the export pipeline.
+- A 30 second clip needs about 150 MB for the intra pass and the same again for the result; `ReverseStore.hasRoomFor` checks twice the estimate plus 50 MB before starting.
+- Reversed copies are removed at app start and after a project is deleted when no reversed clip needs them.

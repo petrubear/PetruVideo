@@ -3,6 +3,8 @@ package com.petruvideo.app.di
 import com.petruvideo.core.media.freeze.FreezeStillMaker
 import com.petruvideo.core.media.freeze.FreezeStills
 import com.petruvideo.core.media.library.MediaLibrary
+import com.petruvideo.core.media.reverse.ReversePreparer
+import com.petruvideo.core.media.reverse.ReverseService
 import com.petruvideo.core.media.library.MediaLibrarySource
 import com.petruvideo.core.media.probe.MediaProbe
 import com.petruvideo.core.media.probe.MediaProber
@@ -38,6 +40,9 @@ abstract class MediaModule {
 
     @Binds
     abstract fun previewEngine(impl: Media3PreviewEngine): PreviewEngine
+
+    @Binds
+    abstract fun reversePreparer(impl: ReverseService): ReversePreparer
 
     @Binds
     abstract fun freezeStills(impl: FreezeStills): FreezeStillMaker

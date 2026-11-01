@@ -53,6 +53,11 @@ import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.CropShape
 import com.petruvideo.core.media.freeze.FreezeStillMaker
+import com.petruvideo.core.media.reverse.NoReversePreparer
+import com.petruvideo.core.media.reverse.ReversePreparer
+import com.petruvideo.core.model.REVERSE_MAX_MS
+import com.petruvideo.core.model.engine.SetReversed
+import kotlinx.coroutines.Job
 import com.petruvideo.core.model.FREEZE_DEFAULT_MS
 import com.petruvideo.core.model.engine.FlipClip
 import com.petruvideo.core.model.engine.FreezeFrame
@@ -140,6 +145,7 @@ class EditorViewModel @Inject constructor(
     private val pressure: ResourcePressureMonitor,
     private val voiceOver: VoiceOverController,
     private val freezeStills: FreezeStillMaker = FreezeStillMaker { _, _ -> null },
+    private val reverse: ReversePreparer = NoReversePreparer,
 ) : ViewModel() {
 
     private data class Local(
@@ -211,6 +217,7 @@ class EditorViewModel @Inject constructor(
     private val effectChannel = Channel<EditorEffect>(Channel.BUFFERED)
     private val checkedMedia = mutableSetOf<String>()
     private var loadedProjectId: String? = null
+    private var reverseJob: Job? = null
 
     val effects = effectChannel.receiveAsFlow()
 
@@ -224,7 +231,11 @@ class EditorViewModel @Inject constructor(
         session.saveStatus,
         engine.state,
         ::Core,
-    ).combine(local, ::toState).combine(voiceOver.ui) { state, take -> state.copy(voiceOver = take) }
+    ).combine(local, ::toState)
+        .combine(voiceOver.ui) { state, take -> state.copy(voiceOver = take) }
+        .combine(reverse.progress) { state, progress ->
+            state.copy(reverseProgress = progress[state.selection?.clipId])
+        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, EditorState())
 
     init {
@@ -387,6 +398,8 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TransformReset -> run(ResetTransform(id))
             EditorEvent.TransformDismiss -> local.update { it.copy(transformOpen = false, crop = null) }
             EditorEvent.CropOpen -> openCrop(id)
+            EditorEvent.ReverseToggle -> toggleReverse(id)
+            EditorEvent.ReverseCancel -> reverseJob?.cancel()
             is EditorEvent.FreezeInsert -> insertFreeze(id, event.lengthMs)
             EditorEvent.FreezeDismiss -> local.update { it.copy(freezeOpen = false) }
             is EditorEvent.CropDrag -> dragCrop(event)
@@ -625,6 +638,26 @@ class EditorViewModel @Inject constructor(
         closeEffect()
         closeKeyframes()
         local.update { it.copy(transformOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun toggleReverse(id: String) {
+        val timeline = session.timeline.value ?: return
+        val clip = timeline.videoLane.firstOrNull { it.id == id } ?: return
+        if (clip.reversed) return run(SetReversed(id, false))
+        val media = timeline.media[clip.mediaItemId] ?: return
+        when {
+            media.kind != MediaKind.Video -> say("Photos cannot be reversed")
+            clip.sourceLengthMs > REVERSE_MAX_MS -> say("Too long to reverse: trim or split the clip first")
+            !reverse.hasRoom(clip.sourceStartMs, clip.sourceEndMs) -> say("Not enough storage to reverse this clip")
+            reverseJob?.isActive == true -> say("Another clip is being reversed")
+            else -> reverseJob = viewModelScope.launch {
+                if (reverse.prepare(id, media, clip.sourceStartMs, clip.sourceEndMs)) {
+                    run(SetReversed(id, true))
+                } else {
+                    say("This clip could not be reversed")
+                }
+            }
+        }
     }
 
     private fun openFreeze() {
@@ -1165,6 +1198,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.Keyframes -> openKeyframes()
             ClipTool.Transform -> openTransform()
             ClipTool.Freeze -> openFreeze()
+            ClipTool.Reverse -> toggleReverse(id)
             ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
             ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
@@ -1283,6 +1317,7 @@ class EditorViewModel @Inject constructor(
             textPanel = textPanelFor(timeline, selection, local.text, core.preview.positionMs),
             transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
             freezePanel = freezePanelFor(selection, local.freezeOpen),
+            selectedReversed = timeline?.videoLane?.firstOrNull { it.id == selection?.clipId }?.reversed == true,
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(
                 timeline, selection, local.keyframesOpen, local.keyframeRel, core.preview.positionMs,

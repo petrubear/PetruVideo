@@ -73,7 +73,7 @@ private fun CompactEditor(
             EditorTopBar(state.header, onBack = onBack, onExport = { onEvent(EditorEvent.OpenExport) })
             val panelOpen = state.sheet != null || state.reverbPanel != null || state.audioPanel != null ||
                 state.textPanel != null || state.filterPanel != null || state.overlayPanel != null ||
-                state.transformPanel != null || state.freezePanel != null
+                state.transformPanel != null || state.freezePanel != null || state.reverseProgress != null
             PreviewWithText(state, player, onEvent, Modifier.fillMaxWidth().height(if (panelOpen) 132.dp else 232.dp))
             TransportRow(
                 playback = state.playback,

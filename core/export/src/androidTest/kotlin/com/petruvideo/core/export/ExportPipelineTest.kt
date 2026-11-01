@@ -1046,6 +1046,32 @@ class ExportPipelineTest {
 
     private fun r(uri: String) = retriever(uri)
 
+    /** SC-003 and SC-004 of feature 017: a reversed clip exports backwards, picture and sound. */
+    @Test
+    fun aReversedClipIsExportedBackwardsWithItsSound() {
+        val a = item("video_with_audio.mp4")
+        val length = minOf(3_000L, a.durationMs ?: 3_000L)
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val forward = project(VideoClip("c1", a.id, 0, length, true), media = listOf(a))
+        val backward = (com.petruvideo.core.model.engine.SetReversed("c1", true).apply(forward) as
+            com.petruvideo.core.model.engine.CommandResult.Applied).timeline
+        val (s1, forwardUri) = export(forward, settings, "pipeline-rev-forward")
+        s1.shouldBeFinished()
+        val (s2, reversedUri) = export(backward, settings, "pipeline-rev-back")
+        s2.shouldBeFinished()
+        val r = retriever(reversedUri!!)
+        r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) shouldBe "yes"
+        check(kotlin.math.abs(r.int(MediaMetadataRetriever.METADATA_KEY_DURATION) - length) < 400) { "length" }
+        r.release()
+        val early = frameAt(forwardUri!!, 150)
+        val late = frameAt(forwardUri, length - 250)
+        check(changedPixels(early, late) > 0) { "the source never changes, the test cannot tell the order" }
+        val reversedStart = frameAt(reversedUri, 150)
+        check(changedPixels(reversedStart, late) < changedPixels(reversedStart, early)) { "reversed start is not the source end" }
+        val reversedEnd = frameAt(reversedUri, length - 250)
+        check(changedPixels(reversedEnd, early) < changedPixels(reversedEnd, late)) { "reversed end is not the source start" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

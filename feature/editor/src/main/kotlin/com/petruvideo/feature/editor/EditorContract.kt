@@ -55,6 +55,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Keyframes("Keyframes", true),
     Transform("Transform", true),
     Freeze("Freeze", true),
+    Reverse("Reverse", true),
 }
 
 /**
@@ -215,6 +216,10 @@ data class EditorState(
     val transformPanel: TransformPanelState? = null,
     /** The open Freeze frame panel for the selected main-track clip, if any. */
     val freezePanel: FreezePanelState? = null,
+    /** Progress (0 to 100) of the backwards copy being made for the selected clip, if any. */
+    val reverseProgress: Int? = null,
+    /** Whether the selected main-track clip plays backwards. */
+    val selectedReversed: Boolean = false,
     /** The open crop screen, if any. */
     val crop: CropSessionState? = null,
     /** The open Keyframes panel, if any. */
@@ -352,6 +357,11 @@ sealed interface EditorEvent {
     data class FreezeInsert(val lengthMs: Long) : EditorEvent
 
     data object FreezeDismiss : EditorEvent
+
+    /** Turns Reverse on (making the backwards copy first) or off for the selected clip. */
+    data object ReverseToggle : EditorEvent
+
+    data object ReverseCancel : EditorEvent
 
     /** Drags [handle] (or the whole box when null) by permille of the picture. */
     data class CropDrag(val handle: com.petruvideo.core.model.CropHandle?, val dx: Int, val dy: Int) : EditorEvent

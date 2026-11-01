@@ -68,6 +68,12 @@ interface TimelineDao {
     @Query("SELECT uri FROM media_item")
     suspend fun allMediaUris(): List<String>
 
+    @Query("SELECT * FROM video_clip WHERE reversed = 1")
+    suspend fun reversedClips(): List<VideoClipEntity>
+
+    @Query("SELECT * FROM media_item")
+    suspend fun allMediaItems(): List<MediaItemEntity>
+
     @Query("SELECT * FROM keyframe WHERE projectId = :projectId ORDER BY ownerId, timeMs")
     suspend fun keyframes(projectId: String): List<KeyframeEntity>
 
