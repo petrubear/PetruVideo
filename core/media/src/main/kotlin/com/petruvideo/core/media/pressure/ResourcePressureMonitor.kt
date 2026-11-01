@@ -51,10 +51,12 @@ data class PreviewQuality(
     val thumbnailPx: Int,
     /** Whether the reverb effect is applied in the preview; it is paused under pressure (it costs CPU). */
     val reverb: Boolean = true,
+    /** Whether noise reduction, pitch, and echo are applied in the preview; paused under pressure. */
+    val voiceFx: Boolean = true,
 ) {
     companion object {
         val Full = PreviewQuality(previewScale = 1f, previewFps = 30, thumbnailPx = 256)
-        val Reduced = PreviewQuality(previewScale = 0.5f, previewFps = 24, thumbnailPx = 128, reverb = false)
+        val Reduced = PreviewQuality(previewScale = 0.5f, previewFps = 24, thumbnailPx = 128, reverb = false, voiceFx = false)
     }
 }
 

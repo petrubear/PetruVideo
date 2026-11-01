@@ -82,6 +82,7 @@ data class VideoClipEntity(
     @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
     @ColumnInfo(defaultValue = "0") val muted: Boolean = false,
     @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
+    @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
 )
 
 @Entity(
@@ -117,6 +118,7 @@ data class AudioClipEntity(
     @ColumnInfo(defaultValue = "1000") val speedMilli: Int = 1000,
     @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
     @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
+    @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
 )
 
 /** A clip's reverb stored as columns `reverb_enabled`, `reverb_preset`, and so on. */
@@ -128,6 +130,26 @@ data class ReverbColumns(
     @ColumnInfo(defaultValue = "50") val damping: Int = 50,
     @ColumnInfo(defaultValue = "20") val preDelayMs: Int = 20,
     @ColumnInfo(defaultValue = "30") val mix: Int = 30,
+)
+
+/** A clip's fade, noise reduction, equalizer and voice effects as columns `fx_fadeInMs`, `fx_nrEnabled`, and so on. */
+data class AudioFxColumns(
+    @ColumnInfo(defaultValue = "0") val fadeInMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val fadeOutMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val nrEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "'Medium'") val nrStrength: String = "Medium",
+    @ColumnInfo(defaultValue = "0") val eqLow: Int = 0,
+    @ColumnInfo(defaultValue = "0") val eqMid: Int = 0,
+    @ColumnInfo(defaultValue = "0") val eqHigh: Int = 0,
+    @ColumnInfo(defaultValue = "0") val echoEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "250") val echoDelayMs: Int = 250,
+    @ColumnInfo(defaultValue = "3") val echoRepeats: Int = 3,
+    @ColumnInfo(defaultValue = "0") val robotEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "60") val robotIntensity: Int = 60,
+    @ColumnInfo(defaultValue = "0") val pitchEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "4") val pitchSemitones: Int = 4,
+    @ColumnInfo(defaultValue = "0") val bassEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "50") val bassAmount: Int = 50,
 )
 
 @Entity(tableName = "export_settings")

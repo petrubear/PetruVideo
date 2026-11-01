@@ -5,6 +5,8 @@ import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.PHOTO_MIN_MS
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.withoutFadeIn
+import com.petruvideo.core.model.withoutFadeOut
 import com.petruvideo.core.model.VideoClip
 import java.util.UUID
 
@@ -48,8 +50,8 @@ class Split(
             second = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = clip.lengthMs - offset)
         } else {
             val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
-            first = clip.copy(id = newClipId(), sourceEndMs = cut)
-            second = clip.copy(id = newClipId(), sourceStartMs = cut)
+            first = clip.copy(id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut())
+            second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
         }
         val lane = timeline.videoLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
         return CommandResult.Applied(timeline.copy(videoLane = lane), "Split clip")
@@ -63,8 +65,10 @@ class Split(
             return CommandResult.Rejected(RejectReason.BelowMinimumLength)
         }
         val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
-        val first = clip.copy(id = newClipId(), sourceEndMs = cut)
-        val second = clip.copy(id = newClipId(), sourceStartMs = cut, timelineStartMs = atMs)
+        val first = clip.copy(id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut())
+        val second = clip.copy(
+            id = newClipId(), sourceStartMs = cut, timelineStartMs = atMs, fx = clip.fx.withoutFadeIn(),
+        )
         val lane = timeline.audioLane.toMutableList().apply { removeAt(index); addAll(index, listOf(first, second)) }
         return CommandResult.Applied(timeline.copy(audioLane = lane), "Split audio")
     }

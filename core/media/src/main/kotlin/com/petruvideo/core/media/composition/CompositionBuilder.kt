@@ -18,6 +18,8 @@ import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.media.preview.GainAudioProcessor
 import com.petruvideo.core.media.preview.ReverbAudioProcessor
+import com.petruvideo.core.media.preview.VoiceFxProcessor
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Reverb
@@ -32,6 +34,7 @@ data class BuildSpec(
     val height: Int?,
     val fps: Int,
     val reverbAllowed: Boolean = true,
+    val voiceFxAllowed: Boolean = true,
     val frameDropFps: Int? = null,
     val sourceFps: Int = 30,
     val toneMapHdr: Boolean = false,
@@ -49,6 +52,7 @@ data class BuildSpec(
                 height = format?.let { even((it.height * quality.previewScale).toInt()) },
                 fps = minOf(format?.fps ?: DEFAULT_FPS, quality.previewFps),
                 reverbAllowed = quality.reverb,
+                voiceFxAllowed = quality.voiceFx,
             )
         }
 
@@ -81,6 +85,7 @@ data class BuildSpec(
 class CompositionBuilder(private val spec: BuildSpec) {
     val gains = mutableMapOf<String, GainAudioProcessor>()
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
+    val voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
 
     /** The composition for [timeline], or null when there is nothing to play or render. */
     fun build(timeline: Timeline): Composition? {
@@ -117,6 +122,7 @@ class CompositionBuilder(private val spec: BuildSpec) {
                             Effects(
                                 soundEffects(
                                     clip.id, clip.reverb, clip.volumePercent, clip.attachedAudio && !clip.muted,
+                                    clip.fx, clip.lengthMs,
                                 ),
                                 frame.videoEffects,
                             ),
@@ -144,7 +150,10 @@ class CompositionBuilder(private val spec: BuildSpec) {
                         .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
                         .setRemoveVideo(true)
                         .setSpeed(speedOf(clip.speedMilli))
-                        .setEffects(Effects(soundEffects(clip.id, clip.reverb, clip.volumePercent, true), emptyList()))
+                        .setEffects(Effects(
+                            soundEffects(clip.id, clip.reverb, clip.volumePercent, true, clip.fx, clip.lengthMs),
+                            emptyList(),
+                        ))
                         .build(),
                 )
             }
@@ -153,16 +162,27 @@ class CompositionBuilder(private val spec: BuildSpec) {
         return builder.build()
     }
 
-    /** Reverb first, then volume, so volume 0% silences the tail too. */
-    private fun soundEffects(clipId: String, reverb: Reverb, percent: Int, hasAudio: Boolean): List<AudioProcessor> {
+    /**
+     * Noise reduction, equalizer, and voice effects first, then reverb, then fade and volume, so volume 0% or a
+     * fade silences the effect tails too.
+     */
+    private fun soundEffects(
+        clipId: String,
+        reverb: Reverb,
+        percent: Int,
+        hasAudio: Boolean,
+        fx: AudioFx,
+        clipLengthMs: Long,
+    ): List<AudioProcessor> {
         if (!hasAudio) return emptyList()
-        val gain = GainAudioProcessor(percent).also { gains[clipId] = it }
+        val voice = VoiceFxProcessor(fx, spec.voiceFxAllowed).also { voiceFxs[clipId] = it }
+        val gain = GainAudioProcessor(percent, fx.fade, clipLengthMs).also { gains[clipId] = it }
         val effective = reverb.copy(enabled = reverb.enabled && spec.reverbAllowed)
         val room = ReverbAudioProcessor(effective).also {
             it.update(effective, applyRoomSize = true)
             reverbs[clipId] = it
         }
-        return listOf(room, gain)
+        return listOf(voice, room, gain)
     }
 
     /** A constant speed for the whole item with the pitch kept (research 1; experimental Media3 API). */

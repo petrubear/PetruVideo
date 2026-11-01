@@ -2,6 +2,7 @@ package com.petruvideo.core.media.preview
 
 import androidx.media3.common.Player
 import com.petruvideo.core.media.pressure.PreviewQuality
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Reverb
@@ -39,6 +40,9 @@ interface PreviewEngine {
 
     /** Changes the reverb of one clip right away, without a rebuild or an edit; room size waits for the next load. */
     fun setClipReverbLive(clipId: String, reverb: Reverb)
+
+    /** Changes the fade, noise reduction, equalizer, and voice effects of one clip right away, without a rebuild. */
+    fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long)
 
     /** Changes the volume of one clip in the loaded composition right away, without a rebuild or an edit. */
     fun setClipVolumeLive(clipId: String, percent: Int)

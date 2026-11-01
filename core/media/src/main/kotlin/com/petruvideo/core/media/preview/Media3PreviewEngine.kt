@@ -12,6 +12,7 @@ import androidx.media3.transformer.CompositionPlayer
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.pressure.PreviewQuality
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +40,8 @@ class Media3PreviewEngine @Inject constructor(
     private var polling = false
     private var gains = mutableMapOf<String, GainAudioProcessor>()
     private var reverbs = mutableMapOf<String, ReverbAudioProcessor>()
+    private var voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
+    private var voiceFxAllowed = true
     private var reverbAllowed = true
 
     override val state: StateFlow<PreviewState> = _state
@@ -75,6 +78,8 @@ class Media3PreviewEngine @Inject constructor(
         val composition = builder.build(timeline)
         gains = builder.gains
         reverbs = builder.reverbs
+        voiceFxs = builder.voiceFxs
+        voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         val player = compositionPlayer ?: CompositionPlayer.Builder(context).build()
             .also {
@@ -119,6 +124,11 @@ class Media3PreviewEngine @Inject constructor(
 
     override fun setClipReverbLive(clipId: String, reverb: Reverb) {
         reverbs[clipId]?.update(reverb.copy(enabled = reverb.enabled && reverbAllowed))
+    }
+
+    override fun setClipFxLive(clipId: String, fx: AudioFx, clipLengthMs: Long) {
+        voiceFxs[clipId]?.update(fx, voiceFxAllowed)
+        gains[clipId]?.setFade(fx.fade, clipLengthMs)
     }
 
     override fun setClipVolumeLive(clipId: String, percent: Int) {

@@ -35,6 +35,7 @@ class DetachAudio(private val videoClipId: String, private val newClipId: () -> 
             volumePercent = clip.volumePercent,
             muted = clip.muted,
             reverb = clip.reverb,
+            fx = clip.fx,
         )
         val video = timeline.videoLane.toMutableList().also {
             it[index] = clip.copy(attachedAudio = false, muted = false)

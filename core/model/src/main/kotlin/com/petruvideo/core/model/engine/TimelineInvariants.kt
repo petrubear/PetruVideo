@@ -1,5 +1,6 @@
 package com.petruvideo.core.model.engine
 
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MIN_CLIP_MS
 import com.petruvideo.core.model.SPEED_MAX_MILLI
 import com.petruvideo.core.model.SPEED_MIN_MILLI
@@ -20,7 +21,7 @@ object TimelineInvariants {
             val media = timeline.media[clip.mediaItemId]
             addAll(
                 clipViolations(
-                    "video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb,
+                    "video", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb, clip.fx,
                 ),
             )
             if (media?.kind == MediaKind.Photo && clip.speedMilli != SPEED_UNIT) {
@@ -34,7 +35,7 @@ object TimelineInvariants {
             val media = timeline.media[clip.mediaItemId]
             addAll(
                 clipViolations(
-                    "audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb,
+                    "audio", clip.id, clip.lengthMs, clip.speedMilli, clip.volumePercent, media, clip.reverb, clip.fx,
                 ),
             )
             if (media != null && outsideSource(media, clip.sourceStartMs, clip.sourceEndMs)) {
@@ -55,8 +56,10 @@ object TimelineInvariants {
         volumePercent: Int,
         media: MediaItem?,
         reverb: Reverb,
+        fx: AudioFx,
     ) = buildList {
         if (!reverb.inRange) add("$kind clip $id reverb is out of range")
+        if (!fx.inRange) add("$kind clip $id audio effects are out of range")
         if (lengthMs < MIN_CLIP_MS) add("$kind clip $id is shorter than $MIN_CLIP_MS ms")
         if (media == null) add("$kind clip $id refers to unknown media")
         if (speedMilli !in SPEED_MIN_MILLI..SPEED_MAX_MILLI) add("$kind clip $id speed is out of range")

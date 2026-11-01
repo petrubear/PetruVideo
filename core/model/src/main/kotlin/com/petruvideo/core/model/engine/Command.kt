@@ -4,7 +4,7 @@ import com.petruvideo.core.model.Timeline
 
 enum class RejectReason { OutOfRange, BelowMinimumLength, NoAttachedAudio, NotFound, MissingMedia }
 
-enum class Notice { Snapped, LengthChanged, SpeedLimited }
+enum class Notice { Snapped, LengthChanged, SpeedLimited, FadeLimited }
 
 sealed interface CommandResult {
     data class Applied(

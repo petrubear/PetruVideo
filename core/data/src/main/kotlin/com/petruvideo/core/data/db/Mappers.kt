@@ -1,17 +1,28 @@
 package com.petruvideo.core.data.db
 
 import com.petruvideo.core.model.AudioClip
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
+import com.petruvideo.core.model.Bass
+import com.petruvideo.core.model.Echo
+import com.petruvideo.core.model.EqPreset
+import com.petruvideo.core.model.Equalizer
+import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.NoiseReduction
+import com.petruvideo.core.model.NoiseStrength
+import com.petruvideo.core.model.Pitch
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
+import com.petruvideo.core.model.Robot
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.VoiceFx
 
 fun ProjectEntity.toModel() = Project(
     id = id,
@@ -72,23 +83,23 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
 
 fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
-    reverb = reverb.toModel(),
+    reverb = reverb.toModel(), fx = fx.toModel(),
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
-        muted, reverb.toColumns(),
+        muted, reverb.toColumns(), fx.toColumns(),
     )
 
 fun AudioClipEntity.toModel() = AudioClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin),
-    speedMilli, volumePercent, reverb.toModel(),
+    speedMilli, volumePercent, reverb.toModel(), fx.toModel(),
 )
 
 fun AudioClip.toEntity(projectId: String) = AudioClipEntity(
     id, projectId, mediaItemId, timelineStartMs, sourceStartMs, sourceEndMs, muted, origin.name,
-    speedMilli, volumePercent, reverb.toColumns(),
+    speedMilli, volumePercent, reverb.toColumns(), fx.toColumns(),
 )
 
 fun ReverbColumns.toModel(): Reverb {
@@ -97,3 +108,24 @@ fun ReverbColumns.toModel(): Reverb {
 }
 
 fun Reverb.toColumns() = ReverbColumns(enabled, preset.name, roomSize, decayMs, damping, preDelayMs, mix)
+
+fun AudioFxColumns.toModel(): AudioFx {
+    val strength = NoiseStrength.entries.firstOrNull { it.name == nrStrength } ?: NoiseStrength.Medium
+    return AudioFx(
+        fade = Fade(fadeInMs, fadeOutMs),
+        noise = NoiseReduction(nrEnabled, strength),
+        eq = Equalizer(EqPreset.Custom, eqLow, eqMid, eqHigh).normalized(),
+        voice = VoiceFx(
+            Echo(echoEnabled, echoDelayMs, echoRepeats),
+            Robot(robotEnabled, robotIntensity),
+            Pitch(pitchEnabled, pitchSemitones),
+            Bass(bassEnabled, bassAmount),
+        ),
+    )
+}
+
+fun AudioFx.toColumns() = AudioFxColumns(
+    fade.inMs, fade.outMs, noise.enabled, noise.strength.name, eq.lowDb, eq.midDb, eq.highDb,
+    voice.echo.enabled, voice.echo.delayMs, voice.echo.repeats, voice.robot.enabled, voice.robot.intensity,
+    voice.pitch.enabled, voice.pitch.semitones, voice.bass.enabled, voice.bass.amount,
+)
