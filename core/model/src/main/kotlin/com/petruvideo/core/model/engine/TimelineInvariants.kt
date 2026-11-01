@@ -1,6 +1,7 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.EFFECT_MAX
 import com.petruvideo.core.model.KEYFRAME_MAX
 import com.petruvideo.core.model.KEYFRAME_MIN_GAP_MS
 import com.petruvideo.core.model.Framing
@@ -60,7 +61,10 @@ object TimelineInvariants {
     }
 
     private fun effectViolations(clip: com.petruvideo.core.model.VideoClip) = buildList {
-        if (clip.effect?.inRange == false) add("video clip ${clip.id} effect is out of range")
+        if (clip.effects.any { !it.inRange }) add("video clip ${clip.id} effect is out of range")
+        if (clip.effects.size > EFFECT_MAX || clip.effects.map { it.kind }.distinct().size != clip.effects.size) {
+            add("video clip ${clip.id} has too many or repeated effects")
+        }
         if (clip.transitionOut?.inRange == false) add("video clip ${clip.id} transition is out of range")
         addAll(videoKeyframeViolations(clip))
         addAll(speedCurveViolations(clip))

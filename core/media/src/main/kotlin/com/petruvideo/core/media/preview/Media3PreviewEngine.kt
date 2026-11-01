@@ -63,7 +63,7 @@ class Media3PreviewEngine @Inject constructor(
     private var masks: Map<String, com.petruvideo.core.media.effects.OverlayMaskHandle> = emptyMap()
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
-    private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
+    private var clipEffects = mutableMapOf<String, List<com.petruvideo.core.media.effects.ClipEffectHandle>>()
     private val analyzer = DuckingAnalyzer(WaveformPeaksGenerator(context))
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var duckJob: Job? = null
@@ -212,7 +212,7 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     override fun setClipEffectLive(clipId: String, effect: com.petruvideo.core.model.ClipEffect) {
-        clipEffects[clipId]?.update(effect)
+        clipEffects[clipId]?.firstOrNull { it.kind == effect.kind }?.update(effect)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)

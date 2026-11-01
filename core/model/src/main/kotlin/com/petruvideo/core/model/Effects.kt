@@ -5,6 +5,7 @@ const val TRANSITION_MAX_MS = 2_000L
 const val TRANSITION_STEP_MS = 100L
 const val TRANSITION_DEFAULT_MS = 1_000L
 const val EFFECT_STRENGTH_DEFAULT = 50
+const val EFFECT_MAX = 3
 
 enum class TransitionKind(val label: String) {
     Dissolve("Dissolve"),

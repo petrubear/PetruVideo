@@ -111,7 +111,9 @@ fun MediaItem.toEntity(projectId: String) = MediaItemEntity(
 fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
     reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
-    transitionOut = transition.toModel(), effect = effect.toModel(), transform = transform.toModel(),
+    transitionOut = transition.toModel(),
+    effects = listOfNotNull(effect.toModel(), effect2.toModel(), effect3.toModel()),
+    transform = transform.toModel(),
     reversed = reversed,
     speedCurve = SpeedCurve.decode(speedCurve)?.takeIf { it.sourceLengthMs == sourceEndMs - sourceStartMs },
 )
@@ -120,7 +122,8 @@ fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
         muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
-        transitionOut.toColumns(), effect.toColumns(), transform.toColumns(), reversed,
+        transitionOut.toColumns(), effects.getOrNull(0).toColumns(), effects.getOrNull(1).toColumns(),
+        effects.getOrNull(2).toColumns(), transform.toColumns(), reversed,
         speedCurve?.let(SpeedCurve::encode),
     )
 

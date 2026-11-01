@@ -91,7 +91,7 @@ class EditorScreenshotTest {
                         0 -> clip.copy(
                             transitionOut = Transition(com.petruvideo.core.model.TransitionKind.Dissolve, 1_000),
                         )
-                        1 -> clip.copy(effect = ClipEffect(EffectKind.Blur, 40))
+                        1 -> clip.copy(effects = listOf(ClipEffect(EffectKind.Blur, 40)))
                         else -> clip
                     }
                 }
@@ -616,7 +616,7 @@ class EditorScreenshotTest {
                             selection = ClipSelection.Video("c1"),
                             tab = ToolbarTab.Effects,
                             joined = true,
-                            effectPanel = EffectPanelState(kind, "c1", transition, effect, 1_500),
+                            effectPanel = EffectPanelState(kind, "c1", transition, listOfNotNull(effect), 1_500),
                         ),
                         player = null,
                         onEvent = {},

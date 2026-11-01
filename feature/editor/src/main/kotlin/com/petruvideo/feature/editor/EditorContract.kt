@@ -3,6 +3,7 @@ package com.petruvideo.feature.editor
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.EffectKind
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.MediaItem
@@ -145,7 +146,7 @@ data class EffectPanelState(
     val kind: EffectToolKind,
     val clipId: String,
     val transition: Transition?,
-    val effect: ClipEffect?,
+    val effects: List<ClipEffect>,
     val limitMs: Long,
 )
 
@@ -464,7 +465,7 @@ sealed interface EditorEvent {
     data class EffectPreview(val effect: ClipEffect) : EditorEvent
     /** The effect on release or a tap: one edit. */
     data class EffectCommit(val effect: ClipEffect) : EditorEvent
-    data object EffectRemove : EditorEvent
+    data class EffectRemove(val kind: EffectKind) : EditorEvent
     data object EffectDismiss : EditorEvent
     /** The Add music button: opens a file picker for an audio file. */
     data object AddMusic : EditorEvent

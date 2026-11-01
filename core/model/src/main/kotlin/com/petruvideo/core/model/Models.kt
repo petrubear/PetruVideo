@@ -69,7 +69,8 @@ data class VideoClip(
     val filter: ClipFilter = ClipFilter(),
     /** The transition into the next clip of the lane; ignored when there is no next clip. */
     val transitionOut: Transition? = null,
-    val effect: ClipEffect? = null,
+    /** Picture effects, up to [EFFECT_MAX] of different kinds, drawn in this order (feature 026). */
+    val effects: List<ClipEffect> = emptyList(),
     /** Zoom, pan, and fade over the clip's time; empty keeps the full-frame look (feature 014). */
     val keyframes: List<Keyframe> = emptyList(),
     /** Turn, mirror, and crop of the picture before it is fitted to the frame (feature 016). */
@@ -80,6 +81,9 @@ data class VideoClip(
     val speedCurve: SpeedCurve? = null,
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
+
+    /** The first picture effect, or null. */
+    val effect: ClipEffect? get() = effects.firstOrNull()
 
     val lengthMs: Long get() = speedCurve?.timelineMs ?: timelineLengthMs(sourceLengthMs, speedMilli)
 

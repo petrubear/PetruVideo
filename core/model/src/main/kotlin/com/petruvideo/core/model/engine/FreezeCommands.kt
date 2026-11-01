@@ -68,7 +68,7 @@ class FreezeFrame(
             sourceEndMs = lengthMs,
             attachedAudio = false,
             filter = clip.filter,
-            effect = clip.effect,
+            effects = clip.effects,
             transform = clip.transform,
         )
         if (clip.keyframes.isEmpty()) return frozen

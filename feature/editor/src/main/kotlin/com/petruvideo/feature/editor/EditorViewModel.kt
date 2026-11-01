@@ -14,6 +14,7 @@ import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.EFFECT_MAX
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.engine.RemoveTransition
@@ -248,7 +249,7 @@ class EditorViewModel @Inject constructor(
 
         /** Filter numbers and effect strength change live, so only whether they are on can force a rebuild. */
         private fun VideoClip.structural() =
-            copy(filter = filter.structural(), effect = effect?.copy(strength = 0))
+            copy(filter = filter.structural(), effects = effects.map { it.copy(strength = 0) })
 
         private fun OverlayClip.structural() =
             copy(xPermille = 0, yPermille = 0, widthPermille = 0, opacityPercent = 0, keyframes = emptyList())
@@ -408,7 +409,7 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TransitionRemove -> selectedPictureId()?.let { run(RemoveTransition(it)) }
             is EditorEvent.EffectPreview -> selectedPictureId()?.let { engine.setClipEffectLive(it, event.effect) }
             is EditorEvent.EffectCommit -> commitEffect(event.effect)
-            EditorEvent.EffectRemove -> selectedPictureId()?.let { run(ResetClipEffect(it)) }
+            is EditorEvent.EffectRemove -> selectedPictureId()?.let { run(ResetClipEffect(it, event.kind)) }
             EditorEvent.EffectDismiss -> closeEffect()
             EditorEvent.AddMusic -> { pause(); effectChannel.trySend(EditorEffect.PickMusic) }
             is EditorEvent.AddMusicMedia -> addMusic(event.media)
@@ -1001,15 +1002,18 @@ class EditorViewModel @Inject constructor(
         val open = local.value.effect ?: return
         local.update { it.copy(effect = null) }
         // A drag that did not become an edit must not leave its live strength behind.
-        session.timeline.value?.videoLane?.firstOrNull { it.id == open.clipId }?.effect
-            ?.let { engine.setClipEffectLive(open.clipId, it) }
+        session.timeline.value?.videoLane?.firstOrNull { it.id == open.clipId }?.effects
+            ?.forEach { engine.setClipEffectLive(open.clipId, it) }
     }
 
     private fun commitEffect(effect: ClipEffect) {
         val id = selectedPictureId() ?: return
-        run(SetClipEffect(id, effect.kind, effect.strength))
-        session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.effect
-            ?.let { engine.setClipEffectLive(id, it) }
+        val result = session.apply(SetClipEffect(id, effect.kind, effect.strength))
+        if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
+            say("Up to $EFFECT_MAX effects per clip")
+        }
+        session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.effects
+            ?.forEach { engine.setClipEffectLive(id, it) }
     }
 
     private fun addMusic(media: MediaItem) {

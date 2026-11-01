@@ -59,7 +59,7 @@ internal fun effectPanelFor(timeline: Timeline?, selection: ClipSelection?, open
     val index = timeline.videoLane.indexOfFirst { it.id == open.clipId }
     if (index < 0) return null
     val clip = timeline.videoLane[index]
-    return EffectPanelState(open.kind, clip.id, clip.transitionOut, clip.effect, transitionLimit(timeline, index))
+    return EffectPanelState(open.kind, clip.id, clip.transitionOut, clip.effects, transitionLimit(timeline, index))
 }
 
 /** The longest transition after the clip at [index]; 0 when it is the last clip or the pair is too short. */

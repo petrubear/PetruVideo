@@ -97,6 +97,8 @@ data class VideoClipEntity(
     @Embedded(prefix = "flt_") val filter: FilterColumns = FilterColumns(),
     @Embedded(prefix = "trn_") val transition: TransitionColumns = TransitionColumns(),
     @Embedded(prefix = "fxe_") val effect: EffectColumns = EffectColumns(),
+    @Embedded(prefix = "fxe2_") val effect2: EffectColumns = EffectColumns(),
+    @Embedded(prefix = "fxe3_") val effect3: EffectColumns = EffectColumns(),
     @Embedded(prefix = "xf_") val transform: TransformColumns = TransformColumns(),
     @ColumnInfo(defaultValue = "0") val reversed: Boolean = false,
     val speedCurve: String? = null,

@@ -327,7 +327,7 @@ class AccessibilityTest {
     @Test
     fun effectsTransitionPanel() = check(
         ClipSelection.Video("c1"), listOf(ClipTool.EffectTransition, ClipTool.EffectFx, ClipTool.Duplicate, ClipTool.Delete),
-        effectPanel = EffectPanelState(EffectToolKind.Transition, "c1", transition, null, 1_500),
+        effectPanel = EffectPanelState(EffectToolKind.Transition, "c1", transition, emptyList(), 1_500),
     )
 
     @Test
@@ -335,7 +335,7 @@ class AccessibilityTest {
         ClipSelection.Video("c1"), listOf(ClipTool.EffectTransition, ClipTool.EffectFx),
         effectPanel = EffectPanelState(
             EffectToolKind.Effect, "c1", null,
-            com.petruvideo.core.model.ClipEffect(com.petruvideo.core.model.EffectKind.Blur, 50), 1_500,
+            listOf(com.petruvideo.core.model.ClipEffect(com.petruvideo.core.model.EffectKind.Blur, 50)), 1_500,
         ),
         fontScale = 2f,
     )

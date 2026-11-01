@@ -211,6 +211,6 @@ private fun BoxScope.ClipDecorations(clip: VideoClip) {
         reverbOn = clip.attachedAudio && clip.reverb.enabled,
         fx = clip.fx.takeIf { clip.attachedAudio },
         filterOn = !clip.filter.isNeutral,
-        effectOn = clip.effect != null,
+        effectOn = clip.effects.isNotEmpty(),
     )
 }

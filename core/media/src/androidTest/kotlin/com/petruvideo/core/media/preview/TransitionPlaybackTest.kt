@@ -59,7 +59,7 @@ class TransitionPlaybackTest {
             media = (listOf(a, b) + extra).associateBy { it.id },
             videoLane = listOf(
                 VideoClip("c1", a.id, 0, 1_500, true, transitionOut = Transition(kind, 500)),
-                VideoClip("c2", b.id, 0, 1_500, false, effect = ClipEffect(EffectKind.Blur, 40)),
+                VideoClip("c2", b.id, 0, 1_500, false, effects = listOf(ClipEffect(EffectKind.Blur, 40))),
             ),
             overlayLane = overlays.toList(),
         )

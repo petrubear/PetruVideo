@@ -36,6 +36,7 @@ import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.designsystem.components.PillButton
 import com.petruvideo.core.designsystem.components.SheetSurface
 import com.petruvideo.core.model.ClipEffect
+import com.petruvideo.core.model.EFFECT_MAX
 import com.petruvideo.core.model.EFFECT_STRENGTH_DEFAULT
 import com.petruvideo.core.model.EffectKind
 import com.petruvideo.core.model.TRANSITION_MIN_MS
@@ -79,7 +80,7 @@ fun EffectPanel(panel: EffectPanelState?, onEvent: (EditorEvent) -> Unit, modifi
             ) {
                 when (panel.kind) {
                     EffectToolKind.Transition -> TransitionControls(panel, onEvent)
-                    EffectToolKind.Effect -> EffectControls(panel.effect, onEvent)
+                    EffectToolKind.Effect -> EffectControls(panel.effects, onEvent)
                 }
             }
         }
@@ -113,26 +114,36 @@ fun TransitionControls(panel: EffectPanelState, onEvent: (EditorEvent) -> Unit, 
 }
 
 @Composable
-fun EffectControls(effect: ClipEffect?, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
+fun EffectControls(effects: List<ClipEffect>, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
+    var selected by remember { mutableStateOf<EffectKind?>(null) }
+    val effect = effects.firstOrNull { it.kind == selected } ?: effects.lastOrNull()
     var shown by remember(effect) { mutableStateOf(effect ?: ClipEffect(EffectKind.Blur, EFFECT_STRENGTH_DEFAULT)) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EffectKind.entries.forEach { kind ->
-                KindTile("Effect ${kind.label}", kind.label, effect?.kind == kind) {
-                    onEvent(EditorEvent.EffectCommit(shown.copy(kind = kind)))
+                KindTile("Effect ${kind.label}", kind.label, effects.any { it.kind == kind }) {
+                    selected = kind
+                    if (effects.none { it.kind == kind }) {
+                        onEvent(EditorEvent.EffectCommit(ClipEffect(kind, EFFECT_STRENGTH_DEFAULT)))
+                    }
                 }
             }
         }
+        Text(
+            "Up to $EFFECT_MAX effects per clip, drawn in the order they were added.",
+            style = PetruType.Caption,
+            color = PetruColors.OnSurfaceMuted,
+        )
         if (effect != null) {
             SettingSlider(
-                "Strength", "${shown.strength}%", shown.strength.toFloat(), 0f..PERCENT_MAX,
+                "${effect.kind.label} strength", "${shown.strength}%", shown.strength.toFloat(), 0f..PERCENT_MAX,
                 {
                     shown = shown.copy(strength = it.roundToInt())
                     onEvent(EditorEvent.EffectPreview(shown))
                 },
                 { onEvent(EditorEvent.EffectCommit(shown)) },
             )
-            TextAction("Remove effect") { onEvent(EditorEvent.EffectRemove) }
+            TextAction("Remove ${effect.kind.label}") { onEvent(EditorEvent.EffectRemove(effect.kind)) }
         }
     }
 }

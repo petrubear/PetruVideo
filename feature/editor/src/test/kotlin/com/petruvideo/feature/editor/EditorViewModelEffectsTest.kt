@@ -86,7 +86,7 @@ class EditorViewModelEffectsTest {
         e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Blur, 80)))
         e.vm.onEvent(EditorEvent.Undo)
         e.lane[1].effect shouldBe ClipEffect(EffectKind.Blur, 50)
-        e.vm.onEvent(EditorEvent.EffectRemove)
+        e.vm.onEvent(EditorEvent.EffectRemove(EffectKind.Blur))
         e.lane[1].effect shouldBe null
     }
 
@@ -100,5 +100,21 @@ class EditorViewModelEffectsTest {
         val video = song.copy(id = "v", kind = MediaKind.Video, width = 100, height = 100)
         e.vm.onEvent(EditorEvent.AddMusicMedia(video))
         e.state.message shouldBe "That file can't be used as audio"
+    }
+
+    @Test
+    fun `a second and third effect stack and a fourth is refused with a message`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.EffectFx))
+        for (kind in listOf(EffectKind.Blur, EffectKind.Glow, EffectKind.Grain)) {
+            e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(kind, 40)))
+        }
+        e.lane[1].effects.map { it.kind } shouldBe listOf(EffectKind.Blur, EffectKind.Glow, EffectKind.Grain)
+        e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Vhs, 40)))
+        e.lane[1].effects.size shouldBe 3
+        e.state.message shouldBe "Up to 3 effects per clip"
+        e.vm.onEvent(EditorEvent.EffectRemove(EffectKind.Glow))
+        e.lane[1].effects.map { it.kind } shouldBe listOf(EffectKind.Blur, EffectKind.Grain)
     }
 }

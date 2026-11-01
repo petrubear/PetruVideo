@@ -110,7 +110,7 @@ class CompositionBuilder(
     val filters = mutableMapOf<String, ClipFilterEffects>()
 
     /** The picture effect of each clip that has one after [build], so the preview can change its strength live. */
-    val clipEffects = mutableMapOf<String, ClipEffectHandle>()
+    val clipEffects = mutableMapOf<String, List<ClipEffectHandle>>()
 
     /** The framing (zoom, pan, fade) of each clip with keyframes after [build], so the preview can change it live. */
     val framings = mutableMapOf<String, ClipFramingHandle>()
@@ -290,18 +290,19 @@ class CompositionBuilder(
 
     /** [frame] plus the clip's color transform and vignette when it has a filter on. */
     private fun withFilter(clip: VideoClip, frame: Effects): Effects {
-        val effect = clip.effect?.let { ClipEffectHandle(it).also { handle -> clipEffects[clip.id] = handle } }
+        val effect = clip.effects.map { ClipEffectHandle(it) }
+            .also { handles -> if (handles.isNotEmpty()) clipEffects[clip.id] = handles }
         val framing = clip.takeIf { it.keyframes.isNotEmpty() || it.id in framingIds }
             ?.let { ClipFramingHandle(clip).also { handle -> framings[clip.id] = handle } }
         val turn = transformEffects(clip.transform)
-        val plain = effect == null && framing == null && turn.isEmpty()
+        val plain = effect.isEmpty() && framing == null && turn.isEmpty()
         if (clip.filter.isNeutral && plain) return frame
         val filter = if (clip.filter.isNeutral) {
             emptyList()
         } else {
             ClipFilterEffects(clip.filter).also { filters[clip.id] = it }.effects
         }
-        val picture = listOfNotNull(effect?.glEffect, framing?.glEffect)
+        val picture = effect.map { it.glEffect } + listOfNotNull(framing?.glEffect)
         return Effects(frame.audioProcessors, turn + frame.videoEffects + filter + picture)
     }
 

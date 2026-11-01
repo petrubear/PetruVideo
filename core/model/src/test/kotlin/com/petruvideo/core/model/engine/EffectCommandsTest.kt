@@ -67,8 +67,8 @@ class EffectCommandsTest {
     fun `an effect is clamped, replaced, and reset`() {
         val t = applied(SetClipEffect("a", EffectKind.Blur, 150))
         t.videoLane[0].effect shouldBe ClipEffect(EffectKind.Blur, 100)
-        applied(SetClipEffect("a", EffectKind.Shake, 20), t).videoLane[0].effect shouldBe
-            ClipEffect(EffectKind.Shake, 20)
+        applied(SetClipEffect("a", EffectKind.Shake, 20), t).videoLane[0].effects shouldBe
+            listOf(ClipEffect(EffectKind.Blur, 100), ClipEffect(EffectKind.Shake, 20))
         SetClipEffect("a", EffectKind.Blur, 100).apply(t) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
         applied(ResetClipEffect("a"), t).videoLane[0].effect shouldBe null
         ResetClipEffect("b").apply(t) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)

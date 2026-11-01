@@ -818,7 +818,7 @@ class ExportPipelineTest {
     }
 
     private fun effectFrames(photo: MediaItem, effect: ClipEffect?, name: String, vararg times: Long): List<android.graphics.Bitmap> {
-        val timeline = project(VideoClip("e1", photo.id, 0, 2_000, false, effect = effect), media = listOf(photo))
+        val timeline = project(VideoClip("e1", photo.id, 0, 2_000, false, effects = listOfNotNull(effect)), media = listOf(photo))
         val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
         check(state is ExportState.Finished) { "$name export: $state" }
         return times.map { frameAt(uri!!, it) }
@@ -890,6 +890,21 @@ class ExportPipelineTest {
             val changed = maxOf(changedPixels(plain[0], frames[0]), changedPixels(plain[1], frames[1]))
             check(changed > 2_000) { "$kind changed only $changed pixels" }
         }
+    }
+
+    /** Feature 026: a second effect on the same clip is drawn too, after the first. */
+    @Test
+    fun stackedEffectsAreAllDrawn() {
+        val stripes = bandsPhoto("stripes26", 10)
+        fun frame(effects: List<ClipEffect>, name: String): android.graphics.Bitmap {
+            val timeline = project(VideoClip("s1", stripes.id, 0, 2_000, false, effects = effects), media = listOf(stripes))
+            val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+            check(state is ExportState.Finished) { "$name export: $state" }
+            return frameAt(uri!!, 1_000)
+        }
+        val one = frame(listOf(ClipEffect(EffectKind.Glow, 100)), "pipeline-stack-one")
+        val two = frame(listOf(ClipEffect(EffectKind.Glow, 100), ClipEffect(EffectKind.Grain, 100)), "pipeline-stack-two")
+        check(changedPixels(one, two) > 2_000) { "the second effect changed only ${changedPixels(one, two)} pixels" }
     }
 
     @Test

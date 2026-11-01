@@ -28,7 +28,7 @@ class EffectPanelTest {
 
     @Test
     fun aTransitionTileSetsItWithTheShownLength() {
-        val events = show(EffectPanelState(EffectToolKind.Transition, "c1", null, null, 1_500))
+        val events = show(EffectPanelState(EffectToolKind.Transition, "c1", null, emptyList(), 1_500))
         compose.onNodeWithContentDescription("Length").assertDoesNotExist()
         compose.onNodeWithContentDescription("Transition Slide").performScrollTo().performClick()
         assertEquals(EditorEvent.TransitionSet(TransitionKind.Slide, 1_000), events.last())
@@ -37,7 +37,7 @@ class EffectPanelTest {
     @Test
     fun withATransitionTheLengthSliderAndRemoveAreThere() {
         val events = show(
-            EffectPanelState(EffectToolKind.Transition, "c1", Transition(TransitionKind.Zoom, 500), null, 1_500),
+            EffectPanelState(EffectToolKind.Transition, "c1", Transition(TransitionKind.Zoom, 500), emptyList(), 1_500),
         )
         compose.onNodeWithContentDescription("Length").assertIsDisplayed()
         compose.onNodeWithText("Remove transition").performClick()
@@ -46,8 +46,8 @@ class EffectPanelTest {
 
     @Test
     fun anEffectTileCommitsAndStrengthShowsOnlyWithAnEffect() {
-        val events = show(EffectPanelState(EffectToolKind.Effect, "c1", null, null, 0))
-        compose.onNodeWithContentDescription("Strength").assertDoesNotExist()
+        val events = show(EffectPanelState(EffectToolKind.Effect, "c1", null, emptyList(), 0))
+        compose.onNodeWithContentDescription("Mirror strength").assertDoesNotExist()
         compose.onNodeWithContentDescription("Effect Mirror").performScrollTo().performClick()
         assertEquals(EditorEvent.EffectCommit(ClipEffect(EffectKind.Mirror, 50)), events.last())
     }
@@ -55,10 +55,10 @@ class EffectPanelTest {
     @Test
     fun withAnEffectTheStrengthSliderAndRemoveAreThere() {
         val events = show(
-            EffectPanelState(EffectToolKind.Effect, "c1", null, ClipEffect(EffectKind.Blur, 30), 0),
+            EffectPanelState(EffectToolKind.Effect, "c1", null, listOf(ClipEffect(EffectKind.Blur, 30)), 0),
         )
-        compose.onNodeWithContentDescription("Strength").assertIsDisplayed()
-        compose.onNodeWithText("Remove effect").performClick()
-        assertEquals(EditorEvent.EffectRemove, events.last())
+        compose.onNodeWithContentDescription("Blur strength").assertIsDisplayed()
+        compose.onNodeWithText("Remove Blur").performClick()
+        assertEquals(EditorEvent.EffectRemove(EffectKind.Blur), events.last())
     }
 }
