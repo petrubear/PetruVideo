@@ -34,7 +34,7 @@ Add a Text lane of text clips to the timeline, a Text tab with add, edit, style,
 |-----------|------|--------|
 | I. Native Android, Kotlin-First | Media3 overlays and Android text layout in Kotlin, no new frameworks | PASS |
 | II. Non-Destructive Editing | Text clips are project data with commands and undo; sources untouched | PASS |
-| III. Real-Time Preview Performance | Bitmaps cached and rendered off the render thread; animation changes only overlay settings; measured later on device; pressure monitor can hide animations | PASS (verify, risk R2) |
+| III. Real-Time Preview Performance | Bitmaps cached and rendered off the render thread; animation changes only overlay settings; measured later on device | PASS (verify, risk R2) |
 | IV. Incremental Delivery | Independent slice on 001 to 005; templates, auto captions, keyframes excluded | PASS |
 | V. Test-First on Core Logic | Commands, bounds, animation math on the JVM; export frame check | PASS |
 | VI. Clean Architecture and Modularity | Engine Android-free; renderer in `core:media`; panel state in the view model | PASS |
