@@ -21,6 +21,9 @@ data class ProjectEntity(
     val playheadMs: Long,
     /** The project's length as last saved (video, audio, text, and overlays); 0 until it is first saved. */
     @ColumnInfo(defaultValue = "0") val durationMs: Long = 0,
+    @ColumnInfo(defaultValue = "'Black'") val canvasKind: String = "Black",
+    @ColumnInfo(defaultValue = "-16777216") val canvasColor: Int = -16777216,
+    @ColumnInfo(defaultValue = "'Medium'") val canvasBlur: String = "Medium",
 )
 
 @Entity(

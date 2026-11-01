@@ -1178,6 +1178,37 @@ class ExportPipelineTest {
         check(mean > plainRate * 0.6f && mean < plainRate * 1.6f) { "pitch moved: plain $plainRate, ramped $rates" }
     }
 
+    private fun withCanvas(canvas: com.petruvideo.core.model.CanvasBackground, name: String): android.graphics.Bitmap {
+        val photo = solidPhoto("canvasphoto", 0xFF804000.toInt())
+        val clip = VideoClip("k1", photo.id, 0, 2_000, false)
+        val timeline = project(clip, media = listOf(photo)).copy(canvas = canvas)
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return frameAt(uri!!, 800)
+    }
+
+    /** SC-002 of feature 021: the bars of a 4:3 picture in a 16:9 project show what the project's background says. */
+    @Test
+    fun theBarsShowTheProjectsBackground() {
+        val black = withCanvas(com.petruvideo.core.model.CanvasBackground.Black, "pipeline-canvas-black")
+        val side = meanRgb(black, 0.0f, 0.08f)
+        check(side.all { it < 25 }) { "black bars are ${side.toList()}" }
+        check(meanRgb(black, 0.4f, 0.6f)[0] > 90) { "the picture is missing" }
+
+        val red = withCanvas(com.petruvideo.core.model.CanvasBackground.Colour(0xFFE53935.toInt()), "pipeline-canvas-red")
+        val redSide = meanRgb(red, 0.0f, 0.08f)
+        check(redSide[0] > 180 && redSide[1] < 90 && redSide[2] < 90) { "colour bars are ${redSide.toList()}" }
+        check(meanRgb(red, 0.4f, 0.6f)[0] in 90..170) { "the picture changed under a colour" }
+
+        val blur = withCanvas(
+            com.petruvideo.core.model.CanvasBackground.Blur(com.petruvideo.core.model.BlurStrength.Medium),
+            "pipeline-canvas-blur",
+        )
+        val blurSide = meanRgb(blur, 0.0f, 0.08f)
+        // The picture is solid brown (128, 64, 0), so its blurred copy is brown a little darkened, not black.
+        check(blurSide[0] in 60..125 && blurSide[0] > blurSide[2] + 30) { "blur bars are ${blurSide.toList()}" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

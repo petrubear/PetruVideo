@@ -62,6 +62,7 @@ import com.petruvideo.core.model.CAPTION_MAX
 import com.petruvideo.core.model.Sticker
 import com.petruvideo.core.model.engine.AddCaptions
 import com.petruvideo.core.model.engine.AddSticker
+import com.petruvideo.core.model.engine.SetCanvas
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import com.petruvideo.core.media.reverse.ReversePreparer
@@ -194,6 +195,7 @@ class EditorViewModel @Inject constructor(
         val curveOpen: Boolean = false,
         val captions: CaptionsLocal? = null,
         val stickersOpen: Boolean = false,
+        val canvasOpen: Boolean = false,
         /** The curve being dragged on the graph, shown in the panel until it is committed. */
         val curveDraft: SpeedCurve? = null,
         val crop: OpenCrop? = null,
@@ -267,6 +269,13 @@ class EditorViewModel @Inject constructor(
         ::Core,
     ).combine(local, ::toState)
         .combine(voiceOver.ui) { state, take -> state.copy(voiceOver = take) }
+        .combine(local) { state, own ->
+            state.copy(
+                captionsPanel = own.captions?.toPanel(),
+                stickersOpen = own.stickersOpen,
+                canvasPanel = state.timeline?.canvas?.takeIf { own.canvasOpen },
+            )
+        }
         .combine(reverse.progress) { state, progress ->
             state.copy(reverseProgress = progress[state.selection?.clipId])
         }
@@ -408,6 +417,9 @@ class EditorViewModel @Inject constructor(
         when (event) {
             EditorEvent.OpenCaptions -> openCaptions()
             EditorEvent.OpenStickers -> local.update { it.copy(stickersOpen = true, captions = null) }
+            EditorEvent.OpenCanvas -> local.update { it.copy(canvasOpen = true) }
+            EditorEvent.CanvasDismiss -> local.update { it.copy(canvasOpen = false) }
+            is EditorEvent.CanvasSet -> run(SetCanvas(event.canvas))
             EditorEvent.StickersDismiss -> local.update { it.copy(stickersOpen = false) }
             is EditorEvent.AddStickerLayer -> addSticker(event.sticker)
             is EditorEvent.CaptionsLanguage -> {
@@ -1470,8 +1482,6 @@ class EditorViewModel @Inject constructor(
             transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
             freezePanel = freezePanelFor(selection, local.freezeOpen),
             curvePanel = curvePanelFor(timeline, selection, local.curveOpen, local.curveDraft),
-            captionsPanel = local.captions?.toPanel(),
-            stickersOpen = local.stickersOpen,
             selectedReversed = timeline?.videoLane?.firstOrNull { it.id == selection?.clipId }?.reversed == true,
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(

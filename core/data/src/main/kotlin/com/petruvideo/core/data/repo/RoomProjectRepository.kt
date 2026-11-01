@@ -3,8 +3,10 @@ package com.petruvideo.core.data.repo
 import androidx.room.withTransaction
 import com.petruvideo.core.data.db.PetruDatabase
 import com.petruvideo.core.data.db.ProjectSummaryRow
+import com.petruvideo.core.data.db.canvas
 import com.petruvideo.core.data.db.toEntity
 import com.petruvideo.core.data.db.toModel
+import com.petruvideo.core.data.db.withCanvas
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.ProjectStatus
@@ -47,6 +49,7 @@ class RoomProjectRepository @Inject constructor(
             textLane = timelines.textClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
             overlayLane = timelines.overlayClips(id).map { it.toModel().withKeyframes(frames[it.id].orEmpty()) },
             playheadMs = entity.playheadMs,
+            canvas = entity.canvas(),
         )
         return LoadedProject(project, timeline)
     }
@@ -75,7 +78,7 @@ class RoomProjectRepository @Inject constructor(
                     formatFps = format?.fps,
                     playheadMs = timeline.playheadMs,
                     durationMs = timeline.totalDurationMs,
-                ),
+                ).withCanvas(timeline.canvas),
             )
             timelines.deleteVideoClips(projectId)
             timelines.deleteAudioClips(projectId)

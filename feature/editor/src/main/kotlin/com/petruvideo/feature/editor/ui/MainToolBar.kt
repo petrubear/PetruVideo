@@ -162,7 +162,7 @@ fun TextTabBar(
 
 /** The bar of the Effects tab with no picture clip selected. */
 @Composable
-fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier, onBackground: () -> Unit = {}) {
     Row(
         modifier
             .fillMaxWidth()
@@ -175,6 +175,7 @@ fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
+        ToolButton(label = "Background", icon = PetruIcons.ToolFilters, active = true, onClick = onBackground)
         Text("Select a clip to add a transition or effect", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
     }
 }

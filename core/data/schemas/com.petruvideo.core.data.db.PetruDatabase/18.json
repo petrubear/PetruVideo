@@ -1,0 +1,1492 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 18,
+    "identityHash": "6d9046e732b7f2676b376d3212d80ae0",
+    "entities": [
+      {
+        "tableName": "project",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `modifiedAt` INTEGER NOT NULL, `status` TEXT NOT NULL, `formatWidth` INTEGER, `formatHeight` INTEGER, `formatFps` INTEGER, `thumbnailRef` TEXT, `playheadMs` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL DEFAULT 0, `canvasKind` TEXT NOT NULL DEFAULT 'Black', `canvasColor` INTEGER NOT NULL DEFAULT -16777216, `canvasBlur` TEXT NOT NULL DEFAULT 'Medium', PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAt",
+            "columnName": "modifiedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "formatWidth",
+            "columnName": "formatWidth",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "formatHeight",
+            "columnName": "formatHeight",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "formatFps",
+            "columnName": "formatFps",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "thumbnailRef",
+            "columnName": "thumbnailRef",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "playheadMs",
+            "columnName": "playheadMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "canvasKind",
+            "columnName": "canvasKind",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Black'"
+          },
+          {
+            "fieldPath": "canvasColor",
+            "columnName": "canvasColor",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "-16777216"
+          },
+          {
+            "fieldPath": "canvasBlur",
+            "columnName": "canvasBlur",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Medium'"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "media_item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `kind` TEXT NOT NULL, `uri` TEXT NOT NULL, `displayName` TEXT NOT NULL, `durationMs` INTEGER, `width` INTEGER, `height` INTEGER, `frameRate` REAL, `hasAudio` INTEGER NOT NULL, `fpSize` INTEGER NOT NULL, `fpLastModified` INTEGER NOT NULL, `fpMimeType` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "frameRate",
+            "columnName": "frameRate",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "hasAudio",
+            "columnName": "hasAudio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fpSize",
+            "columnName": "fpSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fpLastModified",
+            "columnName": "fpLastModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fpMimeType",
+            "columnName": "fpMimeType",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_media_item_projectId",
+            "unique": false,
+            "columnNames": [
+              "projectId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_item_projectId` ON `${TABLE_NAME}` (`projectId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "video_clip",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `mediaItemId` TEXT NOT NULL, `orderIndex` INTEGER NOT NULL, `sourceStartMs` INTEGER NOT NULL, `sourceEndMs` INTEGER NOT NULL, `attachedAudio` INTEGER NOT NULL, `speedMilli` INTEGER NOT NULL DEFAULT 1000, `volumePercent` INTEGER NOT NULL DEFAULT 100, `muted` INTEGER NOT NULL DEFAULT 0, `reversed` INTEGER NOT NULL DEFAULT 0, `speedCurve` TEXT, `reverb_enabled` INTEGER NOT NULL DEFAULT 0, `reverb_preset` TEXT NOT NULL DEFAULT 'MediumRoom', `reverb_room` INTEGER NOT NULL DEFAULT 50, `reverb_decayMs` INTEGER NOT NULL DEFAULT 1500, `reverb_damping` INTEGER NOT NULL DEFAULT 50, `reverb_preDelayMs` INTEGER NOT NULL DEFAULT 20, `reverb_mix` INTEGER NOT NULL DEFAULT 30, `fx_fadeInMs` INTEGER NOT NULL DEFAULT 0, `fx_fadeOutMs` INTEGER NOT NULL DEFAULT 0, `fx_nrEnabled` INTEGER NOT NULL DEFAULT 0, `fx_nrStrength` TEXT NOT NULL DEFAULT 'Medium', `fx_eqLow` INTEGER NOT NULL DEFAULT 0, `fx_eqMid` INTEGER NOT NULL DEFAULT 0, `fx_eqHigh` INTEGER NOT NULL DEFAULT 0, `fx_echoEnabled` INTEGER NOT NULL DEFAULT 0, `fx_echoDelayMs` INTEGER NOT NULL DEFAULT 250, `fx_echoRepeats` INTEGER NOT NULL DEFAULT 3, `fx_robotEnabled` INTEGER NOT NULL DEFAULT 0, `fx_robotIntensity` INTEGER NOT NULL DEFAULT 60, `fx_pitchEnabled` INTEGER NOT NULL DEFAULT 0, `fx_pitchSemitones` INTEGER NOT NULL DEFAULT 4, `fx_bassEnabled` INTEGER NOT NULL DEFAULT 0, `fx_bassAmount` INTEGER NOT NULL DEFAULT 50, `flt_look` TEXT NOT NULL DEFAULT 'None', `flt_intensity` INTEGER NOT NULL DEFAULT 100, `flt_brightness` INTEGER NOT NULL DEFAULT 0, `flt_contrast` INTEGER NOT NULL DEFAULT 0, `flt_saturation` INTEGER NOT NULL DEFAULT 0, `flt_warmth` INTEGER NOT NULL DEFAULT 0, `flt_vignette` INTEGER NOT NULL DEFAULT 0, `trn_kind` TEXT DEFAULT NULL, `trn_lengthMs` INTEGER NOT NULL DEFAULT 0, `fxe_kind` TEXT DEFAULT NULL, `fxe_strength` INTEGER NOT NULL DEFAULT 50, `xf_turns` INTEGER NOT NULL DEFAULT 0, `xf_flipH` INTEGER NOT NULL DEFAULT 0, `xf_flipV` INTEGER NOT NULL DEFAULT 0, `xf_cropLeft` INTEGER NOT NULL DEFAULT 0, `xf_cropTop` INTEGER NOT NULL DEFAULT 0, `xf_cropRight` INTEGER NOT NULL DEFAULT 1000, `xf_cropBottom` INTEGER NOT NULL DEFAULT 1000, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`mediaItemId`) REFERENCES `media_item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaItemId",
+            "columnName": "mediaItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "orderIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceStartMs",
+            "columnName": "sourceStartMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceEndMs",
+            "columnName": "sourceEndMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attachedAudio",
+            "columnName": "attachedAudio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speedMilli",
+            "columnName": "speedMilli",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1000"
+          },
+          {
+            "fieldPath": "volumePercent",
+            "columnName": "volumePercent",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "100"
+          },
+          {
+            "fieldPath": "muted",
+            "columnName": "muted",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "reversed",
+            "columnName": "reversed",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "speedCurve",
+            "columnName": "speedCurve",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reverb.enabled",
+            "columnName": "reverb_enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "reverb.preset",
+            "columnName": "reverb_preset",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'MediumRoom'"
+          },
+          {
+            "fieldPath": "reverb.room",
+            "columnName": "reverb_room",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "reverb.decayMs",
+            "columnName": "reverb_decayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1500"
+          },
+          {
+            "fieldPath": "reverb.damping",
+            "columnName": "reverb_damping",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "reverb.preDelayMs",
+            "columnName": "reverb_preDelayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "20"
+          },
+          {
+            "fieldPath": "reverb.mix",
+            "columnName": "reverb_mix",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "30"
+          },
+          {
+            "fieldPath": "fx.fadeInMs",
+            "columnName": "fx_fadeInMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.fadeOutMs",
+            "columnName": "fx_fadeOutMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.nrEnabled",
+            "columnName": "fx_nrEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.nrStrength",
+            "columnName": "fx_nrStrength",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Medium'"
+          },
+          {
+            "fieldPath": "fx.eqLow",
+            "columnName": "fx_eqLow",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.eqMid",
+            "columnName": "fx_eqMid",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.eqHigh",
+            "columnName": "fx_eqHigh",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.echoEnabled",
+            "columnName": "fx_echoEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.echoDelayMs",
+            "columnName": "fx_echoDelayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "250"
+          },
+          {
+            "fieldPath": "fx.echoRepeats",
+            "columnName": "fx_echoRepeats",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "3"
+          },
+          {
+            "fieldPath": "fx.robotEnabled",
+            "columnName": "fx_robotEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.robotIntensity",
+            "columnName": "fx_robotIntensity",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "60"
+          },
+          {
+            "fieldPath": "fx.pitchEnabled",
+            "columnName": "fx_pitchEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.pitchSemitones",
+            "columnName": "fx_pitchSemitones",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "4"
+          },
+          {
+            "fieldPath": "fx.bassEnabled",
+            "columnName": "fx_bassEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.bassAmount",
+            "columnName": "fx_bassAmount",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "filter.look",
+            "columnName": "flt_look",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'None'"
+          },
+          {
+            "fieldPath": "filter.intensity",
+            "columnName": "flt_intensity",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "100"
+          },
+          {
+            "fieldPath": "filter.brightness",
+            "columnName": "flt_brightness",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "filter.contrast",
+            "columnName": "flt_contrast",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "filter.saturation",
+            "columnName": "flt_saturation",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "filter.warmth",
+            "columnName": "flt_warmth",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "filter.vignette",
+            "columnName": "flt_vignette",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transition.kind",
+            "columnName": "trn_kind",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "transition.lengthMs",
+            "columnName": "trn_lengthMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "effect.kind",
+            "columnName": "fxe_kind",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "effect.strength",
+            "columnName": "fxe_strength",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "transform.turns",
+            "columnName": "xf_turns",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transform.flipH",
+            "columnName": "xf_flipH",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transform.flipV",
+            "columnName": "xf_flipV",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transform.cropLeft",
+            "columnName": "xf_cropLeft",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transform.cropTop",
+            "columnName": "xf_cropTop",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "transform.cropRight",
+            "columnName": "xf_cropRight",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1000"
+          },
+          {
+            "fieldPath": "transform.cropBottom",
+            "columnName": "xf_cropBottom",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1000"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_video_clip_projectId_orderIndex",
+            "unique": true,
+            "columnNames": [
+              "projectId",
+              "orderIndex"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_video_clip_projectId_orderIndex` ON `${TABLE_NAME}` (`projectId`, `orderIndex`)"
+          },
+          {
+            "name": "index_video_clip_mediaItemId",
+            "unique": false,
+            "columnNames": [
+              "mediaItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_video_clip_mediaItemId` ON `${TABLE_NAME}` (`mediaItemId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "media_item",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "mediaItemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "audio_clip",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `mediaItemId` TEXT NOT NULL, `timelineStartMs` INTEGER NOT NULL, `sourceStartMs` INTEGER NOT NULL, `sourceEndMs` INTEGER NOT NULL, `muted` INTEGER NOT NULL, `origin` TEXT NOT NULL, `speedMilli` INTEGER NOT NULL DEFAULT 1000, `volumePercent` INTEGER NOT NULL DEFAULT 100, `duckEnabled` INTEGER NOT NULL DEFAULT 0, `duckAmount` INTEGER NOT NULL DEFAULT 60, `duckSmoothness` TEXT NOT NULL DEFAULT 'Medium', `reverb_enabled` INTEGER NOT NULL DEFAULT 0, `reverb_preset` TEXT NOT NULL DEFAULT 'MediumRoom', `reverb_room` INTEGER NOT NULL DEFAULT 50, `reverb_decayMs` INTEGER NOT NULL DEFAULT 1500, `reverb_damping` INTEGER NOT NULL DEFAULT 50, `reverb_preDelayMs` INTEGER NOT NULL DEFAULT 20, `reverb_mix` INTEGER NOT NULL DEFAULT 30, `fx_fadeInMs` INTEGER NOT NULL DEFAULT 0, `fx_fadeOutMs` INTEGER NOT NULL DEFAULT 0, `fx_nrEnabled` INTEGER NOT NULL DEFAULT 0, `fx_nrStrength` TEXT NOT NULL DEFAULT 'Medium', `fx_eqLow` INTEGER NOT NULL DEFAULT 0, `fx_eqMid` INTEGER NOT NULL DEFAULT 0, `fx_eqHigh` INTEGER NOT NULL DEFAULT 0, `fx_echoEnabled` INTEGER NOT NULL DEFAULT 0, `fx_echoDelayMs` INTEGER NOT NULL DEFAULT 250, `fx_echoRepeats` INTEGER NOT NULL DEFAULT 3, `fx_robotEnabled` INTEGER NOT NULL DEFAULT 0, `fx_robotIntensity` INTEGER NOT NULL DEFAULT 60, `fx_pitchEnabled` INTEGER NOT NULL DEFAULT 0, `fx_pitchSemitones` INTEGER NOT NULL DEFAULT 4, `fx_bassEnabled` INTEGER NOT NULL DEFAULT 0, `fx_bassAmount` INTEGER NOT NULL DEFAULT 50, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`mediaItemId`) REFERENCES `media_item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaItemId",
+            "columnName": "mediaItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timelineStartMs",
+            "columnName": "timelineStartMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceStartMs",
+            "columnName": "sourceStartMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceEndMs",
+            "columnName": "sourceEndMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "muted",
+            "columnName": "muted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speedMilli",
+            "columnName": "speedMilli",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1000"
+          },
+          {
+            "fieldPath": "volumePercent",
+            "columnName": "volumePercent",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "100"
+          },
+          {
+            "fieldPath": "duckEnabled",
+            "columnName": "duckEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "duckAmount",
+            "columnName": "duckAmount",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "60"
+          },
+          {
+            "fieldPath": "duckSmoothness",
+            "columnName": "duckSmoothness",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Medium'"
+          },
+          {
+            "fieldPath": "reverb.enabled",
+            "columnName": "reverb_enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "reverb.preset",
+            "columnName": "reverb_preset",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'MediumRoom'"
+          },
+          {
+            "fieldPath": "reverb.room",
+            "columnName": "reverb_room",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "reverb.decayMs",
+            "columnName": "reverb_decayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1500"
+          },
+          {
+            "fieldPath": "reverb.damping",
+            "columnName": "reverb_damping",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          },
+          {
+            "fieldPath": "reverb.preDelayMs",
+            "columnName": "reverb_preDelayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "20"
+          },
+          {
+            "fieldPath": "reverb.mix",
+            "columnName": "reverb_mix",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "30"
+          },
+          {
+            "fieldPath": "fx.fadeInMs",
+            "columnName": "fx_fadeInMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.fadeOutMs",
+            "columnName": "fx_fadeOutMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.nrEnabled",
+            "columnName": "fx_nrEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.nrStrength",
+            "columnName": "fx_nrStrength",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Medium'"
+          },
+          {
+            "fieldPath": "fx.eqLow",
+            "columnName": "fx_eqLow",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.eqMid",
+            "columnName": "fx_eqMid",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.eqHigh",
+            "columnName": "fx_eqHigh",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.echoEnabled",
+            "columnName": "fx_echoEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.echoDelayMs",
+            "columnName": "fx_echoDelayMs",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "250"
+          },
+          {
+            "fieldPath": "fx.echoRepeats",
+            "columnName": "fx_echoRepeats",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "3"
+          },
+          {
+            "fieldPath": "fx.robotEnabled",
+            "columnName": "fx_robotEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.robotIntensity",
+            "columnName": "fx_robotIntensity",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "60"
+          },
+          {
+            "fieldPath": "fx.pitchEnabled",
+            "columnName": "fx_pitchEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.pitchSemitones",
+            "columnName": "fx_pitchSemitones",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "4"
+          },
+          {
+            "fieldPath": "fx.bassEnabled",
+            "columnName": "fx_bassEnabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "fx.bassAmount",
+            "columnName": "fx_bassAmount",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "50"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_audio_clip_projectId_timelineStartMs",
+            "unique": false,
+            "columnNames": [
+              "projectId",
+              "timelineStartMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_clip_projectId_timelineStartMs` ON `${TABLE_NAME}` (`projectId`, `timelineStartMs`)"
+          },
+          {
+            "name": "index_audio_clip_mediaItemId",
+            "unique": false,
+            "columnNames": [
+              "mediaItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_clip_mediaItemId` ON `${TABLE_NAME}` (`mediaItemId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "media_item",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "mediaItemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "export_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`projectId` TEXT NOT NULL, `resolution` TEXT NOT NULL, `frameRate` INTEGER NOT NULL, `quality` TEXT NOT NULL, PRIMARY KEY(`projectId`))",
+        "fields": [
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolution",
+            "columnName": "resolution",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameRate",
+            "columnName": "frameRate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quality",
+            "columnName": "quality",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "tableName": "export_job",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`projectId` TEXT NOT NULL, `jobId` TEXT NOT NULL, `startedAt` INTEGER NOT NULL, `state` TEXT NOT NULL, `progress` INTEGER NOT NULL, `reason` TEXT, `resultUri` TEXT, `bytes` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, PRIMARY KEY(`projectId`))",
+        "fields": [
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobId",
+            "columnName": "jobId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "startedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "resultUri",
+            "columnName": "resultUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bytes",
+            "columnName": "bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "tableName": "text_clip",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `startMs` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `text` TEXT NOT NULL, `x` INTEGER NOT NULL, `y` INTEGER NOT NULL, `size` INTEGER NOT NULL, `font` TEXT NOT NULL, `color` INTEGER NOT NULL, `align` TEXT NOT NULL, `bgEnabled` INTEGER NOT NULL, `bgColor` INTEGER NOT NULL, `bgOpacity` INTEGER NOT NULL, `olEnabled` INTEGER NOT NULL, `olColor` INTEGER NOT NULL, `olWidth` INTEGER NOT NULL, `inKind` TEXT NOT NULL, `inMs` INTEGER NOT NULL, `outKind` TEXT NOT NULL, `outMs` INTEGER NOT NULL, `caption` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startMs",
+            "columnName": "startMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "x",
+            "columnName": "x",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "y",
+            "columnName": "y",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "font",
+            "columnName": "font",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "align",
+            "columnName": "align",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bgEnabled",
+            "columnName": "bgEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bgColor",
+            "columnName": "bgColor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bgOpacity",
+            "columnName": "bgOpacity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "olEnabled",
+            "columnName": "olEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "olColor",
+            "columnName": "olColor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "olWidth",
+            "columnName": "olWidth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inKind",
+            "columnName": "inKind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inMs",
+            "columnName": "inMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outKind",
+            "columnName": "outKind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outMs",
+            "columnName": "outMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_text_clip_projectId_startMs",
+            "unique": false,
+            "columnNames": [
+              "projectId",
+              "startMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_text_clip_projectId_startMs` ON `${TABLE_NAME}` (`projectId`, `startMs`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "export_record",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectName` TEXT NOT NULL, `uri` TEXT NOT NULL, `durationMs` INTEGER NOT NULL, `bytes` INTEGER NOT NULL, `resolution` TEXT NOT NULL, `frameRate` INTEGER NOT NULL, `quality` TEXT NOT NULL, `finishedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectName",
+            "columnName": "projectName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bytes",
+            "columnName": "bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolution",
+            "columnName": "resolution",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frameRate",
+            "columnName": "frameRate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quality",
+            "columnName": "quality",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finishedAt",
+            "columnName": "finishedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_export_record_finishedAt",
+            "unique": false,
+            "columnNames": [
+              "finishedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_export_record_finishedAt` ON `${TABLE_NAME}` (`finishedAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "overlay_clip",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `projectId` TEXT NOT NULL, `mediaItemId` TEXT NOT NULL, `startMs` INTEGER NOT NULL, `sourceStartMs` INTEGER NOT NULL, `sourceEndMs` INTEGER NOT NULL, `x` INTEGER NOT NULL, `y` INTEGER NOT NULL, `width` INTEGER NOT NULL, `opacity` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`mediaItemId`) REFERENCES `media_item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaItemId",
+            "columnName": "mediaItemId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startMs",
+            "columnName": "startMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceStartMs",
+            "columnName": "sourceStartMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceEndMs",
+            "columnName": "sourceEndMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "x",
+            "columnName": "x",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "y",
+            "columnName": "y",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opacity",
+            "columnName": "opacity",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_overlay_clip_projectId_startMs",
+            "unique": false,
+            "columnNames": [
+              "projectId",
+              "startMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_overlay_clip_projectId_startMs` ON `${TABLE_NAME}` (`projectId`, `startMs`)"
+          },
+          {
+            "name": "index_overlay_clip_mediaItemId",
+            "unique": false,
+            "columnNames": [
+              "mediaItemId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_overlay_clip_mediaItemId` ON `${TABLE_NAME}` (`mediaItemId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "media_item",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "mediaItemId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "keyframe",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `projectId` TEXT NOT NULL, `ownerId` TEXT NOT NULL, `timeMs` INTEGER NOT NULL, `x` INTEGER NOT NULL, `y` INTEGER NOT NULL, `size` INTEGER NOT NULL, `opacity` INTEGER NOT NULL, `ease` INTEGER NOT NULL, FOREIGN KEY(`projectId`) REFERENCES `project`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "projectId",
+            "columnName": "projectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "timeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "x",
+            "columnName": "x",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "y",
+            "columnName": "y",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opacity",
+            "columnName": "opacity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ease",
+            "columnName": "ease",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_keyframe_projectId_ownerId",
+            "unique": false,
+            "columnNames": [
+              "projectId",
+              "ownerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_keyframe_projectId_ownerId` ON `${TABLE_NAME}` (`projectId`, `ownerId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "project",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "projectId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6d9046e732b7f2676b376d3212d80ae0')"
+    ]
+  }
+}

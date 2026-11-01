@@ -17,6 +17,7 @@ import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import com.petruvideo.core.media.effects.ClipEffectHandle
 import com.petruvideo.core.media.effects.ClipFramingHandle
+import com.petruvideo.core.media.effects.FitWithBackground
 import com.petruvideo.core.media.effects.transformEffects
 import com.petruvideo.core.media.reverse.ReversedSource
 import com.petruvideo.core.media.filter.ClipFilterEffects
@@ -26,6 +27,7 @@ import com.petruvideo.core.media.preview.ReverbAudioProcessor
 import com.petruvideo.core.media.preview.VoiceFxProcessor
 import com.petruvideo.core.media.text.TextOverlaySet
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.CanvasBackground
 import com.petruvideo.core.model.SpeedStep
 import com.petruvideo.core.model.DuckEnvelope
 import com.petruvideo.core.model.Fade
@@ -146,7 +148,7 @@ class CompositionBuilder(
      * keep its last frame).
      */
     private fun transitionSequences(timeline: Timeline): List<EditedMediaItemSequence> {
-        val frame = frameEffects()
+        val frame = frameEffects(timeline.canvas)
         val builders = (0..1).map { parity ->
             val clips = timeline.videoLane.filterIndexed { i, _ -> i % 2 == parity }
             EditedMediaItemSequence.Builder(videoTrackTypes(timeline, clips))
@@ -173,7 +175,7 @@ class CompositionBuilder(
     private fun videoSequence(timeline: Timeline): EditedMediaItemSequence? {
         if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty() && timeline.overlayLane.isEmpty()) return null
         val builder = EditedMediaItemSequence.Builder(videoTrackTypes(timeline, timeline.videoLane))
-        val frame = frameEffects()
+        val frame = frameEffects(timeline.canvas)
         timeline.videoLane.forEach { clip -> addVideoClip(builder, timeline, clip, frame) }
         // Text or an overlay that ends after the video plays over black, so the sequence runs on as a gap.
         val extraEndMs = maxOf(
@@ -384,10 +386,14 @@ class CompositionBuilder(
     }
 
     /** Fits every clip inside the output frame (bars, never cropping or stretching). */
-    private fun frameEffects(): Effects {
+    private fun frameEffects(canvas: CanvasBackground): Effects {
         val width = spec.width ?: return Effects.EMPTY
         val height = spec.height ?: return Effects.EMPTY
-        val fit = Presentation.createForWidthAndHeight(width, height, Presentation.LAYOUT_SCALE_TO_FIT)
+        val fit = if (canvas == CanvasBackground.Black) {
+            Presentation.createForWidthAndHeight(width, height, Presentation.LAYOUT_SCALE_TO_FIT)
+        } else {
+            FitWithBackground(width, height, canvas)
+        }
         val drop = spec.frameDropFps?.let {
             FrameDropEffect.createSimpleFrameDropEffect(spec.sourceFps.toFloat(), it.toFloat())
         }

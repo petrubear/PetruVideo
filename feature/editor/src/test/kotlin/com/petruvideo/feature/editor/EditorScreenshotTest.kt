@@ -67,6 +67,7 @@ class EditorScreenshotTest {
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
         stickersOpen: Boolean = false,
+        canvasPanel: com.petruvideo.core.model.CanvasBackground? = null,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -130,6 +131,7 @@ class EditorScreenshotTest {
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
             stickersOpen = stickersOpen,
+            canvasPanel = canvasPanel,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -318,6 +320,23 @@ class EditorScreenshotTest {
             PetruTheme {
                 EditorScreen(
                     state(tab = ToolbarTab.Text, captionsPanel = panel),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun backgroundPanelWithBlur() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        tab = ToolbarTab.Effects,
+                        canvasPanel = com.petruvideo.core.model.CanvasBackground.Blur(
+                            com.petruvideo.core.model.BlurStrength.Medium,
+                        ),
+                    ),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

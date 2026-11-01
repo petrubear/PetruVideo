@@ -2,6 +2,8 @@ package com.petruvideo.core.data.db
 
 import com.petruvideo.core.model.AnimKind
 import com.petruvideo.core.model.AudioClip
+import com.petruvideo.core.model.BlurStrength
+import com.petruvideo.core.model.CanvasBackground
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
@@ -234,4 +236,17 @@ suspend fun PetruDatabase.reversedRanges(): List<ReversedRange> {
     return timelineDao().reversedClips().mapNotNull { clip ->
         media[clip.mediaItemId]?.let { ReversedRange(it, clip.sourceStartMs, clip.sourceEndMs) }
     }
+}
+
+/** The project's background as stored in its row. */
+fun ProjectEntity.canvas(): CanvasBackground = when (canvasKind) {
+    "Colour" -> CanvasBackground.Colour(canvasColor)
+    "Blur" -> CanvasBackground.Blur(BlurStrength.entries.firstOrNull { it.name == canvasBlur } ?: BlurStrength.Medium)
+    else -> CanvasBackground.Black
+}
+
+fun ProjectEntity.withCanvas(canvas: CanvasBackground): ProjectEntity = when (canvas) {
+    CanvasBackground.Black -> copy(canvasKind = "Black")
+    is CanvasBackground.Colour -> copy(canvasKind = "Colour", canvasColor = canvas.argb)
+    is CanvasBackground.Blur -> copy(canvasKind = "Blur", canvasBlur = canvas.strength.name)
 }

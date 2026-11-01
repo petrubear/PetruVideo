@@ -144,6 +144,8 @@ data class Timeline(
     val textLane: List<TextClip> = emptyList(),
     val overlayLane: List<OverlayClip> = emptyList(),
     val playheadMs: Long = 0,
+    /** What fills the frame behind clips that do not cover it (feature 021). */
+    val canvas: CanvasBackground = CanvasBackground.Black,
 ) {
     val videoLengthMs: Long
         get() = videoLane.sumOf { it.lengthMs } - videoLane.indices.sumOf { transitionLengthAfter(it) }

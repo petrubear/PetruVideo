@@ -505,6 +505,30 @@ class OriginalsUnchangedTest {
         listed.durationMs shouldBe total
     }
 
+    /** SC-004 of feature 021: the background reloads exactly, also in a duplicated project. */
+    @Test
+    fun theBackgroundSurvivesAReloadAndAProjectDuplicate() = runBlocking<Unit> {
+        val video = source("clip21.mp4", MediaKind.Video, 10_000)
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        val blur = com.petruvideo.core.model.CanvasBackground.Blur(com.petruvideo.core.model.BlurStrength.Strong)
+        session.apply(com.petruvideo.core.model.engine.SetCanvas(blur))
+        session.flush()
+        session.close()
+
+        repo.loadProject(project.id)!!.timeline.canvas shouldBe blur
+        val copy = repo.duplicateProject(project.id)!!
+        repo.loadProject(copy.id)!!.timeline.canvas shouldBe blur
+        session.open(project.id)
+        session.apply(com.petruvideo.core.model.engine.SetCanvas(com.petruvideo.core.model.CanvasBackground.Colour(-65536)))
+        session.flush()
+        session.close()
+        repo.loadProject(project.id)!!.timeline.canvas shouldBe com.petruvideo.core.model.CanvasBackground.Colour(-65536)
+    }
+
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
     @Test
     fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {

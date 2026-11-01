@@ -58,6 +58,7 @@ class AccessibilityTest {
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
         stickersOpen: Boolean = false,
+        canvasPanel: com.petruvideo.core.model.CanvasBackground? = null,
         tab: ToolbarTab = ToolbarTab.Edit,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
@@ -84,6 +85,7 @@ class AccessibilityTest {
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
             stickersOpen = stickersOpen,
+            canvasPanel = canvasPanel,
             toolbarTab = tab,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
@@ -157,6 +159,18 @@ class AccessibilityTest {
     private val readyCaptions = CaptionsPanelState(
         com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US", "es-ES"),
         "en-US", true, null, "Added 12 captions",
+    )
+
+    @Test
+    fun backgroundPanelWithAColour() = check(
+        null, emptyList(), tab = ToolbarTab.Effects,
+        canvasPanel = com.petruvideo.core.model.CanvasBackground.Colour(0xFFE53935.toInt()),
+    )
+
+    @Test
+    fun backgroundPanelWithLargeFont() = check(
+        null, emptyList(), tab = ToolbarTab.Effects, fontScale = 2f,
+        canvasPanel = com.petruvideo.core.model.CanvasBackground.Blur(com.petruvideo.core.model.BlurStrength.Light),
     )
 
     @Test

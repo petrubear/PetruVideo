@@ -44,7 +44,10 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
         when (state.toolbarTab) {
             ToolbarTab.Overlay -> OverlayTabBar(back, onAdd = { onEvent(EditorEvent.AddOverlay) })
             ToolbarTab.Filters -> FiltersTabBar(back)
-            ToolbarTab.Effects -> EffectsTabBar(back)
+            ToolbarTab.Effects -> {
+                CanvasPanel(state.canvasPanel, onEvent)
+                EffectsTabBar(back, onBackground = { onEvent(EditorEvent.OpenCanvas) })
+            }
             ToolbarTab.Audio -> AudioTabBar(
                 back, onAdd = { onEvent(EditorEvent.AddMusic) }, onRecord = { onEvent(EditorEvent.RecordVoiceOver) },
             )

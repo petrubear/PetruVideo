@@ -243,6 +243,8 @@ data class EditorState(
     val transformPanel: TransformPanelState? = null,
     /** The open Freeze frame panel for the selected main-track clip, if any. */
     val freezePanel: FreezePanelState? = null,
+    /** The open Background panel (Effects tab, no clip selected): the project's current background. */
+    val canvasPanel: com.petruvideo.core.model.CanvasBackground? = null,
     /** Whether the Stickers gallery is open (Text tab). */
     val stickersOpen: Boolean = false,
     /** The open Auto captions panel (Text tab), if any. */
@@ -398,6 +400,9 @@ sealed interface EditorEvent {
 
     data object OpenCaptions : EditorEvent
     data object OpenStickers : EditorEvent
+    data object OpenCanvas : EditorEvent
+    data object CanvasDismiss : EditorEvent
+    data class CanvasSet(val canvas: com.petruvideo.core.model.CanvasBackground) : EditorEvent
     data object StickersDismiss : EditorEvent
     data class AddStickerLayer(val sticker: com.petruvideo.core.model.Sticker) : EditorEvent
     data class CaptionsLanguage(val tag: String) : EditorEvent
