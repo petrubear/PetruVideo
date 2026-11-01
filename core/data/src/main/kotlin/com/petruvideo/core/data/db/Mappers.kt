@@ -106,13 +106,14 @@ fun VideoClipEntity.toModel() = VideoClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent, muted = muted,
     reverb = reverb.toModel(), fx = fx.toModel(), filter = filter.toModel(),
     transitionOut = transition.toModel(), effect = effect.toModel(), transform = transform.toModel(),
+    reversed = reversed,
 )
 
 fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
     VideoClipEntity(
         id, projectId, mediaItemId, orderIndex, sourceStartMs, sourceEndMs, attachedAudio, speedMilli, volumePercent,
         muted, reverb.toColumns(), fx.toColumns(), filter.toColumns(),
-        transitionOut.toColumns(), effect.toColumns(), transform.toColumns(),
+        transitionOut.toColumns(), effect.toColumns(), transform.toColumns(), reversed,
     )
 
 fun TransformColumns.toModel() =

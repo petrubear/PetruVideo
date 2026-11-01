@@ -52,7 +52,10 @@ import com.petruvideo.core.model.engine.MoveKeyframe
 import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.CropShape
+import com.petruvideo.core.media.freeze.FreezeStillMaker
+import com.petruvideo.core.model.FREEZE_DEFAULT_MS
 import com.petruvideo.core.model.engine.FlipClip
+import com.petruvideo.core.model.engine.FreezeFrame
 import com.petruvideo.core.model.engine.ResetTransform
 import com.petruvideo.core.model.engine.RotateClip
 import com.petruvideo.core.model.engine.SetCrop
@@ -136,6 +139,7 @@ class EditorViewModel @Inject constructor(
     private val thumbnails: ThumbnailRefresher,
     private val pressure: ResourcePressureMonitor,
     private val voiceOver: VoiceOverController,
+    private val freezeStills: FreezeStillMaker = FreezeStillMaker { _, _ -> null },
 ) : ViewModel() {
 
     private data class Local(
@@ -165,6 +169,7 @@ class EditorViewModel @Inject constructor(
         val overlayOpen: Boolean = false,
         /** Whether the Transform panel is open, and the crop being edited on its screen. */
         val transformOpen: Boolean = false,
+        val freezeOpen: Boolean = false,
         val crop: OpenCrop? = null,
     )
 
@@ -382,6 +387,8 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TransformReset -> run(ResetTransform(id))
             EditorEvent.TransformDismiss -> local.update { it.copy(transformOpen = false, crop = null) }
             EditorEvent.CropOpen -> openCrop(id)
+            is EditorEvent.FreezeInsert -> insertFreeze(id, event.lengthMs)
+            EditorEvent.FreezeDismiss -> local.update { it.copy(freezeOpen = false) }
             is EditorEvent.CropDrag -> dragCrop(event)
             is EditorEvent.CropShapePick -> pickCropShape(event.shape)
             EditorEvent.CropFullPicture ->
@@ -435,7 +442,9 @@ class EditorViewModel @Inject constructor(
         closeEffect()
         closeOverlay()
         closeKeyframes()
-        local.update { it.copy(selection = selection, text = null, transformOpen = false, crop = null) }
+        local.update {
+            it.copy(selection = selection, text = null, transformOpen = false, freezeOpen = false, crop = null)
+        }
     }
 
     private fun selectedClipId(): String? = local.value.selection?.clipId
@@ -616,6 +625,39 @@ class EditorViewModel @Inject constructor(
         closeEffect()
         closeKeyframes()
         local.update { it.copy(transformOpen = true, overlayOpen = false, sheet = null, text = null) }
+    }
+
+    private fun openFreeze() {
+        if (local.value.selection !is ClipSelection.Video) return
+        flushText()
+        closeSheet()
+        closeReverb()
+        closeAudio()
+        closeFilter()
+        closeEffect()
+        closeKeyframes()
+        local.update {
+            it.copy(freezeOpen = true, transformOpen = false, overlayOpen = false, sheet = null, text = null)
+        }
+    }
+
+    private fun insertFreeze(id: String, lengthMs: Long) {
+        val timeline = session.timeline.value ?: return
+        val clip = timeline.videoLane.firstOrNull { it.id == id } ?: return
+        val media = timeline.media[clip.mediaItemId] ?: return
+        val at = engine.state.value.positionMs
+        val start = timeline.videoStartOf(id) ?: return
+        if (at < start || at > start + clip.lengthMs) return say("Move the playhead onto this clip to freeze a frame")
+        pause()
+        viewModelScope.launch {
+            val still = freezeStills.make(media, clip.sourceTimeAt(at - start))
+            if (still == null) {
+                say("That frame could not be read")
+            } else {
+                run(FreezeFrame(id, at, lengthMs, still))
+                local.update { it.copy(freezeOpen = false) }
+            }
+        }
     }
 
     private fun cropPicture(id: String): Pair<Int, Int> {
@@ -1122,6 +1164,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.FilterAdjust -> openFilter(FilterToolKind.Adjust)
             ClipTool.Keyframes -> openKeyframes()
             ClipTool.Transform -> openTransform()
+            ClipTool.Freeze -> openFreeze()
             ClipTool.EffectTransition -> openEffect(EffectToolKind.Transition)
             ClipTool.EffectFx -> openEffect(EffectToolKind.Effect)
             ClipTool.TextEdit -> openText(TextToolKind.Edit)
@@ -1239,6 +1282,7 @@ class EditorViewModel @Inject constructor(
             selectedOverlayAspect = overlayAspect(timeline, selection?.clipId),
             textPanel = textPanelFor(timeline, selection, local.text, core.preview.positionMs),
             transformPanel = transformPanelFor(timeline, selection, local.transformOpen),
+            freezePanel = freezePanelFor(selection, local.freezeOpen),
             crop = cropSessionFor(timeline, local.crop?.let { Triple(it.clipId, it.box, it.shape) }),
             keyframePanel = keyframePanelFor(
                 timeline, selection, local.keyframesOpen, local.keyframeRel, core.preview.positionMs,

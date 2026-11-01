@@ -24,7 +24,9 @@ import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.editor.ClipTool
 import com.petruvideo.feature.editor.EditorEvent
+import com.petruvideo.feature.editor.FreezePanelState
 import com.petruvideo.feature.editor.SheetState
+import com.petruvideo.feature.editor.ui.FreezeControls
 import com.petruvideo.feature.editor.TransformPanelState
 import com.petruvideo.feature.editor.ui.TransformControls
 import com.petruvideo.feature.editor.FilterPanelState
@@ -67,6 +69,7 @@ fun InspectorPanel(
     onEvent: (EditorEvent) -> Unit,
     modifier: Modifier = Modifier,
     transform: TransformPanelState? = null,
+    freeze: FreezePanelState? = null,
 ) {
     Column(
         modifier.fillMaxHeight().background(PetruColors.Surface).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -114,14 +117,7 @@ fun InspectorPanel(
                 Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 OverlayControls(overlay, onEvent)
             }
-            if (transform != null) {
-                Text("Transform", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
-                TransformControls(transform, onEvent)
-            }
-            if (keyframes != null) {
-                Text("Keyframes", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
-                KeyframeControls(keyframes, onEvent)
-            }
+            VideoToolSections(freeze, transform, keyframes, onEvent)
             if (filter != null) {
                 Text("Filters", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
                 LooksControls(filter, onEvent)
@@ -162,3 +158,25 @@ internal fun inspectorClip(
 ): InspectorClip = InspectorClip(media?.displayName ?: name, label, lengthMs, startMs)
 
 private const val MS_PER_SECOND = 1_000f
+
+/** The Freeze frame, Transform, and Keyframes sections of the inspector, for the tools that are open. */
+@Composable
+private fun VideoToolSections(
+    freeze: FreezePanelState?,
+    transform: TransformPanelState?,
+    keyframes: KeyframePanelState?,
+    onEvent: (EditorEvent) -> Unit,
+) {
+    if (freeze != null) {
+        Text("Freeze frame", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        FreezeControls(freeze, onEvent)
+    }
+    if (transform != null) {
+        Text("Transform", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        TransformControls(transform, onEvent)
+    }
+    if (keyframes != null) {
+        Text("Keyframes", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        KeyframeControls(keyframes, onEvent)
+    }
+}

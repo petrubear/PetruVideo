@@ -410,6 +410,27 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-005 of feature 017: the reversed flag reloads exactly, also in a duplicated project. */
+    @Test
+    fun reversedClipsSurviveAReloadAndAProjectDuplicate() = runBlocking<Unit> {
+        val video = source("clip17.mp4", MediaKind.Video, 10_000)
+        val before = checksums()
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(AddVideoClips(listOf(AddVideoItem(video)), playheadMs = 0))
+        val id = session.timeline.value!!.videoLane.single().id
+        session.apply(com.petruvideo.core.model.engine.SetReversed(id, true))
+        session.flush()
+        session.close()
+
+        repo.loadProject(project.id)!!.timeline.videoLane.single().reversed shouldBe true
+        val copy = repo.duplicateProject(project.id)!!
+        repo.loadProject(copy.id)!!.timeline.videoLane.single().reversed shouldBe true
+        checksums() shouldBe before
+    }
+
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
     @Test
     fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {

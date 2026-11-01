@@ -17,7 +17,7 @@ import androidx.room.RoomDatabase
         OverlayClipEntity::class,
         KeyframeEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -32,6 +32,7 @@ import androidx.room.RoomDatabase
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13),
+        AutoMigration(from = 13, to = 14),
     ],
 )
 abstract class PetruDatabase : RoomDatabase() {

@@ -1018,6 +1018,34 @@ class ExportPipelineTest {
         check(halvesAt(frame, 0.5f, 0.5f) == "brown" && halvesAt(frame, 0.5f, 0.8f) == "brown") { "keyframes did not act on the turned picture" }
     }
 
+    /** SC-003 of feature 017: the exported freeze holds the frame the playhead showed, and the video goes on after it. */
+    @Test
+    fun aFreezeHoldsTheFrameAtThePlayheadAndTheVideoContinuesAfterIt() = runBlocking<Unit> {
+        val a = item("video_silent.mp4")
+        val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+        val length = minOf(3_000L, a.durationMs ?: 3_000L)
+        val original = project(VideoClip("c1", a.id, 0, length, false), media = listOf(a))
+        val (s1, plainUri) = export(original, settings, "pipeline-fz-plain")
+        s1.shouldBeFinished()
+        val still = com.petruvideo.core.media.freeze.FreezeStills(context, MediaProbe(context)).make(a, 1_000)!!
+        val frozen = (com.petruvideo.core.model.engine.FreezeFrame("c1", 1_000, 2_000, still).apply(original) as
+            com.petruvideo.core.model.engine.CommandResult.Applied).timeline
+        val (s2, frozenUri) = export(frozen, settings, "pipeline-fz-frozen")
+        s2.shouldBeFinished()
+        val atPlayhead = frameAt(plainUri!!, 1_000)
+        val early = frameAt(frozenUri!!, 1_400)
+        val late = frameAt(frozenUri, 2_800)
+        val total = (atPlayhead.width / 2) * (atPlayhead.height / 2)
+        check(changedPixels(atPlayhead, early) < total / 10) { "freeze differs from the playhead frame" }
+        check(changedPixels(early, late) < total / 20) { "the picture moved during the freeze" }
+        val after = frameAt(frozenUri, 3_300)
+        val sourceAfter = frameAt(plainUri, 1_300)
+        check(changedPixels(sourceAfter, after) < total / 5) { "the video did not continue after the freeze" }
+        r(frozenUri).let { val ms = it.int(MediaMetadataRetriever.METADATA_KEY_DURATION); check(ms in (length + 1_900)..(length + 2_300)) { "length $ms" } }
+    }
+
+    private fun r(uri: String) = retriever(uri)
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

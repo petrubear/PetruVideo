@@ -96,11 +96,20 @@ class Split(
             first = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = offset, transitionOut = null)
             second = clip.copy(id = newClipId(), sourceStartMs = 0, sourceEndMs = clip.lengthMs - offset)
         } else {
-            val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
-            first = clip.copy(
-                id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
-            )
-            second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
+            if (clip.reversed) {
+                // Played backwards, the earlier part of the timeline is the later part of the source.
+                val cut = clip.sourceEndMs - sourceOffset(offset, clip.speedMilli)
+                first = clip.copy(
+                    id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
+                )
+                second = clip.copy(id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeIn())
+            } else {
+                val cut = clip.sourceStartMs + sourceOffset(offset, clip.speedMilli)
+                first = clip.copy(
+                    id = newClipId(), sourceEndMs = cut, fx = clip.fx.withoutFadeOut(), transitionOut = null,
+                )
+                second = clip.copy(id = newClipId(), sourceStartMs = cut, fx = clip.fx.withoutFadeIn())
+            }
         }
         val parts = listOf(
             first.reframed(clip.keyframes, 0, offset),

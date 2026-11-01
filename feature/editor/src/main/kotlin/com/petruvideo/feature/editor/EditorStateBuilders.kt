@@ -3,6 +3,7 @@ package com.petruvideo.feature.editor
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.DuckingPlanner
+import com.petruvideo.core.model.FREEZE_DEFAULT_MS
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.TRANSITION_MIN_MS
@@ -107,6 +108,9 @@ internal fun transformPanelFor(timeline: Timeline?, selection: ClipSelection?, o
     return TransformPanelState(clip.id, clip.transform)
 }
 
+internal fun freezePanelFor(selection: ClipSelection?, open: Boolean): FreezePanelState? =
+    (selection as? ClipSelection.Video)?.takeIf { open }?.let { FreezePanelState(it.clipId, FREEZE_DEFAULT_MS) }
+
 internal fun cropSessionFor(
     timeline: Timeline?,
     open: Triple<String, com.petruvideo.core.model.CropBox, com.petruvideo.core.model.CropShape>?,
@@ -187,6 +191,7 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
     return noTransition + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
             ClipTool.Speed to "Photos have no speed",
+            ClipTool.Freeze to "A photo is already a still",
             ClipTool.Volume to "Photos have no sound",
             ClipTool.Mute to "Photos have no sound",
             ClipTool.Reverb to "Photos have no sound",
@@ -266,6 +271,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Speed,
         ClipTool.Keyframes,
         ClipTool.Transform,
+        ClipTool.Freeze,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
         ClipTool.Duplicate,

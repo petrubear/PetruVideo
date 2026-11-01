@@ -61,6 +61,7 @@ class EditorScreenshotTest {
         overlays: List<com.petruvideo.core.model.OverlayClip> = emptyList(),
         overlayPanel: OverlayPanelState? = null,
         transformPanel: TransformPanelState? = null,
+        freezePanel: FreezePanelState? = null,
         crop: CropSessionState? = null,
     ): EditorState {
         val loaded = sampleLoaded()
@@ -119,6 +120,7 @@ class EditorScreenshotTest {
             selectedKeyframeMs = selectedKeyframeMs,
             overlayPanel = overlayPanel,
             transformPanel = transformPanel,
+            freezePanel = freezePanel,
             crop = crop,
             selectedOverlay = overlays.firstOrNull { it.id == selection?.clipId },
             toolbarTab = tab,
@@ -296,6 +298,18 @@ class EditorScreenshotTest {
                             "c1", turnedClip.copy(crop = com.petruvideo.core.model.CropBox(100, 100, 800, 800)),
                         ),
                     ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun freezePanelOnAVideoClip() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(selection = ClipSelection.Video("c1"), freezePanel = FreezePanelState("c1", 2_000)),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

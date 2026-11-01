@@ -53,6 +53,7 @@ class AccessibilityTest {
         voiceOver: VoiceOverUi? = null,
         overlayPanel: OverlayPanelState? = null,
         transformPanel: TransformPanelState? = null,
+        freezePanel: FreezePanelState? = null,
         crop: CropSessionState? = null,
         fontScale: Float = 1f,
     ) {
@@ -73,6 +74,7 @@ class AccessibilityTest {
             voiceOver = voiceOver,
             overlayPanel = overlayPanel,
             transformPanel = transformPanel,
+            freezePanel = freezePanel,
             crop = crop,
             selectedReverb = reverbPanel?.reverb,
         )
@@ -140,6 +142,16 @@ class AccessibilityTest {
 
     private fun audio(kind: AudioToolKind) = AudioPanelState(
         kind, "c1", "a.mp4", AudioFx(fade = Fade(500, 500)), 4_000, 100, false, Reverb(),
+    )
+
+    @Test
+    fun freezePanel() = check(
+        ClipSelection.Video("c1"), videoTools, freezePanel = FreezePanelState("c1", 2_000),
+    )
+
+    @Test
+    fun freezePanelWithLargeFont() = check(
+        ClipSelection.Video("c1"), videoTools, freezePanel = FreezePanelState("c1", 2_000), fontScale = 2f,
     )
 
     @Test

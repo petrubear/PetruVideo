@@ -101,6 +101,7 @@ fun ExpandedEditorLayout(
                         onEvent,
                         Modifier.weight(1f).fillMaxWidth(),
                         transform = state.transformPanel,
+                        freeze = state.freezePanel,
                     )
                     TimelineWithLabels(state, onEvent, Modifier.height(TIMELINE_HEIGHT))
                 }
@@ -131,6 +132,7 @@ fun ExpandedEditorLayout(
                             onEvent,
                             Modifier.width(INSPECTOR_WIDTH),
                             transform = state.transformPanel,
+                            freeze = state.freezePanel,
                         )
                     }
                 }

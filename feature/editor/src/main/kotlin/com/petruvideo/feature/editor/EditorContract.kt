@@ -54,6 +54,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     OverlayOpacity("Opacity", true),
     Keyframes("Keyframes", true),
     Transform("Transform", true),
+    Freeze("Freeze", true),
 }
 
 /**
@@ -151,6 +152,9 @@ data class KeyframePanelState(
     val framing: com.petruvideo.core.model.Pose? = null,
 )
 
+/** The open Freeze frame panel: the clip and how long the still will be held (default length in ms). */
+data class FreezePanelState(val clipId: String, val lengthMs: Long)
+
 /** The open Transform panel: the clip's turn, mirrors, and crop. */
 data class TransformPanelState(val clipId: String, val transform: com.petruvideo.core.model.ClipTransform)
 
@@ -209,6 +213,8 @@ data class EditorState(
     val voiceOver: VoiceOverUi? = null,
     /** The open Transform panel for the selected main-track clip, if any. */
     val transformPanel: TransformPanelState? = null,
+    /** The open Freeze frame panel for the selected main-track clip, if any. */
+    val freezePanel: FreezePanelState? = null,
     /** The open crop screen, if any. */
     val crop: CropSessionState? = null,
     /** The open Keyframes panel, if any. */
@@ -341,6 +347,11 @@ sealed interface EditorEvent {
     data object TransformReset : EditorEvent
     data object TransformDismiss : EditorEvent
     data object CropOpen : EditorEvent
+
+    /** Inserts a still of the frame at the playhead, held for [lengthMs]. */
+    data class FreezeInsert(val lengthMs: Long) : EditorEvent
+
+    data object FreezeDismiss : EditorEvent
 
     /** Drags [handle] (or the whole box when null) by permille of the picture. */
     data class CropDrag(val handle: com.petruvideo.core.model.CropHandle?, val dx: Int, val dy: Int) : EditorEvent

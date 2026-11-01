@@ -35,19 +35,34 @@ private fun trim(timeline: Timeline, clipId: String, newSourceMs: Long, start: B
 private fun trimVideo(timeline: Timeline, index: Int, newSourceMs: Long, start: Boolean): CommandResult {
     val clip = timeline.videoLane[index]
     val media = timeline.media[clip.mediaItemId] ?: return CommandResult.Rejected(RejectReason.NotFound)
-    val trimmed = if (media.kind == MediaKind.Photo) trimPhoto(clip, newSourceMs, start) else {
-        val duration = media.durationMs ?: return CommandResult.Rejected(RejectReason.OutOfRange)
-        if (newSourceMs < 0 || newSourceMs > duration) return CommandResult.Rejected(RejectReason.OutOfRange)
-        val candidate = if (start) clip.copy(sourceStartMs = newSourceMs) else clip.copy(sourceEndMs = newSourceMs)
-        if (candidate.lengthMs < MIN_CLIP_MS) return CommandResult.Rejected(RejectReason.BelowMinimumLength)
-        candidate
+    val trimmed = if (media.kind == MediaKind.Photo) {
+        trimPhoto(clip, newSourceMs, start) ?: return CommandResult.Rejected(RejectReason.OutOfRange)
+    } else {
+        trimFootage(clip, media.durationMs, newSourceMs, start).let {
+            it.clip ?: return CommandResult.Rejected(it.reason)
+        }
     }
-    if (trimmed == null) return CommandResult.Rejected(RejectReason.OutOfRange)
     // The part of the old clip that is kept starts at the start trim and is as long as the new clip.
     val from = if (start) clip.lengthMs - trimmed.lengthMs else 0L
     val kept = trimmed.reframed(clip.keyframes, from, from + trimmed.lengthMs)
     val lane = timeline.videoLane.toMutableList().also { it[index] = kept }
     return CommandResult.Applied(timeline.copy(videoLane = lane), "Trim clip")
+}
+
+/** The trimmed clip, or why it cannot be. */
+private class Trimmed(val clip: VideoClip?, val reason: RejectReason = RejectReason.OutOfRange)
+
+private fun trimFootage(clip: VideoClip, duration: Long?, newSourceMs: Long, start: Boolean): Trimmed {
+    if (duration == null || newSourceMs < 0 || newSourceMs > duration) return Trimmed(null)
+    // A reversed clip runs backwards, so its start handle trims the end of the source and the end handle the start.
+    val value = if (clip.reversed) mirrored(clip, newSourceMs) else newSourceMs
+    val trimsSourceStart = start != clip.reversed
+    val candidate = if (trimsSourceStart) clip.copy(sourceStartMs = value) else clip.copy(sourceEndMs = value)
+    return when {
+        candidate.sourceStartMs < 0 || candidate.sourceEndMs > duration -> Trimmed(null)
+        candidate.lengthMs < MIN_CLIP_MS -> Trimmed(null, RejectReason.BelowMinimumLength)
+        else -> Trimmed(candidate)
+    }
 }
 
 private fun trimPhoto(clip: VideoClip, newSourceMs: Long, start: Boolean): VideoClip? {
@@ -78,3 +93,6 @@ private fun trimAudio(timeline: Timeline, index: Int, newSourceMs: Long, start: 
 private fun overlapsOthers(lane: List<AudioClip>, clip: AudioClip) = lane.any {
     it.id != clip.id && it.timelineStartMs < clip.timelineEndMs && clip.timelineStartMs < it.timelineEndMs
 }
+
+/** A source time given as if the clip played forwards, as the source time for the opposite edge of a reversed clip. */
+private fun mirrored(clip: VideoClip, forwardMs: Long): Long = clip.sourceStartMs + clip.sourceEndMs - forwardMs

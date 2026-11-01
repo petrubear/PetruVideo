@@ -74,8 +74,16 @@ data class VideoClip(
     val keyframes: List<Keyframe> = emptyList(),
     /** Turn, mirror, and crop of the picture before it is fitted to the frame (feature 016). */
     val transform: ClipTransform = ClipTransform(),
+    /** Plays the trimmed source range backwards, picture and attached sound (feature 017). */
+    val reversed: Boolean = false,
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
+
+    /** The source time shown [offsetMs] after the clip's start on the timeline, forwards or backwards. */
+    fun sourceTimeAt(offsetMs: Long): Long {
+        val travelled = offsetMs.coerceIn(0, lengthMs) * speedMilli / SPEED_UNIT
+        return if (reversed) sourceEndMs - travelled else sourceStartMs + travelled
+    }
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)
 
     /** The shown zoom, pan, and opacity [relMs] after the clip's start, always covering the frame. */
