@@ -139,6 +139,14 @@ class AccessibilityTest {
     )
 
     @Test
+    fun duckingPanel() = check(
+        ClipSelection.Audio("a1"), listOf(ClipTool.Audio, ClipTool.Delete),
+        audioPanel = audio(AudioToolKind.Ducking).copy(
+            clipId = "a1", ducking = com.petruvideo.core.model.Ducking(true, 70), duckingIdle = true,
+        ),
+    )
+
+    @Test
     fun audioToolList() = check(ClipSelection.Video("c1"), videoTools, audioPanel = audio(AudioToolKind.List))
 
     @Test

@@ -909,6 +909,49 @@ class ExportPipelineTest {
         }
     }
 
+    /** SC-003 of feature 015: music is lowered under a quieter sound by the chosen amount, and only there. */
+    @Test
+    fun duckedMusicIsLowerUnderASoundThanAloneAndNormalWithoutDucking() {
+        val a = item("video_silent.mp4")
+        val files = listOf("duck-music", "duck-voice").map { name ->
+            File(context.cacheDir, "$name-${System.nanoTime()}.aac").also {
+                it.writeBytes(SyntheticTake.bytes(if (name == "duck-music") 3_000 else 1_000))
+            }
+        }
+        try {
+            val store = com.petruvideo.core.media.voiceover.VoiceOverStore(File(context.cacheDir, "duck-test"))
+            val musicItem = store.mediaItemFor(files[0], 3_000)
+            val voiceItem = store.mediaItemFor(files[1], 1_000)
+            fun timeline(ducked: Boolean) = project(VideoClip("c1", a.id, 0, 3_000, false), media = listOf(a)).let {
+                it.copy(
+                    media = it.media + (musicItem.id to musicItem) + (voiceItem.id to voiceItem),
+                    audioLane = listOf(
+                        AudioClip(
+                            "music", musicItem.id, 0, 3_000, 0, origin = AudioOrigin.Added,
+                            ducking = com.petruvideo.core.model.Ducking(
+                                ducked, 100, com.petruvideo.core.model.DuckSmoothness.Quick,
+                            ),
+                        ),
+                        AudioClip("voice", voiceItem.id, 0, 1_000, 1_000, origin = AudioOrigin.Added, volumePercent = 15),
+                    ),
+                )
+            }
+            val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
+            val windows = listOf(200L to 700L, 1_300L to 1_800L, 2_400L to 2_900L)
+            val (s1, ducked) = export(timeline(true), settings, "pipeline-duck")
+            s1.shouldBeFinished()
+            val d = audioRms(ducked!!, windows)
+            val (s2, plain) = export(timeline(false), settings, "pipeline-noduck")
+            s2.shouldBeFinished()
+            val p = audioRms(plain!!, windows)
+            check(d[1] < d[0] * 0.35f) { "ducked: under the sound ${d[1]} against alone ${d[0]}" }
+            check(d[2] > d[0] * 0.8f) { "ducked: music did not come back, ${d[2]} against ${d[0]}" }
+            check(p[1] > p[0] * 0.9f) { "not ducked: under the sound ${p[1]} against alone ${p[0]}" }
+        } finally {
+            files.forEach { it.delete() }
+        }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

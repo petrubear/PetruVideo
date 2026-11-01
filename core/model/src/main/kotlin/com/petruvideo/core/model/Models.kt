@@ -98,6 +98,8 @@ data class AudioClip(
     val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
     val reverb: Reverb = Reverb(),
     val fx: AudioFx = AudioFx(),
+    /** Lowers this clip while other sound plays (feature 015). */
+    val ducking: Ducking = Ducking(),
 ) {
     val sourceLengthMs: Long get() = sourceEndMs - sourceStartMs
     val lengthMs: Long get() = timelineLengthMs(sourceLengthMs, speedMilli)

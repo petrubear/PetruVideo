@@ -11,6 +11,8 @@ import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.EffectKind
 import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.TransitionKind
+import com.petruvideo.core.model.DuckSmoothness
+import com.petruvideo.core.model.Ducking
 import com.petruvideo.core.model.Echo
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.Equalizer
@@ -114,11 +116,16 @@ fun VideoClip.toEntity(projectId: String, orderIndex: Int) =
 fun AudioClipEntity.toModel() = AudioClip(
     id, mediaItemId, sourceStartMs, sourceEndMs, timelineStartMs, muted, AudioOrigin.valueOf(origin),
     speedMilli, volumePercent, reverb.toModel(), fx.toModel(),
+    Ducking(
+        duckEnabled, duckAmount,
+        DuckSmoothness.entries.firstOrNull { it.name == duckSmoothness } ?: DuckSmoothness.Medium,
+    ),
 )
 
 fun AudioClip.toEntity(projectId: String) = AudioClipEntity(
     id, projectId, mediaItemId, timelineStartMs, sourceStartMs, sourceEndMs, muted, origin.name,
     speedMilli, volumePercent, reverb.toColumns(), fx.toColumns(),
+    ducking.enabled, ducking.amountPercent, ducking.smoothness.name,
 )
 
 fun ReverbColumns.toModel(): Reverb {

@@ -122,6 +122,9 @@ data class AudioClipEntity(
     @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
     @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
     @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
+    @ColumnInfo(defaultValue = "0") val duckEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "60") val duckAmount: Int = 60,
+    @ColumnInfo(defaultValue = "'Medium'") val duckSmoothness: String = "Medium",
 )
 
 /** A clip's reverb stored as columns `reverb_enabled`, `reverb_preset`, and so on. */

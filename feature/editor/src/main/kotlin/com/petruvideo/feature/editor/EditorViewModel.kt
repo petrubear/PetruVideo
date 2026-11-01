@@ -50,6 +50,7 @@ import com.petruvideo.core.model.engine.CopyKeyframe
 import com.petruvideo.core.model.engine.DeleteKeyframe
 import com.petruvideo.core.model.engine.MoveKeyframe
 import com.petruvideo.core.model.engine.RejectReason
+import com.petruvideo.core.model.engine.SetDucking
 import com.petruvideo.core.model.engine.SetKeyframeMotion
 import com.petruvideo.core.model.engine.SetPoseAt
 import com.petruvideo.core.model.engine.AddOverlay
@@ -353,6 +354,8 @@ class EditorViewModel @Inject constructor(
             EditorEvent.KeyframeDelete -> deleteKeyframe()
             is EditorEvent.KeyframeMotion -> setKeyframeMotion(event.ease)
             EditorEvent.KeyframeDismiss -> closeKeyframes()
+            is EditorEvent.DuckingChange ->
+                (local.value.selection as? ClipSelection.Audio)?.let { run(SetDucking(it.clipId, event.ducking)) }
             is EditorEvent.FramingPreview -> previewFraming(event.pose)
             is EditorEvent.FramingCommit -> commitFraming(event.pose)
             else -> Unit
@@ -951,7 +954,7 @@ class EditorViewModel @Inject constructor(
                 AudioToolKind.Noise -> current.copy(noise = NoiseReduction())
                 AudioToolKind.Eq -> current.copy(eq = Equalizer())
                 AudioToolKind.Voice -> current.copy(voice = VoiceFx())
-                AudioToolKind.List -> current
+                AudioToolKind.List, AudioToolKind.Ducking -> current
             },
         )
     }

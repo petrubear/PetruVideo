@@ -22,8 +22,15 @@ import com.petruvideo.core.model.Timeline
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.petruvideo.core.media.ducking.DuckingAnalyzer
+import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * Preview through Media3's [CompositionPlayer] (research 1): the video lane is one sequence (photos as timed
@@ -49,6 +56,9 @@ class Media3PreviewEngine @Inject constructor(
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
+    private val analyzer = DuckingAnalyzer(WaveformPeaksGenerator(context))
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var duckJob: Job? = null
     private val armedFraming = mutableSetOf<String>()
     private var lastTimeline: Timeline? = null
     private var lastQuality: PreviewQuality? = null
@@ -116,6 +126,7 @@ class Media3PreviewEngine @Inject constructor(
         filters = builder.filters
         clipEffects = builder.clipEffects
         framings = builder.framings
+        applyDucking(timeline)
         voiceFxAllowed = quality.voiceFx
         reverbAllowed = quality.reverb
         // Overlays and transitions are separate video inputs, which needs the multiple-input video graph. That player
@@ -194,6 +205,16 @@ class Media3PreviewEngine @Inject constructor(
         }
     }
 
+    /** Computes the ducking envelopes in the background and hands each to its clip's processor when ready. */
+    private fun applyDucking(timeline: Timeline) {
+        duckJob?.cancel()
+        val processors = gains
+        duckJob = scope.launch {
+            val envelopes = analyzer.envelopes(timeline)
+            processors.forEach { (id, processor) -> processor.setEnvelope(envelopes[id]) }
+        }
+    }
+
     override fun armClipFraming(clipId: String) {
         val loaded = lastTimeline ?: return
         if (armedFraming.add(clipId)) load(loaded, lastQuality ?: return)
@@ -239,6 +260,7 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     override fun release() {
+        duckJob?.cancel()
         polling = false
         handler.removeCallbacks(poll)
         compositionPlayer?.release()

@@ -2,6 +2,7 @@ package com.petruvideo.feature.editor
 
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.DuckingPlanner
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.TRANSITION_MIN_MS
@@ -136,6 +137,8 @@ internal fun audioPanelFor(timeline: Timeline?, selection: ClipSelection?, open:
         volumePercent = video?.volumePercent ?: audio?.volumePercent ?: VOLUME_DEFAULT_PERCENT,
         muted = video?.muted ?: audio?.muted ?: false,
         reverb = video?.reverb ?: audio?.reverb ?: Reverb(),
+        ducking = audio?.ducking,
+        duckingIdle = audio != null && !DuckingPlanner.hasTriggerOver(timeline, audio),
     )
 }
 

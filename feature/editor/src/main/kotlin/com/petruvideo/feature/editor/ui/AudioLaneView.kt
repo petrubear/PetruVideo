@@ -128,6 +128,7 @@ fun AudioClipsRow(
                     fx = clip.fx,
                 )
                 if (clip.muted && clip.id != selectedClipId) MutedBadge(Modifier.align(Alignment.CenterEnd))
+                if (clip.ducking.enabled) DuckBadge(clip.ducking.amountPercent, Modifier.align(Alignment.BottomStart))
                 if (clip.id == selectedClipId) {
                     TrimHandles(
                         geometry = geometry,

@@ -17,6 +17,8 @@ import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
+import com.petruvideo.core.media.ducking.DuckingAnalyzer
+import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import com.petruvideo.core.model.export.BitrateTable
 import com.petruvideo.core.model.export.ExportCaps
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,8 @@ import kotlin.coroutines.resume
  */
 @OptIn(UnstableApi::class)
 class TransformerRunner(private val context: Context) : ExportRunner {
+    private val analyzer = DuckingAnalyzer(WaveformPeaksGenerator(context))
+
     override suspend fun run(request: ExportRequest, onProgress: (Int) -> Unit): RunResult =
         withContext(Dispatchers.Main.immediate) {
             val spec = BuildSpec.forExport(
@@ -39,7 +43,8 @@ class TransformerRunner(private val context: Context) : ExportRunner {
                 request.settings.frameRate.fps,
                 ExportCaps.from(request.timeline).maxFrameRate.fps,
             )
-            val composition = CompositionBuilder(spec).build(request.timeline)
+            val ducking = withContext(Dispatchers.Default) { analyzer.envelopes(request.timeline) }
+            val composition = CompositionBuilder(spec, duckEnvelopes = ducking).build(request.timeline)
                 ?: return@withContext RunResult.Error("Nothing to export")
             render(composition, request, onProgress)
         }

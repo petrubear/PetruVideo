@@ -364,6 +364,28 @@ class OriginalsUnchangedTest {
         checksums() shouldBe before
     }
 
+    /** SC-005 of feature 015: ducking settings reload exactly, also in a duplicated project. */
+    @Test
+    fun duckingSurvivesAReloadAndAProjectDuplicate() = runBlocking<Unit> {
+        val song = source("song15.mp3", MediaKind.Audio, 6_000)
+        val before = checksums()
+        val repo = RoomProjectRepository(db)
+        val project = repo.createProject()
+        val session = ProjectSession(repo, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default))
+        session.open(project.id)
+        session.apply(com.petruvideo.core.model.engine.AddAudioClips(listOf(song), 0))
+        val id = session.timeline.value!!.audioLane.single().id
+        val ducking = com.petruvideo.core.model.Ducking(true, 80, com.petruvideo.core.model.DuckSmoothness.Slow)
+        session.apply(com.petruvideo.core.model.engine.SetDucking(id, ducking))
+        session.flush()
+        session.close()
+
+        repo.loadProject(project.id)!!.timeline.audioLane.single().ducking shouldBe ducking
+        val copy = repo.duplicateProject(project.id)!!
+        repo.loadProject(copy.id)!!.timeline.audioLane.single().ducking shouldBe ducking
+        checksums() shouldBe before
+    }
+
     /** SC-005 of feature 013: a voice-over clip reloads and a deleted project reports the files still in use. */
     @Test
     fun voiceOversSurviveAReloadAndDeletingAProjectReportsTheFilesStillUsed() = runBlocking<Unit> {

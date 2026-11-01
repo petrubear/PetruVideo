@@ -109,6 +109,7 @@ fun AudioPanelBody(panel: AudioPanelState, onEvent: (EditorEvent) -> Unit) {
         AudioToolKind.Noise -> NoiseControls(panel.fx, onEvent)
         AudioToolKind.Eq -> EqualizerControls(panel.fx, onEvent)
         AudioToolKind.Voice -> VoiceControls(panel.fx, onEvent)
+        AudioToolKind.Ducking -> panel.ducking?.let { DuckingControls(it, panel.duckingIdle, onEvent) }
     }
 }
 
@@ -138,6 +139,10 @@ private fun AudioToolList(panel: AudioPanelState, onEvent: (EditorEvent) -> Unit
         ToolRow("Equalizer", if (fx.eq.isFlat) "Off" else fx.eq.preset.label, tool(AudioToolKind.Eq)),
         ToolRow("Voice effects", voiceNames.joinToString(", ").ifEmpty { "Off" }, tool(AudioToolKind.Voice)),
         ToolRow("Reverb", if (panel.reverb.enabled) panel.reverb.preset.label else "Off", use(ClipTool.Reverb)),
+    ) + listOfNotNull(
+        panel.ducking?.let {
+            ToolRow("Ducking", if (it.enabled) "${it.amountPercent}%" else "Off", tool(AudioToolKind.Ducking))
+        },
     )
     Column {
         rows.forEach { row ->
@@ -310,3 +315,45 @@ fun VoiceControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Modifie
         TextAction("Reset") { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Voice)) }
     }
 }
+
+/** Ducking of an audio-lane clip: a switch, how much it is lowered, and how smoothly it moves. */
+@Composable
+fun DuckingControls(
+    ducking: com.petruvideo.core.model.Ducking,
+    idle: Boolean,
+    onEvent: (EditorEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var shown by remember(ducking) { mutableStateOf(ducking) }
+    Column(modifier.fillMaxWidth()) {
+        FxSwitch("Lower this clip while other sound plays", shown.enabled) {
+            shown = shown.copy(enabled = it)
+            onEvent(EditorEvent.DuckingChange(shown))
+        }
+        if (shown.enabled) {
+            SettingSlider(
+                "Amount", "${shown.amountPercent}%", shown.amountPercent.toFloat(), 0f..DUCK_RANGE_MAX,
+                { shown = shown.copy(amountPercent = it.roundToInt()) },
+                { onEvent(EditorEvent.DuckingChange(shown)) },
+            )
+            val options = com.petruvideo.core.model.DuckSmoothness.entries
+            com.petruvideo.core.designsystem.components.SegmentedControl(
+                options = options.map { it.label },
+                selectedIndex = options.indexOf(shown.smoothness),
+                onSelect = {
+                    shown = shown.copy(smoothness = options[it])
+                    onEvent(EditorEvent.DuckingChange(shown))
+                },
+            )
+            if (idle) {
+                Text(
+                    "Nothing is playing over this clip, so nothing is lowered.",
+                    style = PetruType.Caption,
+                    color = PetruColors.OnSurfaceMuted,
+                )
+            }
+        }
+    }
+}
+
+private const val DUCK_RANGE_MAX = 100f

@@ -75,6 +75,7 @@ enum class AudioToolKind(val label: String) {
     Noise("Noise reduction"),
     Eq("Equalizer"),
     Voice("Voice effects"),
+    Ducking("Ducking"),
 }
 
 /** The open Audio list or one of its panels for one clip, with the values the rows and panels show. */
@@ -87,6 +88,10 @@ data class AudioPanelState(
     val volumePercent: Int,
     val muted: Boolean,
     val reverb: Reverb,
+    /** The clip's ducking when it is on the audio lane (video clips cannot duck); null otherwise. */
+    val ducking: com.petruvideo.core.model.Ducking? = null,
+    /** True when nothing plays over the clip, so ducking has nothing to react to. */
+    val duckingIdle: Boolean = false,
 )
 
 /** The tools of a text clip; each opens its panel. */
@@ -307,6 +312,9 @@ sealed interface EditorEvent {
     data object KeyframeDelete : EditorEvent
     data class KeyframeMotion(val ease: Boolean) : EditorEvent
     data object KeyframeDismiss : EditorEvent
+
+    /** The ducking of the selected audio-lane clip as it should be; one undo step. */
+    data class DuckingChange(val ducking: com.petruvideo.core.model.Ducking) : EditorEvent
 
     /** A zoom, pan, or fade of the selected video clip at the playhead, live while it is dragged. */
     data class FramingPreview(val pose: com.petruvideo.core.model.Pose) : EditorEvent

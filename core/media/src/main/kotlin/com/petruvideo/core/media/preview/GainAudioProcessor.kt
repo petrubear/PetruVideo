@@ -6,6 +6,7 @@ import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.AudioProcessor.AudioFormat
 import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
+import com.petruvideo.core.model.DuckEnvelope
 import com.petruvideo.core.model.Fade
 import kotlin.math.abs
 import kotlin.math.tanh
@@ -23,6 +24,9 @@ class GainAudioProcessor(percent: Int, fade: Fade = Fade(), clipLengthMs: Long =
 
     @Volatile
     private var fadeSetting: Fade = fade.limitedTo(clipLengthMs)
+    /** The ducking of this clip (feature 015), applied after volume and fade; null when it is not ducked. */
+    @Volatile
+    private var envelope: DuckEnvelope? = null
     private var lengthMs = clipLengthMs
     private var position = 0L
 
@@ -32,6 +36,10 @@ class GainAudioProcessor(percent: Int, fade: Fade = Fade(), clipLengthMs: Long =
 
     fun setPercent(percent: Int) {
         gain = percent / PERCENT
+    }
+
+    fun setEnvelope(next: DuckEnvelope?) {
+        envelope = next
     }
 
     /** Changes the fades (limited to half the clip) while playing. */
@@ -61,8 +69,10 @@ class GainAudioProcessor(percent: Int, fade: Fade = Fade(), clipLengthMs: Long =
         val outFrames = fade.outMs * rate / MILLIS
         val total = lengthMs * rate / MILLIS
         val fading = !fade.isNeutral
+        val ducking = envelope
         while (inputBuffer.remaining() >= 2 * channels) {
-            val frameGain = if (fading) current * FadeCurve.factor(position, inFrames, outFrames, total) else current
+            val base = if (fading) current * FadeCurve.factor(position, inFrames, outFrames, total) else current
+            val frameGain = if (ducking != null) base * ducking.gainAt(position * MILLIS / rate) else base
             repeat(channels) { output.putShort(scale(inputBuffer.getShort(), frameGain)) }
             position++
         }

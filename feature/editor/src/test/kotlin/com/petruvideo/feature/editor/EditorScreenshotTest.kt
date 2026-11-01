@@ -279,6 +279,27 @@ class EditorScreenshotTest {
     private fun audioPanel(kind: AudioToolKind, fx: AudioFx = AudioFx()) =
         AudioPanelState(kind, "c1", "m1.mp4", fx, 4_000, 80, false, com.petruvideo.core.model.Reverb())
 
+    @Test
+    fun duckingPanelOnAnAudioClip() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(
+                        selection = ClipSelection.Audio("a1"),
+                        audioPanel = audioPanel(AudioToolKind.Ducking).copy(
+                            clipId = "a1",
+                            ducking = com.petruvideo.core.model.Ducking(
+                                true, 70, com.petruvideo.core.model.DuckSmoothness.Slow,
+                            ),
+                            duckingIdle = true,
+                        ),
+                    ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
     private fun snapshotAudio(kind: AudioToolKind, fx: AudioFx = AudioFx()) {
         paparazzi.snapshot {
             CompositionLocalProvider(LocalMediaLoaders provides loaders) {

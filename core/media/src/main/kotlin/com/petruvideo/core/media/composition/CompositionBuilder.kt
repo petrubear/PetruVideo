@@ -24,6 +24,7 @@ import com.petruvideo.core.media.preview.ReverbAudioProcessor
 import com.petruvideo.core.media.preview.VoiceFxProcessor
 import com.petruvideo.core.media.text.TextOverlaySet
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.DuckEnvelope
 import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
@@ -88,7 +89,11 @@ data class BuildSpec(
  * for each clip are kept in [gains] and [reverbs] so the preview can change them live.
  */
 @OptIn(UnstableApi::class, ExperimentalApi::class)
-class CompositionBuilder(private val spec: BuildSpec, private val framingIds: Set<String> = emptySet()) {
+class CompositionBuilder(
+    private val spec: BuildSpec,
+    private val framingIds: Set<String> = emptySet(),
+    private val duckEnvelopes: Map<String, DuckEnvelope> = emptyMap(),
+) {
     val gains = mutableMapOf<String, GainAudioProcessor>()
     val reverbs = mutableMapOf<String, ReverbAudioProcessor>()
     val voiceFxs = mutableMapOf<String, VoiceFxProcessor>()
@@ -331,7 +336,10 @@ class CompositionBuilder(private val spec: BuildSpec, private val framingIds: Se
     ): List<AudioProcessor> {
         if (!hasAudio) return emptyList()
         val voice = VoiceFxProcessor(fx, spec.voiceFxAllowed).also { voiceFxs[clipId] = it }
-        val gain = GainAudioProcessor(percent, fx.fade, clipLengthMs).also { gains[clipId] = it }
+        val gain = GainAudioProcessor(percent, fx.fade, clipLengthMs).also {
+            gains[clipId] = it
+            it.setEnvelope(duckEnvelopes[clipId])
+        }
         val effective = reverb.copy(enabled = reverb.enabled && spec.reverbAllowed)
         val room = ReverbAudioProcessor(effective).also {
             it.update(effective, applyRoomSize = true)
