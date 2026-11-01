@@ -45,16 +45,20 @@ object TimelineInvariants {
                 add("audio clip ${clip.id} trim is outside its source")
             }
         }
+        addAll(extraLaneViolations(timeline))
+        val sorted = timeline.audioLane.sortedBy { it.timelineStartMs }
+        sorted.zipWithNext().forEach { (a, b) ->
+            if (a.timelineEndMs > b.timelineStartMs) add("audio clips ${a.id} and ${b.id} overlap")
+        }
+    }
+
+    private fun extraLaneViolations(timeline: Timeline) = buildList {
         for (clip in timeline.overlayLane) {
             if (!clip.inRange) add("overlay clip ${clip.id} is out of range")
             if (clip.mediaItemId !in timeline.media) add("overlay clip ${clip.id} refers to unknown media")
         }
         for (clip in timeline.textLane) {
             if (!clip.inRange) add("text clip ${clip.id} is out of range")
-        }
-        val sorted = timeline.audioLane.sortedBy { it.timelineStartMs }
-        sorted.zipWithNext().forEach { (a, b) ->
-            if (a.timelineEndMs > b.timelineStartMs) add("audio clips ${a.id} and ${b.id} overlap")
         }
     }
 

@@ -29,7 +29,7 @@ import com.petruvideo.feature.editor.ui.EditorTopBar
 import com.petruvideo.feature.editor.ui.MainToolBar
 import com.petruvideo.feature.editor.ui.PreviewSurface
 import com.petruvideo.feature.editor.ToolbarTab
-import com.petruvideo.feature.editor.ui.AudioPanel
+import com.petruvideo.feature.editor.ui.EditorBottomBars
 import com.petruvideo.feature.editor.ui.FilterPanel
 import com.petruvideo.feature.editor.ui.OverlayPanel
 import com.petruvideo.feature.editor.ui.OverlayTabBar
@@ -126,36 +126,6 @@ fun TabletopControlsHalf(
                 )
             }
         }
-        if (state.selection != null && state.clipTools.isNotEmpty()) {
-            SpeedVolumeSheet(state.sheet, onEvent)
-            ReverbPanel(state.reverbPanel, onEvent)
-            AudioPanel(state.audioPanel, onEvent)
-            TextPanel(state.textPanel, onEvent)
-            FilterPanel(state.filterPanel, onEvent)
-            OverlayPanel(state.overlayPanel, onEvent)
-            ClipToolBar(
-                    state.clipTools,
-                    state.selectedAudioMuted,
-                    onTool = { onEvent(EditorEvent.UseTool(it)) },
-                    disabled = state.disabledTools.keys,
-            )
-        } else if (state.toolbarTab == ToolbarTab.Overlay) {
-            OverlayTabBar(
-                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
-                onAdd = { onEvent(EditorEvent.AddOverlay) },
-            )
-        } else if (state.toolbarTab == ToolbarTab.Filters) {
-            FiltersTabBar(onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) })
-        } else if (state.toolbarTab == ToolbarTab.Text) {
-            TextTabBar(
-                onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
-                onAdd = { onEvent(EditorEvent.AddText) },
-            )
-        } else {
-            MainToolBar(
-                onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },
-                onTab = { onEvent(EditorEvent.SelectTab(it)) },
-            )
-        }
+        EditorBottomBars(state, onEvent)
     }
 }

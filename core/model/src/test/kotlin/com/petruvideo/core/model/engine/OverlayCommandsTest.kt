@@ -82,7 +82,8 @@ class OverlayCommandsTest {
         dup.overlayLane.map { it.startMs } shouldBe listOf(2_000L, 12_000L)
         applied(Delete("d"), dup).overlayLane.size shouldBe 1
         val p = applied(AddOverlay(photo, 0, { "p1" }), empty)
-        val (pa, pb) = applied(Split("p1", 2_000, ids::next).let { Split("p1", 2_000, sequenceOf("x", "y").iterator()::next) }, p).overlayLane
+        val photoIds = sequenceOf("x", "y").iterator()
+        val (pa, pb) = applied(Split("p1", 2_000, photoIds::next), p).overlayLane
         pa.durationMs shouldBe 2_000
         pb.durationMs shouldBe 3_000
         pb.sourceStartMs shouldBe 0

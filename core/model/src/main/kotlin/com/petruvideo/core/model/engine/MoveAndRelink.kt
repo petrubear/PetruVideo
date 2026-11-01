@@ -33,6 +33,7 @@ class MoveVideoClip(private val clipId: String, private val newIndex: Int) : Com
  * has sound.
  */
 class RelinkMedia(private val mediaItemId: String, private val replacement: MediaItem) : Command {
+    @Suppress("CyclomaticComplexMethod")
     override fun apply(timeline: Timeline): CommandResult {
         val old = timeline.media[mediaItemId] ?: return CommandResult.Rejected(RejectReason.NotFound)
         if (replacement.kind != old.kind) return CommandResult.Rejected(RejectReason.OutOfRange)

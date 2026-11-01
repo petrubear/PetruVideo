@@ -76,7 +76,7 @@ class EditorViewModelOverlayTest {
     }
 
     @Test
-    fun `timeline moves and trims are separate events, the length follows and the panel closes on selection change`() = runTest {
+    fun `moves and trims are separate events and the panel closes when the selection changes`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.AddOverlayMedia(clip))
         val id = e.overlays.single().id

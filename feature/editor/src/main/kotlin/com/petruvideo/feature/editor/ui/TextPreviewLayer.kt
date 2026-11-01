@@ -66,7 +66,12 @@ fun PreviewWithText(
 
 /** The video frame is fitted inside this layer; the selected overlay's box is placed on that frame. */
 @Composable
-private fun OverlayPreviewLayer(clip: OverlayClip, overlayAspect: Float, aspect: Float, onEvent: (EditorEvent) -> Unit) {
+private fun OverlayPreviewLayer(
+    clip: OverlayClip,
+    overlayAspect: Float,
+    aspect: Float,
+    onEvent: (EditorEvent) -> Unit,
+) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val frameWidth: Dp = min(maxWidth.value, maxHeight.value * aspect).dp
         val frameHeight: Dp = frameWidth / aspect

@@ -149,9 +149,7 @@ fun TimelineView(
             }
         }
         Playhead(Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
-        if (timeline.videoLane.isEmpty() && timeline.audioLane.isEmpty() && timeline.textLane.isEmpty() &&
-            timeline.overlayLane.isEmpty()
-        ) {
+        if (timeline.hasNoClips()) {
             Text(
                 "Add your first clip",
                 style = PetruType.Body,
@@ -171,3 +169,6 @@ fun TimelineView(
         )
     }
 }
+
+private fun Timeline.hasNoClips() =
+    videoLane.isEmpty() && audioLane.isEmpty() && textLane.isEmpty() && overlayLane.isEmpty()

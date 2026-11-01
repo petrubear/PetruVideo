@@ -242,6 +242,13 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.SheetReset ->
                 commitValue(event.tool, if (event.tool == ClipTool.Speed) SPEED_UNIT else VOLUME_DEFAULT_PERCENT)
             EditorEvent.SheetDismiss -> closeSheet()
+            else -> onToolEvent(event)
+        }
+    }
+
+    /** The events of the tool panels (reverb, audio, text, filters, overlays), split out of [onEvent]. */
+    private fun onToolEvent(event: EditorEvent) {
+        when (event) {
             is EditorEvent.ReverbToggle -> selectedClipId()?.let { run(SetReverbEnabled(it, event.on)) }
             is EditorEvent.ReverbPick -> selectedClipId()?.let { run(ApplyReverbPreset(it, event.preset)) }
             is EditorEvent.ReverbPreview -> selectedClipId()?.let { engine.setClipReverbLive(it, event.reverb) }
@@ -277,6 +284,7 @@ class EditorViewModel @Inject constructor(
             EditorEvent.TextDismiss -> closeText()
             is EditorEvent.MoveTextClip -> run(MoveText(event.clipId, event.startMs))
             is EditorEvent.TrimTextClip -> run(TrimText(event.clipId, event.startMs, event.endMs))
+            else -> Unit
         }
     }
 

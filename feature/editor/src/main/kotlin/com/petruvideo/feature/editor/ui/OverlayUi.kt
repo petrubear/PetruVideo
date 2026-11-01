@@ -71,9 +71,17 @@ private const val MS = 1_000L
 fun OverlayPanel(panel: OverlayPanelState?, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
     if (panel == null) return
     SheetSurface(modifier.fillMaxWidth()) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(
+            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Overlay", style = PetruType.Title, color = PetruColors.OnBackground, modifier = Modifier.weight(1f))
+                Text(
+                    "Overlay",
+                    style = PetruType.Title,
+                    color = PetruColors.OnBackground,
+                    modifier = Modifier.weight(1f),
+                )
                 PillButton("Done", onClick = { onEvent(EditorEvent.OverlayDismiss) })
             }
             Text(panel.name, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted, maxLines = 1)
@@ -199,7 +207,12 @@ private fun OverlayClipBox(
 }
 
 @Composable
-private fun BoxScope.OverlayHandle(alignment: Alignment, description: String, onDrag: (Float) -> Unit, onEnd: () -> Unit) {
+private fun BoxScope.OverlayHandle(
+    alignment: Alignment,
+    description: String,
+    onDrag: (Float) -> Unit,
+    onEnd: () -> Unit,
+) {
     Box(
         Modifier
             .align(alignment)
@@ -284,7 +297,13 @@ internal fun OverlaySelectionBox(
     )
 }
 
-internal class OverlayDragStep(val rawX: Float, val rawY: Float, val guideX: Boolean, val guideY: Boolean, val clip: OverlayClip)
+internal class OverlayDragStep(
+    val rawX: Float,
+    val rawY: Float,
+    val guideX: Boolean,
+    val guideY: Boolean,
+    val clip: OverlayClip,
+)
 
 /** Snaps to the frame's center within [snapPx] pixels and keeps the width inside its limits. */
 internal fun overlayDragStep(

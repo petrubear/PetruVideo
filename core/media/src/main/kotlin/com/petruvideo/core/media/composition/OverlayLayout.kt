@@ -1,18 +1,21 @@
 package com.petruvideo.core.media.composition
 
 import android.util.Pair
+import androidx.annotation.OptIn
 import androidx.media3.common.OverlaySettings
 import androidx.media3.common.VideoCompositorSettings
 import androidx.media3.common.util.Size
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.StaticOverlaySettings
 import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TEXT_PERMILLE
 
 /**
  * Where each overlay sequence is drawn over the main video: the center, the width as a share of the frame width, and
- * the opacity. Overlay [k] is input k; the main video comes after them and is drawn as it is. The output has the frame size
- * [frameWidth] by [frameHeight]. The clips can be replaced while playing, so a drag shows at once.
+ * the opacity. Overlay [k] is input k; the main video comes after them and is drawn as it is. The output has the
+ * frame size [frameWidth] by [frameHeight]. The clips can be replaced while playing, so a drag shows at once.
  */
+@OptIn(UnstableApi::class)
 class OverlayLayout(clips: List<OverlayClip>, private val frameWidth: Int, private val frameHeight: Int) :
     VideoCompositorSettings {
     @Volatile private var byInput: Map<Int, OverlayClip> = clips.mapIndexed { i, c -> i to c }.toMap()

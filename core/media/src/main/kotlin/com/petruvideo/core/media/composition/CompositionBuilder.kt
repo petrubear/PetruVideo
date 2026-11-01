@@ -120,55 +120,66 @@ class CompositionBuilder(private val spec: BuildSpec) {
 
     private fun videoSequence(timeline: Timeline): EditedMediaItemSequence? {
         if (timeline.videoLane.isEmpty() && timeline.textLane.isEmpty() && timeline.overlayLane.isEmpty()) return null
-        // A sequence with no picture-clip sound (photos only, silent or muted clips) would wait for an audio track
-        // that never comes, which fails the export, so it only asks for video; sound comes from the audio lane.
-        val hasSound = timeline.videoLane.any {
-            it.attachedAudio && !it.muted && timeline.media[it.mediaItemId]?.kind == MediaKind.Video
-        }
-        val tracks = if (hasSound) setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO) else setOf(C.TRACK_TYPE_VIDEO)
-        val builder = EditedMediaItemSequence.Builder(tracks)
-        val fps = spec.fps
+        val builder = EditedMediaItemSequence.Builder(videoTrackTypes(timeline))
         val frame = frameEffects()
-        timeline.videoLane.forEach { clip ->
-            val media = timeline.media[clip.mediaItemId]
-            when {
-                media == null || media.availability == Availability.Missing -> builder.addGap(clip.lengthMs * US_PER_MS)
-                media.kind == MediaKind.Photo -> builder.addItem(
-                    EditedMediaItem.Builder(
-                        // Transformer needs the image duration on the media item itself, not only on the edited item.
-                        MediaItem.Builder().setUri(Uri.parse(media.uri)).setImageDurationMs(clip.lengthMs).build(),
-                    )
-                        .setDurationUs(clip.lengthMs * US_PER_MS)
-                        .setFrameRate(fps)
-                        .setRemoveAudio(true)
-                        .setEffects(withFilter(clip, frame))
-                        .build(),
-                )
-                else -> builder.addItem(
-                    EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
-                        .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
-                        .setRemoveAudio(!clip.attachedAudio || clip.muted)
-                        .setSpeed(speedOf(clip.speedMilli))
-                        .setEffects(
-                            Effects(
-                                soundEffects(
-                                    clip.id, clip.reverb, clip.volumePercent, clip.attachedAudio && !clip.muted,
-                                    clip.fx, clip.lengthMs,
-                                ),
-                                withFilter(clip, frame).videoEffects,
-                            ),
-                        )
-                        .build(),
-                )
-            }
-        }
-        // Text that ends after the video plays over black, so the video sequence runs on as a gap.
+        timeline.videoLane.forEach { clip -> addVideoClip(builder, timeline, clip, frame) }
+        // Text or an overlay that ends after the video plays over black, so the sequence runs on as a gap.
         val extraEndMs = maxOf(
             timeline.textLane.maxOfOrNull { it.endMs } ?: 0L,
             timeline.overlayLane.maxOfOrNull { it.endMs } ?: 0L,
         )
         if (extraEndMs > timeline.videoLengthMs) builder.addGap((extraEndMs - timeline.videoLengthMs) * US_PER_MS)
         return builder.build()
+    }
+
+    /**
+     * A sequence with no picture-clip sound (photos only, silent or muted clips) would wait for an audio track that
+     * never comes, which fails the export, so it only asks for video; sound comes from the audio lane.
+     */
+    private fun videoTrackTypes(timeline: Timeline): Set<Int> {
+        val hasSound = timeline.videoLane.any {
+            it.attachedAudio && !it.muted && timeline.media[it.mediaItemId]?.kind == MediaKind.Video
+        }
+        return if (hasSound) setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO) else setOf(C.TRACK_TYPE_VIDEO)
+    }
+
+    private fun addVideoClip(
+        builder: EditedMediaItemSequence.Builder,
+        timeline: Timeline,
+        clip: VideoClip,
+        frame: Effects,
+    ) {
+        val media = timeline.media[clip.mediaItemId]
+        when {
+            media == null || media.availability == Availability.Missing -> builder.addGap(clip.lengthMs * US_PER_MS)
+            media.kind == MediaKind.Photo -> builder.addItem(
+                EditedMediaItem.Builder(
+                    // Transformer needs the image duration on the media item itself, not only on the edited item.
+                    MediaItem.Builder().setUri(Uri.parse(media.uri)).setImageDurationMs(clip.lengthMs).build(),
+                )
+                    .setDurationUs(clip.lengthMs * US_PER_MS)
+                    .setFrameRate(spec.fps)
+                    .setRemoveAudio(true)
+                    .setEffects(withFilter(clip, frame))
+                    .build(),
+            )
+            else -> builder.addItem(
+                EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
+                    .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
+                    .setRemoveAudio(!clip.attachedAudio || clip.muted)
+                    .setSpeed(speedOf(clip.speedMilli))
+                    .setEffects(
+                        Effects(
+                            soundEffects(
+                                clip.id, clip.reverb, clip.volumePercent, clip.attachedAudio && !clip.muted,
+                                clip.fx, clip.lengthMs,
+                            ),
+                            withFilter(clip, frame).videoEffects,
+                        ),
+                    )
+                    .build(),
+            )
+        }
     }
 
     /**

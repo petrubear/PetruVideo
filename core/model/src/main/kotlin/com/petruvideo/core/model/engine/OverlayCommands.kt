@@ -86,7 +86,8 @@ class TrimOverlay(clipId: String, private val startMs: Long, private val endMs: 
         val sourceStart = if (photo) 0L else clip.sourceStartMs + (start - clip.startMs)
         val sourceEnd = sourceStart + (endMs - start)
         val limit = media?.durationMs
-        if (!photo && (sourceStart < 0 || (limit != null && sourceEnd > limit))) return null
+        if (!photo && sourceStart < 0) return null
+        if (!photo && limit != null && sourceEnd > limit) return null
         return clip.copy(startMs = start, sourceStartMs = sourceStart, sourceEndMs = sourceEnd)
     }
 }

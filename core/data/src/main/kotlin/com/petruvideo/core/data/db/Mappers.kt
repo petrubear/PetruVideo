@@ -174,4 +174,7 @@ fun OverlayClipEntity.toModel() =
     OverlayClip(id, mediaItemId, sourceStartMs, sourceEndMs, startMs, x, y, width, opacity)
 
 fun OverlayClip.toEntity(projectId: String) =
-    OverlayClipEntity(id, projectId, mediaItemId, startMs, sourceStartMs, sourceEndMs, xPermille, yPermille, widthPermille, opacityPercent)
+    OverlayClipEntity(
+        id, projectId, mediaItemId, startMs, sourceStartMs, sourceEndMs,
+        xPermille, yPermille, widthPermille, opacityPercent,
+    )
