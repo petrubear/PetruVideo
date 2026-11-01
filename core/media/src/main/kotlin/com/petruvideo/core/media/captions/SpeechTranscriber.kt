@@ -12,14 +12,14 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -115,15 +115,28 @@ class AndroidSpeechTranscriber @Inject constructor(
             putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, SAMPLE_RATE)
         }
         recognizer.startListening(intent)
-        CoroutineScope(Dispatchers.IO).launch { feed(pipe[1], pcm) }
+        Thread { paced(pipe[1], pcm + ShortArray(TRAILING_SILENCE)) }.start()
     }
 
-    private fun feed(write: ParcelFileDescriptor, pcm: ShortArray) {
+    /** Writes the audio into the pipe in 100 ms pieces at about twice real time, like a microphone would. */
+    private fun paced(write: ParcelFileDescriptor, pcm: ShortArray) {
         ParcelFileDescriptor.AutoCloseOutputStream(write).use { out ->
-            val buffer = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
-            pcm.forEach { buffer.putShort(it) }
-            runCatching { out.write(buffer.array()) }
+            val piece = SAMPLE_RATE / 10
+            var at = 0
+            while (at < pcm.size) {
+                val end = minOf(at + piece, pcm.size)
+                val ok = runCatching { out.write(littleEndian(pcm.copyOfRange(at, end))) }.isSuccess
+                if (!ok) return
+                Thread.sleep(PACE_MS)
+                at = end
+            }
         }
+    }
+
+    private fun littleEndian(pcm: ShortArray): ByteArray {
+        val buffer = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
+        pcm.forEach { buffer.putShort(it) }
+        return buffer.array()
     }
 
     private fun listener(recognizer: SpeechRecognizer, done: (String?) -> Unit) = object : RecognitionListener {
@@ -134,6 +147,7 @@ class AndroidSpeechTranscriber @Inject constructor(
         }
 
         override fun onError(error: Int) {
+            android.util.Log.w("PetruCaptions", "recognizer error $error")
             recognizer.destroy()
             done(null)
         }
@@ -155,5 +169,11 @@ class AndroidSpeechTranscriber @Inject constructor(
 
     private companion object {
         const val SAMPLE_RATE = 16_000
+
+        /** Delay after each 100 ms piece: twice real time, as a compromise between speed and a live-like stream. */
+        const val PACE_MS = 50L
+
+        /** A second of silence after the phrase, so the recognizer sees where the speech ends. */
+        const val TRAILING_SILENCE = SAMPLE_RATE
     }
 }
