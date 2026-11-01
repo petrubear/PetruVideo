@@ -25,6 +25,11 @@ enum class EffectKind(val label: String) {
     Pixelate("Pixelate"),
     Mirror("Mirror"),
     Shake("Shake"),
+    Glitch("Glitch"),
+    RgbSplit("RGB split"),
+    Glow("Glow"),
+    Vhs("VHS"),
+    Grain("Grain"),
 }
 
 data class ClipEffect(val kind: EffectKind, val strength: Int = EFFECT_STRENGTH_DEFAULT) {

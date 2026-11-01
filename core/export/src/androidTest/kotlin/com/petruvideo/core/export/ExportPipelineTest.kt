@@ -875,6 +875,23 @@ class ExportPipelineTest {
         check(unmirrored[2] > unmirrored[0] + 40) { "plain right side is not blue: ${unmirrored.toList()}" }
     }
 
+    /** Feature 025: each new effect changes the exported picture compared with the same clip without one. */
+    @Test
+    fun theNewEffectsChangeTheExportedPicture() {
+        val stripes = bandsPhoto("stripes25", 10)
+        val plain = effectFrames(stripes, null, "pipeline-fx25-plain", 1_000, 1_500)
+        val glow = effectFrames(stripes, ClipEffect(EffectKind.Glow, 100), "pipeline-fx25-Glow", 1_000)[0]
+        val before = meanRgb(plain[0], 0.15f, 0.85f).sum()
+        val after = meanRgb(glow, 0.15f, 0.85f).sum()
+        check(after > before + 15) { "glow did not brighten: $before to $after" }
+        val kinds = listOf(EffectKind.Glitch, EffectKind.RgbSplit, EffectKind.Vhs, EffectKind.Grain)
+        for (kind in kinds) {
+            val frames = effectFrames(stripes, ClipEffect(kind, 100), "pipeline-fx25-${kind.name}", 1_000, 1_500)
+            val changed = maxOf(changedPixels(plain[0], frames[0]), changedPixels(plain[1], frames[1]))
+            check(changed > 2_000) { "$kind changed only $changed pixels" }
+        }
+    }
+
     @Test
     fun aFilledTemplateExportsWithItsLengthLookAndTransitions() {
         val a = item("video_with_audio.mp4")
