@@ -757,7 +757,23 @@ class EditorScreenshotTest {
                 androidx.compose.foundation.layout.Box(Modifier.padding(16.dp)) {
                     com.petruvideo.feature.editor.ui.OverlayControls(
                         overlays[0].copy(chroma = com.petruvideo.core.model.ChromaKey(enabled = true)),
-                        onEvent = {}, checker = true, startOnChroma = true,
+                        onEvent = {}, checker = true, startTab = 1,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun overlayMaskPanel() = paparazzi.snapshot {
+        PetruTheme {
+            com.petruvideo.core.designsystem.components.SheetSurface(Modifier.fillMaxWidth()) {
+                androidx.compose.foundation.layout.Box(Modifier.padding(16.dp)) {
+                    com.petruvideo.feature.editor.ui.OverlayControls(
+                        overlays[0].copy(
+                            mask = com.petruvideo.core.model.OverlayMask(com.petruvideo.core.model.MaskKind.Circle),
+                        ),
+                        onEvent = {}, startTab = 2,
                     )
                 }
             }

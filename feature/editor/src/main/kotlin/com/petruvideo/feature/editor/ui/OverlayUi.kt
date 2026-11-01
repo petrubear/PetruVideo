@@ -52,6 +52,7 @@ import com.petruvideo.core.designsystem.components.SheetSurface
 import com.petruvideo.core.model.CHROMA_BLUE
 import com.petruvideo.core.model.CHROMA_GREEN
 import com.petruvideo.core.model.ChromaKey
+import com.petruvideo.core.model.MaskKind
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.OVERLAY_MIN_MS
 import com.petruvideo.core.model.OVERLAY_WIDTH_MAX
@@ -105,15 +106,19 @@ fun OverlayControls(
     modifier: Modifier = Modifier,
     checker: Boolean = false,
     picking: Boolean = false,
-    startOnChroma: Boolean = false,
+    startTab: Int = 0,
 ) {
-    var tab by remember { mutableIntStateOf(if (startOnChroma) 1 else 0) }
+    var tab by remember { mutableIntStateOf(startTab) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SegmentedControl(listOf("Opacity", "Chroma key"), tab, {
+        SegmentedControl(listOf("Opacity", "Chroma key", "Mask"), tab, {
             tab = it
             if (it == 0) onEvent(EditorEvent.ChromaPicking(false))
         })
-        if (tab == 0) OpacityControls(clip, onEvent) else ChromaControls(clip, checker, picking, onEvent)
+        when (tab) {
+            0 -> OpacityControls(clip, onEvent)
+            1 -> ChromaControls(clip, checker, picking, onEvent)
+            else -> MaskControls(clip, onEvent)
+        }
     }
 }
 
@@ -134,6 +139,34 @@ private fun OpacityControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
+    }
+}
+
+/** The mask of an overlay: a shape (or none), how big, how soft, and whether the inside or the outside is shown. */
+@Composable
+private fun MaskControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
+    var shown by remember(clip.mask) { mutableStateOf(clip.mask) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            MaskKind.entries.forEach { kind ->
+                PetruChip(kind.label, selected = shown.kind == kind, onClick = {
+                    onEvent(EditorEvent.MaskCommit(shown.copy(kind = kind)))
+                })
+            }
+        }
+        if (shown.active) {
+            SettingSlider("Size", "${shown.size}", shown.size.toFloat(), 0f..PERCENT_MAX, {
+                shown = shown.copy(size = it.roundToInt())
+                onEvent(EditorEvent.MaskPreview(shown))
+            }, { onEvent(EditorEvent.MaskCommit(shown)) })
+            SettingSlider("Feather", "${shown.feather}", shown.feather.toFloat(), 0f..PERCENT_MAX, {
+                shown = shown.copy(feather = it.roundToInt())
+                onEvent(EditorEvent.MaskPreview(shown))
+            }, { onEvent(EditorEvent.MaskCommit(shown)) })
+            PetruChip("Invert", selected = shown.invert, onClick = {
+                onEvent(EditorEvent.MaskCommit(shown.copy(invert = !shown.invert)))
+            })
+        }
     }
 }
 

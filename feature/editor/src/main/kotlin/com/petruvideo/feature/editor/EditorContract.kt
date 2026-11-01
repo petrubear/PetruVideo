@@ -8,6 +8,7 @@ import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.OverlayMask
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
@@ -367,6 +368,8 @@ sealed interface EditorEvent {
     data class ChromaPreview(val key: ChromaKey) : EditorEvent
     data class ChromaCommit(val key: ChromaKey) : EditorEvent
     data class ChromaChecker(val on: Boolean) : EditorEvent
+    data class MaskPreview(val mask: OverlayMask) : EditorEvent
+    data class MaskCommit(val mask: OverlayMask) : EditorEvent
     data class ChromaPicking(val on: Boolean) : EditorEvent
 
     /** A tap on the preview while picking, as permille of the frame width and of the frame height. */

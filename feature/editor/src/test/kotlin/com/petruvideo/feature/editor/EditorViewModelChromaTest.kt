@@ -85,4 +85,17 @@ class EditorViewModelChromaTest {
         e.overlay.chroma shouldBe ChromaKey(true, CHROMA_BLUE)
         sampled.single().map { Math.round(it * 100) / 100f } shouldBe listOf(0.5f, 0.5f)
     }
+
+    @Test
+    fun `a mask previews live and commits as one undo step`() = runTest {
+        val e = env()
+        val mask = com.petruvideo.core.model.OverlayMask(com.petruvideo.core.model.MaskKind.Circle, 50, 10, true)
+        e.vm.onEvent(EditorEvent.MaskPreview(mask))
+        e.overlay.mask shouldBe com.petruvideo.core.model.OverlayMask()
+        e.engine.calls.last().startsWith("overlay ") shouldBe true
+        e.vm.onEvent(EditorEvent.MaskCommit(mask))
+        e.overlay.mask shouldBe mask
+        e.vm.onEvent(EditorEvent.Undo)
+        e.overlay.mask shouldBe com.petruvideo.core.model.OverlayMask()
+    }
 }

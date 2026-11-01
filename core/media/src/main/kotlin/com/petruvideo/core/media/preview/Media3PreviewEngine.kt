@@ -60,6 +60,7 @@ class Media3PreviewEngine @Inject constructor(
     private var voiceFxAllowed = true
     private var chromas: Map<String, com.petruvideo.core.media.effects.ChromaKeyHandle> = emptyMap()
     private var chromaChecker = false
+    private var masks: Map<String, com.petruvideo.core.media.effects.OverlayMaskHandle> = emptyMap()
     private var overlayLayout: com.petruvideo.core.media.composition.OverlayLayout? = null
     private var filters = mutableMapOf<String, com.petruvideo.core.media.filter.ClipFilterEffects>()
     private var clipEffects = mutableMapOf<String, com.petruvideo.core.media.effects.ClipEffectHandle>()
@@ -133,6 +134,7 @@ class Media3PreviewEngine @Inject constructor(
         textOverlays = builder.textOverlays
         overlayLayout = builder.overlayLayout
         adoptChromas(builder.chromas)
+        masks = builder.masks.toMap()
         filters = builder.filters
         clipEffects = builder.clipEffects
         framings = builder.framings
@@ -261,6 +263,7 @@ class Media3PreviewEngine @Inject constructor(
     override fun setOverlayLive(clip: OverlayClip) {
         overlayLayout?.update(clip)
         chromas[clip.id]?.update(clip.chroma)
+        masks[clip.id]?.update(clip.mask)
         if (!polling) {
             handler.removeCallbacks(refresh)
             handler.postDelayed(refresh, REFRESH_MS)

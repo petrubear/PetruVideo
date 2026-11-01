@@ -30,7 +30,9 @@ import com.petruvideo.core.model.NoiseReduction
 import com.petruvideo.core.model.NoiseStrength
 import com.petruvideo.core.model.Keyframe
 import com.petruvideo.core.model.ChromaKey
+import com.petruvideo.core.model.MaskKind
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.OverlayMask
 import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.Pitch
 import com.petruvideo.core.model.Project
@@ -217,6 +219,9 @@ fun OverlayClipEntity.toModel() =
     OverlayClip(
         id, mediaItemId, sourceStartMs, sourceEndMs, startMs, x, y, width, opacity,
         chroma = ChromaKey(chromaEnabled, chromaColor, chromaStrength, chromaSmoothness, chromaSpill),
+        mask = OverlayMask(
+            MaskKind.entries.firstOrNull { it.name == maskKind } ?: MaskKind.None, maskSize, maskFeather, maskInvert,
+        ),
     )
 
 fun OverlayClip.toEntity(projectId: String) =
@@ -224,6 +229,7 @@ fun OverlayClip.toEntity(projectId: String) =
         id, projectId, mediaItemId, startMs, sourceStartMs, sourceEndMs,
         xPermille, yPermille, widthPermille, opacityPercent,
         chroma.enabled, chroma.color, chroma.strength, chroma.smoothness, chroma.spill,
+        mask.kind.name, mask.size, mask.feather, mask.invert,
     )
 
 fun TransitionColumns.toModel(): Transition? =

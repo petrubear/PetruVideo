@@ -57,6 +57,28 @@ class OverlayUiTest {
     }
 
     @Test
+    fun maskTabChoosesAShapeAndOffersSizeFeatherAndInvert() {
+        val events = mutableListOf<EditorEvent>()
+        val masked = clips[0].copy(
+            mask = com.petruvideo.core.model.OverlayMask(com.petruvideo.core.model.MaskKind.Circle),
+        )
+        compose.setContent { PetruTheme { OverlayPanel(OverlayPanelState(masked, "pip.mp4"), { events += it }) } }
+        compose.onNodeWithText("Mask").performClick()
+        compose.onNodeWithContentDescription("Size").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Feather").assertIsDisplayed()
+        compose.onNodeWithText("Invert").performClick()
+        assertEquals(
+            EditorEvent.MaskCommit(masked.mask.copy(invert = true)),
+            events.last(),
+        )
+        compose.onNodeWithText("Rectangle").performClick()
+        assertEquals(
+            EditorEvent.MaskCommit(masked.mask.copy(kind = com.petruvideo.core.model.MaskKind.Rectangle)),
+            events.last(),
+        )
+    }
+
+    @Test
     fun laneClipsAreSelectableOnSeparateRowsAndTheEndHandleTrims() {
         val selected = mutableListOf<String>()
         val trims = mutableListOf<Triple<String, Long, Long>>()

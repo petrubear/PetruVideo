@@ -8,6 +8,7 @@ import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.OVERLAY_DEFAULT_MS
 import com.petruvideo.core.model.OVERLAY_MIN_MS
 import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.OverlayMask
 import com.petruvideo.core.model.Pose
 import com.petruvideo.core.model.Timeline
 import java.util.UUID
@@ -119,4 +120,9 @@ class TrimOverlay(clipId: String, private val startMs: Long, private val endMs: 
 /** Sets the chroma key of the overlay (feature 022). */
 class SetChromaKey(clipId: String, private val chroma: ChromaKey) : OverlayCommand(clipId, "Chroma key") {
     override fun next(clip: OverlayClip, media: MediaItem?) = clip.copy(chroma = chroma.normalized())
+}
+
+/** Sets the mask of the overlay (feature 024). */
+class SetOverlayMask(clipId: String, private val mask: OverlayMask) : OverlayCommand(clipId, "Overlay mask") {
+    override fun next(clip: OverlayClip, media: MediaItem?) = clip.copy(mask = mask.normalized())
 }

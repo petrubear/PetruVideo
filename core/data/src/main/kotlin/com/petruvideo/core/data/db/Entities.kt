@@ -10,6 +10,8 @@ import com.petruvideo.core.model.CHROMA_GREEN
 import com.petruvideo.core.model.CHROMA_SMOOTHNESS_DEFAULT
 import com.petruvideo.core.model.CHROMA_SPILL_DEFAULT
 import com.petruvideo.core.model.CHROMA_STRENGTH_DEFAULT
+import com.petruvideo.core.model.MASK_FEATHER_DEFAULT
+import com.petruvideo.core.model.MASK_SIZE_DEFAULT
 
 @Entity(tableName = "project")
 data class ProjectEntity(
@@ -245,6 +247,10 @@ data class OverlayClipEntity(
     @ColumnInfo(defaultValue = "40") val chromaStrength: Int = CHROMA_STRENGTH_DEFAULT,
     @ColumnInfo(defaultValue = "20") val chromaSmoothness: Int = CHROMA_SMOOTHNESS_DEFAULT,
     @ColumnInfo(defaultValue = "50") val chromaSpill: Int = CHROMA_SPILL_DEFAULT,
+    @ColumnInfo(defaultValue = "'None'") val maskKind: String = "None",
+    @ColumnInfo(defaultValue = "70") val maskSize: Int = MASK_SIZE_DEFAULT,
+    @ColumnInfo(defaultValue = "20") val maskFeather: Int = MASK_FEATHER_DEFAULT,
+    @ColumnInfo(defaultValue = "0") val maskInvert: Boolean = false,
 )
 
 /** One keyframe of an overlay or text clip; [ownerId] is the clip's id (the two lanes live in two tables). */

@@ -1267,6 +1267,56 @@ class ExportPipelineTest {
         check(tinted[1] < plain[1] - 8 && tinted[0] > plain[0]) { "tint did not move green to magenta: ${tinted.toList()}" }
     }
 
+    private fun maskedOverlayFrame(mask: com.petruvideo.core.model.OverlayMask, name: String): android.graphics.Bitmap {
+        val base = solidPhoto("maskbase", 0xFF0040C0.toInt())
+        val overlay = solidPhoto("maskoverlay", 0xFF804000.toInt())
+        val timeline = project(VideoClip("b1", base.id, 0, 2_000, false), media = listOf(base)).let {
+            it.copy(
+                media = it.media + (overlay.id to overlay),
+                overlayLane = listOf(OverlayClip("o1", overlay.id, 0, 2_000, 0, 500, 500, 600, mask = mask)),
+            )
+        }
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+        check(state is ExportState.Finished) { "$name export: $state" }
+        return frameAt(uri!!, 800)
+    }
+
+    private fun boxRgb(frame: android.graphics.Bitmap, l: Float, t: Float, r: Float, b: Float): IntArray {
+        val sum = LongArray(3)
+        var n = 0
+        for (y in (frame.height * t).toInt() until (frame.height * b).toInt()) {
+            for (x in (frame.width * l).toInt() until (frame.width * r).toInt()) {
+                val c = frame.getPixel(x, y)
+                sum[0] += android.graphics.Color.red(c); sum[1] += android.graphics.Color.green(c)
+                sum[2] += android.graphics.Color.blue(c)
+                n++
+            }
+        }
+        return intArrayOf((sum[0] / n).toInt(), (sum[1] / n).toInt(), (sum[2] / n).toInt())
+    }
+
+    /** SC-002 of feature 024: the corner of a Circle-masked overlay shows the layer beneath, the centre the overlay. */
+    @Test
+    fun aCircleMaskCutsTheCornersOfAnOverlay() {
+        val kind = com.petruvideo.core.model.MaskKind.Circle
+        val masked = maskedOverlayFrame(com.petruvideo.core.model.OverlayMask(kind, 100, 0), "pipeline-mask-circle")
+        // The overlay spans 0.2..0.8 of the width and 0.1..0.9 of the height; its corners are outside the ellipse.
+        val corner = boxRgb(masked, 0.21f, 0.12f, 0.27f, 0.2f)
+        val centre = boxRgb(masked, 0.45f, 0.45f, 0.55f, 0.55f)
+        check(corner[2] > 120 && corner[0] < 70) { "the corner still shows the overlay: ${corner.toList()}" }
+        check(centre[0] > 70 && centre[2] < 80) { "the centre lost the overlay: ${centre.toList()}" }
+
+        val plain = maskedOverlayFrame(com.petruvideo.core.model.OverlayMask(), "pipeline-mask-none")
+        val plainCorner = boxRgb(plain, 0.21f, 0.12f, 0.27f, 0.2f)
+        check(plainCorner[0] > 70 && plainCorner[2] < 80) { "a clip without a mask changed: ${plainCorner.toList()}" }
+
+        val inverted = maskedOverlayFrame(
+            com.petruvideo.core.model.OverlayMask(kind, 100, 0, true), "pipeline-mask-inverted",
+        )
+        check(boxRgb(inverted, 0.45f, 0.45f, 0.55f, 0.55f)[2] > 120) { "invert kept the centre" }
+        check(boxRgb(inverted, 0.21f, 0.12f, 0.27f, 0.2f)[0] > 70) { "invert lost the corner" }
+    }
+
     private fun hasHardwareAvcEncoder() = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any {
         it.isEncoder && it.isHardwareAccelerated && it.supportedTypes.any { t -> t.equals("video/avc", true) }
     }

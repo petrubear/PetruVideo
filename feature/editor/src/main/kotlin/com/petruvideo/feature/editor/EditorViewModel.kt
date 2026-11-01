@@ -39,6 +39,7 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
 import com.petruvideo.core.model.ChromaKey
+import com.petruvideo.core.model.OverlayMask
 import com.petruvideo.core.model.Keyframes
 import com.petruvideo.core.model.VOICE_OVER_MIN_MS
 import com.petruvideo.core.model.VoiceOverLimit
@@ -113,6 +114,7 @@ import com.petruvideo.core.model.engine.SetFilterLook
 import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
 import com.petruvideo.core.model.engine.SetChromaKey
+import com.petruvideo.core.model.engine.SetOverlayMask
 import com.petruvideo.core.model.engine.SetOverlayOpacity
 import com.petruvideo.core.model.engine.SetOverlayPlacement
 import com.petruvideo.core.model.engine.SetReverbEnabled
@@ -389,7 +391,8 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.OverlayCommit -> commitOverlay(event.clip)
             EditorEvent.OverlayDismiss -> closeOverlay()
             is EditorEvent.ChromaPreview, is EditorEvent.ChromaCommit, is EditorEvent.ChromaChecker,
-            is EditorEvent.ChromaPicking, is EditorEvent.ChromaPick -> onChromaEvent(event)
+            is EditorEvent.ChromaPicking, is EditorEvent.ChromaPick, is EditorEvent.MaskPreview,
+            is EditorEvent.MaskCommit -> onChromaEvent(event)
             is EditorEvent.MoveOverlayClip -> run(MoveOverlay(event.clipId, event.startMs))
             is EditorEvent.TrimOverlayClip -> run(TrimOverlay(event.clipId, event.startMs, event.endMs))
             is EditorEvent.OpenFilterTool -> openFilter(event.kind)
@@ -1085,6 +1088,8 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.ChromaChecker -> setChromaChecker(event.on)
             is EditorEvent.ChromaPicking -> local.update { it.copy(chromaPicking = event.on) }
             is EditorEvent.ChromaPick -> pickChroma(event.xPermille, event.yPermille)
+            is EditorEvent.MaskPreview -> previewMask(event.mask)
+            is EditorEvent.MaskCommit -> selectedOverlayId()?.let { run(SetOverlayMask(it, event.mask)) }
             else -> Unit
         }
     }
@@ -1093,6 +1098,12 @@ class EditorViewModel @Inject constructor(
         val stored = selectedOverlayId()
             ?.let { id -> session.timeline.value?.overlayLane?.firstOrNull { it.id == id } } ?: return
         engine.setOverlayLive(stored.copy(chroma = key.normalized()))
+    }
+
+    private fun previewMask(mask: OverlayMask) {
+        val stored = selectedOverlayId()
+            ?.let { id -> session.timeline.value?.overlayLane?.firstOrNull { it.id == id } } ?: return
+        engine.setOverlayLive(stored.copy(mask = mask.normalized()))
     }
 
     private fun setChromaChecker(on: Boolean) {
