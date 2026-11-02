@@ -68,6 +68,7 @@ class EditorScreenshotTest {
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
+        voiceSplitProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
         stickersOpen: Boolean = false,
@@ -132,6 +133,7 @@ class EditorScreenshotTest {
             transformPanel = transformPanel,
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
+            voiceSplitProgress = voiceSplitProgress,
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
             stickersOpen = stickersOpen,
@@ -393,6 +395,18 @@ class EditorScreenshotTest {
                         selection = ClipSelection.Video("c1"),
                         curvePanel = SpeedCurvePanelState("c1", curve, true, curve.timelineMs, 4_000),
                     ),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun splittingVoiceShowsProgressWithCancelAndNote() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(
+                    state(selection = ClipSelection.Video("c1"), voiceSplitProgress = 45),
                     player = null, onEvent = {}, onBack = {},
                 )
             }

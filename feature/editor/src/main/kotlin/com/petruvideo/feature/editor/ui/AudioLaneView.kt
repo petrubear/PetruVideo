@@ -38,11 +38,13 @@ import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.engine.AudioPlacement
 import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import com.petruvideo.feature.editor.TimelineGeometry
 import com.petruvideo.feature.editor.TrimLimits
 
 private val WAVE_ROW_HEIGHT = 32.dp
+private val LAYER_GAP = 4.dp
 private val WAVE_SHAPE = RoundedCornerShape(7.dp)
 private const val MUTED_ALPHA = 0.6f
 private val LABEL_INSET = 20.dp
@@ -75,6 +77,8 @@ fun AttachedAudioRow(
     }
 }
 
+private fun rowCountOf(rows: Map<String, Int>): Int = (rows.values.maxOrNull() ?: 0) + 1
+
 /** Detached and added audio clips at their own positions; muted clips are dimmed. */
 @Composable
 fun AudioClipsRow(
@@ -87,7 +91,10 @@ fun AudioClipsRow(
     modifier: Modifier = Modifier,
 ) {
     var previewLength by remember { mutableStateOf<Pair<String, Long>?>(null) }
-    Box(modifier.height(WAVE_ROW_HEIGHT)) {
+    // Clips that play together sit on rows of their own, like the overlay lane (feature 027).
+    val rows = remember(clips) { AudioPlacement.rows(clips) }
+    val rowCount = rowCountOf(rows)
+    Box(modifier.height(WAVE_ROW_HEIGHT * rowCount + LAYER_GAP * (rowCount - 1))) {
         clips.forEach { clip ->
             val item = media[clip.mediaItemId] ?: return@forEach
             val rect = geometry.audioRect(clip)
@@ -96,9 +103,9 @@ fun AudioClipsRow(
             val fill = if (detached) TrackColors.AudioFill else TrackColors.MusicFill
             Box(
                 Modifier
-                    .offset(x = rect.startPx.dp)
+                    .offset(x = rect.startPx.dp, y = (WAVE_ROW_HEIGHT + LAYER_GAP) * rows.getValue(clip.id))
                     .width(rect.widthPx.dp)
-                    .fillMaxHeight()
+                    .height(WAVE_ROW_HEIGHT)
                     .alpha(if (clip.muted) MUTED_ALPHA else 1f)
                     .then(selectionOutline(clip.id == selectedClipId))
                     .clickable { onSelect(clip.id) }

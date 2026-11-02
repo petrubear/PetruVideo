@@ -38,8 +38,7 @@ class SetSpeed(private val clipId: String, private val speedMilli: Int) : Comman
 
     private fun setAudio(timeline: Timeline, index: Int): CommandResult {
         val clip = timeline.audioLane[index]
-        val next = timeline.audioLane.filter { it.id != clip.id && it.timelineStartMs >= clip.timelineStartMs }
-            .minOfOrNull { it.timelineStartMs }
+        val next = AudioPlacement.firstFullMoment(timeline.audioLane, clip.timelineStartMs, clip.id)
         val minSpeed = if (next == null) {
             SPEED_MIN_MILLI
         } else {

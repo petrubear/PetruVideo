@@ -54,9 +54,13 @@ object TimelineInvariants {
             }
         }
         addAll(extraLaneViolations(timeline))
-        val sorted = timeline.audioLane.sortedBy { it.timelineStartMs }
-        sorted.zipWithNext().forEach { (a, b) ->
-            if (a.timelineEndMs > b.timelineStartMs) add("audio clips ${a.id} and ${b.id} overlap")
+        for (clip in timeline.audioLane) {
+            val playing = timeline.audioLane.count {
+                it.timelineStartMs <= clip.timelineStartMs && clip.timelineStartMs < it.timelineEndMs
+            }
+            if (playing > MAX_AUDIO_LAYERS) {
+                add("more than $MAX_AUDIO_LAYERS audio clips play at ${clip.timelineStartMs}")
+            }
         }
     }
 

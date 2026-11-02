@@ -33,10 +33,12 @@ import com.petruvideo.core.model.CanvasBackground
 import com.petruvideo.core.model.SpeedStep
 import com.petruvideo.core.model.DuckEnvelope
 import com.petruvideo.core.model.Fade
+import com.petruvideo.core.model.AudioClip
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.Timeline
+import com.petruvideo.core.model.engine.AudioPlacement
 import com.petruvideo.core.model.VideoClip
 
 /**
@@ -134,7 +136,7 @@ class CompositionBuilder(
         val overlays = overlaySequences(timeline)
         val transitions = hasTransitions(timeline)
         val main = if (transitions) transitionSequences(timeline) else listOfNotNull(videoSequence(timeline))
-        val sequences = overlays + main + listOfNotNull(audioSequence(timeline))
+        val sequences = overlays + main + audioSequences(timeline)
         if (sequences.isEmpty()) return null
         val builder = Composition.Builder(sequences)
         textEffects(timeline)?.let { builder.setEffects(it) }
@@ -318,11 +320,17 @@ class CompositionBuilder(
         return Effects(emptyList(), listOf(frame, effect))
     }
 
-    private fun audioSequence(timeline: Timeline): EditedMediaItemSequence? {
-        if (timeline.audioLane.isEmpty()) return null
+    private fun audioSequences(timeline: Timeline): List<EditedMediaItemSequence> {
+        if (timeline.audioLane.isEmpty()) return emptyList()
+        // Clips that play together go on separate rows; the player mixes the rows (feature 027).
+        val rows = AudioPlacement.rows(timeline.audioLane)
+        return timeline.audioLane.groupBy { rows.getValue(it.id) }.toSortedMap().values.map { audioRow(timeline, it) }
+    }
+
+    private fun audioRow(timeline: Timeline, clips: List<AudioClip>): EditedMediaItemSequence {
         val builder = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_AUDIO))
         var cursor = 0L
-        timeline.audioLane.sortedBy { it.timelineStartMs }.forEach { clip ->
+        clips.sortedBy { it.timelineStartMs }.forEach { clip ->
             val gap = clip.timelineStartMs - cursor
             if (gap > 0) builder.addGap(gap * US_PER_MS)
             val media = timeline.media[clip.mediaItemId]

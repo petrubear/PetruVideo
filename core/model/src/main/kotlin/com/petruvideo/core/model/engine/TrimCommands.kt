@@ -94,9 +94,8 @@ private fun trimAudio(timeline: Timeline, index: Int, newSourceMs: Long, start: 
     return CommandResult.Applied(timeline.copy(audioLane = lane), "Trim audio")
 }
 
-private fun overlapsOthers(lane: List<AudioClip>, clip: AudioClip) = lane.any {
-    it.id != clip.id && it.timelineStartMs < clip.timelineEndMs && clip.timelineStartMs < it.timelineEndMs
-}
+private fun overlapsOthers(lane: List<AudioClip>, clip: AudioClip) =
+    !AudioPlacement.fits(lane, clip.timelineStartMs, clip.lengthMs, ignoreClipId = clip.id)
 
 /** A source time given as if the clip played forwards, as the source time for the opposite edge of a reversed clip. */
 private fun mirrored(clip: VideoClip, forwardMs: Long): Long = clip.sourceStartMs + clip.sourceEndMs - forwardMs

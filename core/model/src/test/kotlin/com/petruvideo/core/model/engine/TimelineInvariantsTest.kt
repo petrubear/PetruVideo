@@ -61,17 +61,15 @@ class TimelineInvariantsTest {
     }
 
     @Test
-    fun `overlapping audio clips are reported`() {
+    fun `more than three audio clips at once are reported and up to three are fine`() {
         val media = testAudio("a", 10_000)
-        val t = Timeline(
+        fun lane(count: Int) = Timeline(
             projectId = "p",
             media = mapOf(media.id to media),
-            audioLane = listOf(
-                AudioClip("x", "a", 0, 5_000, 0, false, AudioOrigin.Added),
-                AudioClip("y", "a", 0, 5_000, 4_000, false, AudioOrigin.Added),
-            ),
+            audioLane = (0 until count).map { AudioClip("c$it", "a", 0, 5_000, it * 1_000L, false, AudioOrigin.Added) },
         )
-        TimelineInvariants.violations(t) shouldHaveSize 1
+        TimelineInvariants.violations(lane(3)) shouldHaveSize 0
+        TimelineInvariants.violations(lane(4)) shouldHaveSize 1
     }
 
     @Test

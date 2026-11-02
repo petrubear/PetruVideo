@@ -33,6 +33,10 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
             OverlayPanel(state.overlayPanel, onEvent)
         }
         ReverseProgress(state.reverseProgress, onCancel = { onEvent(EditorEvent.ReverseCancel) })
+        ReverseProgress(
+            state.voiceSplitProgress, onCancel = { onEvent(EditorEvent.VoiceSplitCancel) }, label = "Splitting voice",
+            note = "Voice and Backing are an approximate split of the original.",
+        )
         ClipToolBar(
             state.clipTools,
             state.selectedAudioMuted,

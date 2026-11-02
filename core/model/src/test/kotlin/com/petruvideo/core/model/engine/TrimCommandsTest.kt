@@ -80,12 +80,18 @@ class TrimCommandsTest {
     }
 
     @Test
-    fun `audio trim that would overlap a neighbour is rejected`() {
-        TrimEnd("a1", 9_000).apply(base) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
+    fun `audio trim may run over a neighbour but not into a fourth layer`() {
+        TrimEnd("a1", 9_000).apply(base).shouldBeInstanceOf<CommandResult.Applied>()
         TrimStart("a1", 0).apply(base).shouldBeInstanceOf<CommandResult.Applied>()
         TrimStart("a1", 500).apply(base.copy(audioLane = base.audioLane.map {
             if (it.id == "a1") it.copy(timelineStartMs = 100) else it
         })) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
+        val crowded = base.copy(
+            audioLane = base.audioLane + listOf("f1", "f2", "f3").map {
+                AudioClip(it, "au", 0, 8_000, timelineStartMs = 2_000, origin = AudioOrigin.Added)
+            },
+        )
+        TrimEnd("a1", 9_000).apply(crowded) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
     }
 
     @Test

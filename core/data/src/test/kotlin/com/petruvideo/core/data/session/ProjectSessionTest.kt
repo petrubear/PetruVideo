@@ -140,12 +140,14 @@ class ProjectSessionTest {
     }
 
     @Test
-    fun `addMedia reports a snapped audio clip`() = runTest {
+    fun `addMedia layers audio and reports a snapped clip only when three already play there`() = runTest {
         val session = ProjectSession(FakeProjectRepository(mapOf("p" to loaded)), this)
         session.open("p")
         session.addMedia(listOf(media("a1", MediaKind.Audio)))
+        session.addMedia(listOf(media("a2", MediaKind.Audio))) shouldBe emptyList()
+        session.addMedia(listOf(media("a3", MediaKind.Audio))) shouldBe emptyList()
 
-        session.addMedia(listOf(media("a2", MediaKind.Audio))) shouldBe listOf(Notice.Snapped)
+        session.addMedia(listOf(media("a4", MediaKind.Audio))) shouldBe listOf(Notice.Snapped)
         advanceUntilIdle()
     }
 

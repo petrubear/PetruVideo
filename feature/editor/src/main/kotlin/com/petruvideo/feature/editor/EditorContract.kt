@@ -42,6 +42,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Volume("Volume", true),
     Audio("Audio", true),
     Detach("Detach", true),
+    SplitVoice("Split voice", true),
     Duplicate("Duplicate", true),
     Delete("Delete", true),
     Mute("Mute", true),
@@ -265,6 +266,8 @@ data class EditorState(
     val curvePanel: SpeedCurvePanelState? = null,
     /** Progress (0 to 100) of the backwards copy being made for the selected clip, if any. */
     val reverseProgress: Int? = null,
+    /** The share done of a running voice split of the selected clip, or null. */
+    val voiceSplitProgress: Int? = null,
     /** Whether the selected main-track clip plays backwards. */
     val selectedReversed: Boolean = false,
     /** The open crop screen, if any. */
@@ -371,6 +374,7 @@ sealed interface EditorEvent {
     data class ChromaChecker(val on: Boolean) : EditorEvent
     data class MaskPreview(val mask: OverlayMask) : EditorEvent
     data class MaskCommit(val mask: OverlayMask) : EditorEvent
+    data object VoiceSplitCancel : EditorEvent
     data class ChromaPicking(val on: Boolean) : EditorEvent
 
     /** A tap on the preview while picking, as permille of the frame width and of the frame height. */

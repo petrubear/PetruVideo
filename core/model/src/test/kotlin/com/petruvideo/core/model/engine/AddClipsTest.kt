@@ -131,12 +131,17 @@ class AddClipsTest {
     }
 
     @Test
-    fun `an audio clip that would overlap another snaps to the next free spot with a notice`() {
-        val existing = AudioClip("x", "ax", 0, 5_000, timelineStartMs = 2_000, origin = AudioOrigin.Added)
-        val t = empty.copy(media = mapOf("ax" to testAudio("ax", 10_000)), audioLane = listOf(existing))
+    fun `an audio clip may overlap others and snaps to the next free spot only when the layers are full`() {
+        val existing = listOf("x", "y", "z").map {
+            AudioClip(it, "ax", 0, 5_000, timelineStartMs = 2_000, origin = AudioOrigin.Added)
+        }
+        val one = empty.copy(media = mapOf("ax" to testAudio("ax", 10_000)), audioLane = existing.take(1))
+        val layered = applied(AddAudioClips(listOf(testAudio("n", 3_000)), playheadMs = 3_000, ids).apply(one))
+        layered.timeline.audioLane.first { it.mediaItemId == "n" }.timelineStartMs shouldBe 3_000
+        layered.notices.shouldBeEmpty()
 
-        val result = applied(AddAudioClips(listOf(testAudio("n", 3_000)), playheadMs = 3_000, ids).apply(t))
-
+        val full = one.copy(audioLane = existing)
+        val result = applied(AddAudioClips(listOf(testAudio("n", 3_000)), playheadMs = 3_000, ids).apply(full))
         val added = result.timeline.audioLane.first { it.mediaItemId == "n" }
         added.timelineStartMs shouldBe 7_000
         result.notices shouldContain Notice.Snapped

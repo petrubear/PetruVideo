@@ -55,6 +55,7 @@ class AccessibilityTest {
         transformPanel: TransformPanelState? = null,
         freezePanel: FreezePanelState? = null,
         reverseProgress: Int? = null,
+        voiceSplitProgress: Int? = null,
         curvePanel: SpeedCurvePanelState? = null,
         captionsPanel: CaptionsPanelState? = null,
         stickersOpen: Boolean = false,
@@ -82,6 +83,7 @@ class AccessibilityTest {
             transformPanel = transformPanel,
             freezePanel = freezePanel,
             reverseProgress = reverseProgress,
+            voiceSplitProgress = voiceSplitProgress,
             curvePanel = curvePanel,
             captionsPanel = captionsPanel,
             stickersOpen = stickersOpen,
@@ -209,6 +211,13 @@ class AccessibilityTest {
         ClipSelection.Video("c1"), videoTools,
         curvePanel = SpeedCurvePanelState("c1", heroCurve, true, heroCurve.timelineMs, 4_000), fontScale = 2f,
     )
+
+    @Test
+    fun voiceSplitProgress() = check(ClipSelection.Video("c1"), videoTools, voiceSplitProgress = 45)
+
+    @Test
+    fun voiceSplitProgressWithLargeFont() =
+        check(ClipSelection.Video("c1"), videoTools, voiceSplitProgress = 45, fontScale = 2f)
 
     @Test
     fun reverseProgress() = check(ClipSelection.Video("c1"), videoTools, reverseProgress = 45)

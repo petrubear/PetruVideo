@@ -56,6 +56,8 @@ import com.petruvideo.core.model.engine.RejectReason
 import com.petruvideo.core.model.CropBox
 import com.petruvideo.core.model.CropShape
 import com.petruvideo.core.media.chroma.ChromaSampler
+import com.petruvideo.core.media.voicesplit.VoiceSplitter
+import com.petruvideo.core.media.voicesplit.NoVoiceSplitter
 import com.petruvideo.core.media.freeze.FreezeStillMaker
 import com.petruvideo.core.media.captions.CaptionMaker
 import com.petruvideo.core.media.captions.CaptionResult
@@ -116,6 +118,8 @@ import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
 import com.petruvideo.core.model.engine.SetChromaKey
 import com.petruvideo.core.model.engine.SetOverlayMask
+import com.petruvideo.core.model.engine.VoiceSplitRules
+import com.petruvideo.core.model.engine.SplitVoice
 import com.petruvideo.core.model.engine.SetOverlayOpacity
 import com.petruvideo.core.model.engine.SetOverlayPlacement
 import com.petruvideo.core.model.engine.SetReverbEnabled
@@ -167,6 +171,7 @@ class EditorViewModel @Inject constructor(
     private val voiceOver: VoiceOverController,
     private val freezeStills: FreezeStillMaker = FreezeStillMaker { _, _ -> null },
     private val chromaSampler: ChromaSampler = ChromaSampler { _, _, _, _ -> null },
+    private val voiceSplitter: VoiceSplitter = NoVoiceSplitter,
     private val reverse: ReversePreparer = NoReversePreparer,
     private val captions: CaptionMaker = NoCaptionMaker,
 ) : ViewModel() {
@@ -205,6 +210,8 @@ class EditorViewModel @Inject constructor(
         val captions: CaptionsLocal? = null,
         val stickersOpen: Boolean = false,
         val canvasOpen: Boolean = false,
+        /** A running voice split: the clip, how it looked when it started, and the share done. */
+        val voiceSplit: VoiceSplitRun? = null,
         /** The curve being dragged on the graph, shown in the panel until it is committed. */
         val curveDraft: SpeedCurve? = null,
         val crop: OpenCrop? = null,
@@ -283,6 +290,7 @@ class EditorViewModel @Inject constructor(
                 captionsPanel = own.captions?.toPanel(),
                 stickersOpen = own.stickersOpen,
                 canvasPanel = state.timeline?.canvas?.takeIf { own.canvasOpen },
+                voiceSplitProgress = own.voiceSplit?.takeIf { it.clipId == state.selection?.clipId }?.progress,
             )
         }
         .combine(reverse.progress) { state, progress ->
@@ -312,6 +320,12 @@ class EditorViewModel @Inject constructor(
                 .collect { filters -> filters.forEach { (id, filter) -> engine.setClipFilterLive(id, filter) } }
         }
         viewModelScope.launch { pressure.notices.collect(::onPressureNotice) }
+        viewModelScope.launch {
+            session.timeline.filterNotNull().collect { timeline ->
+                val run = local.value.voiceSplit ?: return@collect
+                if (VoiceSplitRun.of(timeline, run.clipId) != run.snapshot) cancelVoiceSplit(CHANGED_MESSAGE)
+            }
+        }
         viewModelScope.launch {
             engine.state.map { it.error }.filterNotNull().distinctUntilChanged().collect { onPlaybackError() }
         }
@@ -396,7 +410,7 @@ class EditorViewModel @Inject constructor(
             EditorEvent.OverlayDismiss -> closeOverlay()
             is EditorEvent.ChromaPreview, is EditorEvent.ChromaCommit, is EditorEvent.ChromaChecker,
             is EditorEvent.ChromaPicking, is EditorEvent.ChromaPick, is EditorEvent.MaskPreview,
-            is EditorEvent.MaskCommit -> onChromaEvent(event)
+            is EditorEvent.MaskCommit, EditorEvent.VoiceSplitCancel -> onChromaEvent(event)
             is EditorEvent.MoveOverlayClip -> run(MoveOverlay(event.clipId, event.startMs))
             is EditorEvent.TrimOverlayClip -> run(TrimOverlay(event.clipId, event.startMs, event.endMs))
             is EditorEvent.OpenFilterTool -> openFilter(event.kind)
@@ -1097,6 +1111,7 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.ChromaPick -> pickChroma(event.xPermille, event.yPermille)
             is EditorEvent.MaskPreview -> previewMask(event.mask)
             is EditorEvent.MaskCommit -> selectedOverlayId()?.let { run(SetOverlayMask(it, event.mask)) }
+            EditorEvent.VoiceSplitCancel -> cancelVoiceSplit("Split cancelled")
             else -> Unit
         }
     }
@@ -1105,6 +1120,50 @@ class EditorViewModel @Inject constructor(
         val stored = selectedOverlayId()
             ?.let { id -> session.timeline.value?.overlayLane?.firstOrNull { it.id == id } } ?: return
         engine.setOverlayLive(stored.copy(chroma = key.normalized()))
+    }
+
+    private var voiceSplitJob: Job? = null
+
+    /** Separates the voice of the clip in the background; editing the clip meanwhile cancels it (feature 027). */
+    private fun startVoiceSplit(timeline: Timeline, clipId: String) {
+        VoiceSplitRules.reasonNot(timeline, clipId)?.let { return say(it) }
+        if (local.value.voiceSplit != null) return say("A voice split is already running")
+        val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return
+        val media = timeline.media[clip.mediaItemId] ?: return
+        val snapshot = VoiceSplitRun.of(timeline, clipId) ?: return
+        local.update { it.copy(voiceSplit = VoiceSplitRun(clipId, snapshot, 0)) }
+        voiceSplitJob = viewModelScope.launch {
+            try {
+                val stems = voiceSplitter.split(media, clip.sourceStartMs, clip.sourceEndMs) { percent ->
+                    local.update { state -> state.copy(voiceSplit = state.voiceSplit?.copy(progress = percent)) }
+                }
+                // The run ends before the edit, so the edit is not mistaken for a change of the clip.
+                local.update { it.copy(voiceSplit = null) }
+                if (stems == null) {
+                    say("Could not split the voice")
+                } else {
+                    val result = session.apply(SplitVoice(clipId, stems.voice, stems.backing))
+                    if (result is CommandResult.Rejected) {
+                        say(
+                            if (result.reason == RejectReason.LimitReached) {
+                                "Up to 3 audio layers play together"
+                            } else {
+                                "Could not split the voice"
+                            },
+                        )
+                    }
+                }
+            } finally {
+                local.update { it.copy(voiceSplit = null) }
+            }
+        }
+    }
+
+    private fun cancelVoiceSplit(message: String) {
+        if (local.value.voiceSplit == null) return
+        voiceSplitJob?.cancel()
+        local.update { it.copy(voiceSplit = null) }
+        say(message)
     }
 
     private fun previewMask(mask: OverlayMask) {
@@ -1425,6 +1484,7 @@ class EditorViewModel @Inject constructor(
             ClipTool.Audio -> openAudio(AudioToolKind.List)
             ClipTool.Split -> run(Split(id, engine.state.value.positionMs))
             ClipTool.Detach -> run(DetachAudio(id))
+            ClipTool.SplitVoice -> startVoiceSplit(timeline, id)
             ClipTool.Duplicate -> run(Duplicate(id))
             ClipTool.Delete -> run(Delete(id))
             ClipTool.Mute -> toggleMute(timeline, id)
@@ -1594,6 +1654,8 @@ class EditorViewModel @Inject constructor(
 
 
     private companion object {
+        const val CHANGED_MESSAGE = "Split cancelled because the clip changed"
+
         val VOICE_OVER_EVENTS = setOf<EditorEvent>(
             EditorEvent.StopVoiceOver, EditorEvent.CancelVoiceOver, EditorEvent.VoiceOverInterrupted,
         )

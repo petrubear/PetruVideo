@@ -95,14 +95,12 @@ class SpeedVolumeCommandsTest {
     }
 
     @Test
-    fun `audio speed keeps the start and is limited to avoid the next clip`() {
+    fun `audio speed keeps the start and may run over the next clip while fewer than three layers play`() {
         val fast = applied(SetSpeed("a1", 2000).apply(base))
         fast.timeline.audioLane[0].lengthMs shouldBe 2_000
         fast.timeline.audioLane[0].timelineStartMs shouldBe 0
         val slow = applied(SetSpeed("a1", 250).apply(base))
-        slow.notices shouldContainExactly listOf(Notice.SpeedLimited)
-        slow.timeline.audioLane[0].speedMilli shouldBe 667
-        (slow.timeline.audioLane[0].timelineEndMs <= 6_000) shouldBe true
+        slow.timeline.audioLane[0].speedMilli shouldBe 250
         TimelineInvariants.violations(slow.timeline).shouldBeEmpty()
     }
 

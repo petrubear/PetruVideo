@@ -10,6 +10,7 @@ import com.petruvideo.core.export.ExportRecovery
 import com.petruvideo.core.media.pressure.ResourcePressureMonitor
 import com.petruvideo.core.media.reverse.ReverseNeed
 import com.petruvideo.core.media.reverse.ReversePreparer
+import com.petruvideo.core.media.voicesplit.VoiceSplitStore
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +24,7 @@ class PetruVideoApp : Application() {
     @Inject lateinit var settings: SettingsRepository
     @Inject lateinit var database: PetruDatabase
     @Inject lateinit var reverse: ReversePreparer
+    @Inject lateinit var voiceSplits: VoiceSplitStore
     @Inject @ApplicationScope lateinit var scope: CoroutineScope
 
     override fun onCreate() {
@@ -31,6 +33,8 @@ class PetruVideoApp : Application() {
         scope.launch { exportRecovery.run() }
         // Backwards copies that no reversed clip uses any more (for instance after Reverse was turned off) are removed.
         scope.launch { reverse.sweep(database.reversedRanges().map { ReverseNeed(it.media, it.startMs, it.endMs) }) }
+        // Voice split files that no project uses any more (for instance after the clips were deleted) are removed.
+        scope.launch { voiceSplits.sweep(database.timelineDao().allMediaUris().toSet()) }
         scope.launch { pressure.level.collect(exportCoordinator::onPressure) }
         scope.launch { settings.settings.collect { pressure.setForcedReduced(it.lowerPreview) } }
     }

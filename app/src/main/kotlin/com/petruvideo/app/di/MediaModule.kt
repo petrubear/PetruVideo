@@ -5,6 +5,8 @@ import com.petruvideo.core.media.captions.CaptionService
 import com.petruvideo.core.media.chroma.ChromaSampler
 import com.petruvideo.core.media.chroma.DeviceChromaSampler
 import com.petruvideo.core.media.freeze.FreezeStillMaker
+import com.petruvideo.core.media.voicesplit.VoiceSplitService
+import com.petruvideo.core.media.voicesplit.VoiceSplitter
 import com.petruvideo.core.media.freeze.FreezeStills
 import com.petruvideo.core.media.library.MediaLibrary
 import com.petruvideo.core.media.reverse.ReversePreparer
@@ -50,6 +52,9 @@ abstract class MediaModule {
 
     @Binds
     abstract fun reversePreparer(impl: ReverseService): ReversePreparer
+
+    @Binds
+    abstract fun voiceSplitter(impl: VoiceSplitService): VoiceSplitter
 
     @Binds
     abstract fun chromaSampler(impl: DeviceChromaSampler): ChromaSampler

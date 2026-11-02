@@ -36,8 +36,9 @@ class AddVoiceOverTest {
     @Test
     fun `short takes, overlaps, missing files and other kinds are rejected`() {
         AddVoiceOver(take(400), 0).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.BelowMinimumLength)
-        AddVoiceOver(take(5_000), 8_000).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
-        AddVoiceOver(take(2_000), 11_000).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
+        // A take may start over another audio clip: up to three layers play together.
+        (AddVoiceOver(take(5_000), 8_000).apply(timeline) is CommandResult.Applied) shouldBe true
+        (AddVoiceOver(take(2_000), 11_000).apply(timeline) is CommandResult.Applied) shouldBe true
         AddVoiceOver(take(2_000, MediaKind.Video), 0).apply(timeline) shouldBe
             CommandResult.Rejected(RejectReason.OutOfRange)
         AddVoiceOver(take(2_000).copy(availability = Availability.Missing), 0).apply(timeline) shouldBe

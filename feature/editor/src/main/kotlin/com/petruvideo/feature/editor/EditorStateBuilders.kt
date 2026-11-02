@@ -12,6 +12,7 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.transitionLimitMs
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
+import com.petruvideo.core.model.engine.VoiceSplitRules
 import com.petruvideo.core.model.engine.Delete
 import com.petruvideo.core.model.engine.Duplicate
 import com.petruvideo.core.model.engine.Split
@@ -214,7 +215,9 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
         emptyMap()
     }
     val curved = if (clip.speedCurve != null) mapOf(ClipTool.Speed to "This clip uses a speed curve") else emptyMap()
-    return noTransition + tooLong + curved + when {
+    val noSplit = VoiceSplitRules.reasonNot(timeline, clip.id)?.takeIf { clip.attachedAudio }
+        ?.let { mapOf(ClipTool.SplitVoice to it) }.orEmpty()
+    return noTransition + tooLong + curved + noSplit + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
             ClipTool.Speed to "Photos have no speed",
             ClipTool.Freeze to "A photo is already a still",
@@ -304,6 +307,7 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
         ClipTool.Curve,
         ClipTool.Audio,
         ClipTool.Detach.takeIf { attached },
+        ClipTool.SplitVoice.takeIf { attached },
         ClipTool.Duplicate,
         ClipTool.Delete,
     )
@@ -313,7 +317,36 @@ private val EFFECT_TOOLS = listOf(ClipTool.EffectTransition, ClipTool.EffectFx, 
 
 private fun audioTabTools(timeline: Timeline?, selection: ClipSelection): List<ClipTool> {
     val attached = timeline?.videoLane?.firstOrNull { it.id == selection.clipId }?.attachedAudio == true
-    return listOfNotNull(ClipTool.Audio, ClipTool.Detach.takeIf { attached }, ClipTool.Duplicate, ClipTool.Delete)
+    return listOfNotNull(
+        ClipTool.Audio, ClipTool.Detach.takeIf { attached }, ClipTool.SplitVoice.takeIf { attached },
+        ClipTool.Duplicate, ClipTool.Delete,
+    )
 }
 
 private val FILTER_TOOLS = listOf(ClipTool.FilterLooks, ClipTool.FilterAdjust, ClipTool.Duplicate, ClipTool.Delete)
+
+/** What a voice split depends on in its clip; when any of it changes, the split no longer fits and is cancelled. */
+internal data class VoiceSplitSnapshot(
+    val mediaItemId: String,
+    val sourceStartMs: Long,
+    val sourceEndMs: Long,
+    val speedMilli: Int,
+    val startMs: Long,
+    val attachedAudio: Boolean,
+    val reversed: Boolean,
+    val curved: Boolean,
+)
+
+/** A running voice split of [clipId], with the clip as it was at the start and the share done. */
+internal data class VoiceSplitRun(val clipId: String, val snapshot: VoiceSplitSnapshot, val progress: Int) {
+    companion object {
+        fun of(timeline: Timeline, clipId: String): VoiceSplitSnapshot? {
+            val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return null
+            val start = timeline.videoStartOf(clipId) ?: return null
+            return VoiceSplitSnapshot(
+                clip.mediaItemId, clip.sourceStartMs, clip.sourceEndMs, clip.speedMilli, start,
+                clip.attachedAudio, clip.reversed, clip.speedCurve != null,
+            )
+        }
+    }
+}

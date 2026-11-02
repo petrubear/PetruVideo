@@ -14,6 +14,7 @@ import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.media.probe.MediaProber
 import com.petruvideo.core.media.voiceover.VoiceOverStore
+import com.petruvideo.core.media.voicesplit.VoiceSplitStore
 import com.petruvideo.core.data.db.reversedRanges
 import com.petruvideo.core.media.reverse.ReverseNeed
 import com.petruvideo.core.media.reverse.ReversePreparer
@@ -51,10 +52,12 @@ object DataModule {
         db: PetruDatabase,
         recordings: VoiceOverStore,
         reverse: ReversePreparer,
+        voiceSplits: VoiceSplitStore,
     ): ProjectRepository = RoomProjectRepository(
         db,
         onDeleted = { used ->
             recordings.sweep(used)
+            voiceSplits.sweep(used)
             reverse.sweep(db.reversedRanges().map { ReverseNeed(it.media, it.startMs, it.endMs) })
         },
     )

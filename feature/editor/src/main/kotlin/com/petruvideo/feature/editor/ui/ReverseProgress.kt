@@ -21,9 +21,15 @@ import com.petruvideo.core.designsystem.components.SheetSurface
 
 /** The progress of making a backwards copy, with Cancel, above the clip tool bar. */
 @Composable
-fun ReverseProgress(percent: Int?, onCancel: () -> Unit, modifier: Modifier = Modifier) {
+fun ReverseProgress(
+    percent: Int?,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Reversing",
+    note: String? = null,
+) {
     if (percent == null) return
-    val description = "Reversing, $percent percent"
+    val description = "$label, $percent percent"
     SheetSurface(modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -31,13 +37,14 @@ fun ReverseProgress(percent: Int?, onCancel: () -> Unit, modifier: Modifier = Mo
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Reversing $percent%",
+                    "$label $percent%",
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
                 PillButton("Cancel", onClick = onCancel, modifier = Modifier.defaultMinSize(minHeight = 56.dp))
             }
+            if (note != null) Text(note, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
             LinearProgressIndicator(
                 progress = { percent / PERCENT },
                 modifier = Modifier.fillMaxWidth().semantics { contentDescription = description },

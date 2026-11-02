@@ -37,10 +37,10 @@ class AudioClipCommandsTest {
     }
 
     @Test
-    fun `moving onto another clip snaps after it with a notice`() {
+    fun `moving onto another clip layers over it without a notice`() {
         val result = applied(MoveAudioClip("a1", 7_000).apply(base))
-        result.timeline.audioLane.first { it.id == "a1" }.timelineStartMs shouldBe 11_000
-        result.notices shouldContainExactly listOf(Notice.Snapped)
+        result.timeline.audioLane.first { it.id == "a1" }.timelineStartMs shouldBe 7_000
+        result.notices.shouldBeEmpty()
         TimelineInvariants.violations(result.timeline).shouldBeEmpty()
     }
 

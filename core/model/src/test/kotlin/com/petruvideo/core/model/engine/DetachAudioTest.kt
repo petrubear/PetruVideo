@@ -48,11 +48,20 @@ class DetachAudioTest {
     }
 
     @Test
-    fun `snaps to the next free position when the spot is taken`() {
+    fun `layers over other audio and snaps only when three clips already play there`() {
         val busy = base.copy(
             audioLane = listOf(AudioClip("a1", "au", 0, 6_000, timelineStartMs = 3_000, origin = AudioOrigin.Added)),
         )
-        val result = applied(DetachAudio("c2") { "d" }.apply(busy))
+        val over = applied(DetachAudio("c2") { "d" }.apply(busy))
+        over.timeline.audioLane.first { it.id == "d" }.timelineStartMs shouldBe base.videoStartOf("c2")
+        over.notices.shouldBeEmpty()
+
+        val full = base.copy(
+            audioLane = listOf("a1", "a2", "a3").map {
+                AudioClip(it, "au", 0, 6_000, timelineStartMs = 3_000, origin = AudioOrigin.Added)
+            },
+        )
+        val result = applied(DetachAudio("c2") { "d" }.apply(full))
         result.timeline.audioLane.first { it.id == "d" }.timelineStartMs shouldBe 9_000
         result.notices shouldContainExactly listOf(Notice.Snapped)
         TimelineInvariants.violations(result.timeline).shouldBeEmpty()

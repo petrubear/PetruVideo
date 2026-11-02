@@ -17,6 +17,7 @@ dependencies {
     api(libs.media3.exoplayer)
     implementation(libs.media3.transformer)
     implementation(libs.media3.effect)
+    implementation(libs.onnxruntime.android)
     api(libs.coil.compose)
     implementation(libs.coil.video)
     implementation(libs.kotlinx.coroutines.android)

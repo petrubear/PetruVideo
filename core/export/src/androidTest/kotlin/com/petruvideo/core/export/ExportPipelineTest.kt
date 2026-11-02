@@ -351,6 +351,27 @@ class ExportPipelineTest {
         check(rms[2] < rms[1] * 0.35f) { "end level ${rms[2]} should be far below the middle ${rms[1]}" }
     }
 
+    /** SC-006 of feature 027: two audio clips at the same moment are both heard, mixed together. */
+    @Test
+    fun overlappingAudioClipsAreMixed() {
+        val a = item("video_silent.mp4")
+        val music = item("audio.mp3")
+        fun level(copies: Int, name: String): Float {
+            val audio = (0 until copies).map {
+                AudioClip("m$it", music.id, 0, 2_000, timelineStartMs = 0, origin = AudioOrigin.Added, volumePercent = 40)
+            }
+            val timeline = project(VideoClip("c1", a.id, 0, 2_000, false), media = listOf(a, music), audio = audio)
+            val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+            state.shouldBeFinished()
+            return audioRms(uri!!, listOf(500L to 1_500L))[0]
+        }
+        val one = level(1, "pipeline-layers-one")
+        val two = level(2, "pipeline-layers-two")
+        val three = level(3, "pipeline-layers-three")
+        check(two > one * 1.6f && two < one * 2.4f) { "two layers $two against one $one" }
+        check(three > two * 1.2f) { "three layers $three against two $two" }
+    }
+
     /** Decodes the audio track and returns the RMS (0..1) of each [windows] range in milliseconds. */
     private fun audioRms(uri: String, windows: List<Pair<Long, Long>>): List<Float> {
         val extractor = MediaExtractor().apply { setDataSource(context, Uri.parse(uri), null) }
