@@ -222,7 +222,7 @@ class EditorViewModelTest {
     fun `a playback error with every source present says playback stopped`() = runTest {
         val e = env()
         e.engine.fail("Playback stopped: ERROR_CODE_DECODING_FAILED")
-        e.state.message shouldBe "Playback stopped"
+        e.state.message shouldBe "Playback stopped: ERROR_CODE_DECODING_FAILED"
     }
 
     @Test

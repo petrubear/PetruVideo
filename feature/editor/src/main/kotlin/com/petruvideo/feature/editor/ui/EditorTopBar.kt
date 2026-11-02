@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +26,7 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.EditorHeader
 import androidx.compose.foundation.clickable
 
-/** Back button, project name with format and save status, and the Export button (dimmed until export exists). */
+/** Back button, project name with format and save status, and the Export button. */
 @Composable
 fun EditorTopBar(
     header: EditorHeader?,
@@ -72,7 +71,6 @@ private fun ExportButton(onClick: () -> Unit) {
         Modifier
             .height(Spacing.MinTouchTarget)
             .clip(RoundedCornerShape(18.dp))
-            .alpha(DIMMED)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -87,5 +85,3 @@ private fun ExportButton(onClick: () -> Unit) {
         )
     }
 }
-
-private const val DIMMED = 0.4f

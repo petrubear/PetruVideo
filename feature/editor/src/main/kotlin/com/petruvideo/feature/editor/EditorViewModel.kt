@@ -1565,7 +1565,7 @@ class EditorViewModel @Inject constructor(
         val missing = session.timeline.value?.media?.values?.firstOrNull { it.availability == Availability.Missing }
         say(
             if (missing != null) "${missing.displayName} is missing from your phone. Relink it to keep editing."
-            else "Playback stopped",
+            else engine.state.value.error ?: "Playback stopped",
         )
     }
 

@@ -95,6 +95,7 @@ class Media3PreviewEngine @Inject constructor(
         override fun onPlaybackStateChanged(playbackState: Int) = publish()
 
         override fun onPlayerError(error: PlaybackException) {
+            android.util.Log.e("PreviewEngine", "Playback error ${error.errorCodeName}", error)
             publish(error = "Playback stopped: ${error.errorCodeName}")
         }
     }
@@ -179,6 +180,14 @@ class Media3PreviewEngine @Inject constructor(
 
     // With nothing to play (an empty project) the player has no composition and rejects play and seek.
     override fun play() {
+        // A player that failed ignores play until it is prepared again, so it is built again from the timeline.
+        val failed = compositionPlayer?.playerError != null
+        val timeline = lastTimeline
+        val quality = lastQuality
+        if (failed && timeline != null && quality != null) {
+            _state.value = _state.value.copy(error = null)
+            load(timeline, quality)
+        }
         if (hasComposition) {
             endedByPosition = false
             playbackStats?.playRequested()
