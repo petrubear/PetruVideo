@@ -52,6 +52,10 @@ The editing model is a single immutable timeline changed only by pure commands, 
 
 Features are developed with Spec Kit: each one has a folder in [specs/](specs) with its spec, plan, tasks, and test notes (001 to 027). Project rules for contributors are in [CLAUDE.md](CLAUDE.md).
 
+## Versions
+
+The version is set in `app/build.gradle.kts` and every change is listed in [CHANGELOG.md](CHANGELOG.md).
+
 ## Licenses
 
 The app bundles the Manrope and JetBrains Mono fonts under the SIL Open Font License; see [licenses/](licenses).

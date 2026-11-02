@@ -4,13 +4,17 @@ plugins {
     id("petru.android.hilt")
 }
 
+// The one place the version is set (see CHANGELOG.md). The version code follows from it: 0.2.0 is 200, 1.3.4 is 10304.
+val appVersion = "0.2.0"
+val appVersionCode = appVersion.split(".").map { it.toInt() }.let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
+
 android {
     namespace = "com.petruvideo.app"
 
     defaultConfig {
         applicationId = "com.petruvideo"
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersion
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
