@@ -300,6 +300,10 @@ internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<Cli
     return listOfNotNull(
         ClipTool.Split,
         ClipTool.Speed,
+        ClipTool.FilterLooks,
+        ClipTool.FilterAdjust,
+        ClipTool.EffectFx,
+        ClipTool.EffectTransition,
         ClipTool.Keyframes,
         ClipTool.Transform,
         ClipTool.Freeze,

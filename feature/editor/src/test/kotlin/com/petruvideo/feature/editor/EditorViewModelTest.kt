@@ -114,7 +114,8 @@ class EditorViewModelTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c1")))
         e.state.clipTools shouldContainExactly listOf(
-            ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
+            ClipTool.Split, ClipTool.Speed, ClipTool.FilterLooks, ClipTool.FilterAdjust, ClipTool.EffectFx,
+            ClipTool.EffectTransition, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
             ClipTool.Reverse, ClipTool.Curve, ClipTool.Audio, ClipTool.Detach, ClipTool.SplitVoice,
             ClipTool.Duplicate, ClipTool.Delete,
         )
@@ -122,7 +123,8 @@ class EditorViewModelTest {
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
         e.state.clipTools shouldContainExactly
             listOf(
-                ClipTool.Split, ClipTool.Speed, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
+                ClipTool.Split, ClipTool.Speed, ClipTool.FilterLooks, ClipTool.FilterAdjust, ClipTool.EffectFx,
+            ClipTool.EffectTransition, ClipTool.Keyframes, ClipTool.Transform, ClipTool.Freeze,
                 ClipTool.Reverse, ClipTool.Curve, ClipTool.Audio,
                 ClipTool.Duplicate, ClipTool.Delete,
             )
