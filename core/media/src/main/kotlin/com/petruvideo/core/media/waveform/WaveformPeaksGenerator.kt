@@ -54,7 +54,9 @@ class WaveformPeaksGenerator(
     private fun cacheFile(item: MediaItem): File {
         val f = item.fingerprint
         val dir = File(context.cacheDir, "waveforms").apply { mkdirs() }
-        return File(dir, "${f.sizeBytes}-${f.lastModified}-${f.durationMs}.peaks")
+        // The address is part of the key: stems of a voice split have the same size, time and length.
+        val address = item.uri.hashCode().toUInt().toString(16)
+        return File(dir, "${f.sizeBytes}-${f.lastModified}-${f.durationMs}-$address.peaks")
     }
 
     private fun readCache(file: File): FloatArray? = runCatching {

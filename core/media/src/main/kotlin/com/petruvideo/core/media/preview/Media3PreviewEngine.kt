@@ -154,7 +154,7 @@ class Media3PreviewEngine @Inject constructor(
         }
         val previous = compositionPlayer
         val resumeBefore = previous?.isPlaying == true
-        val positionBefore = previous?.currentPosition ?: 0L
+        val positionBefore = positionBefore(previous)
         val multi = usesMultipleInputs(timeline)
         if (previous != null && (multi || multi != multipleInputs)) discardPlayer()
         multipleInputs = multi
@@ -199,7 +199,32 @@ class Media3PreviewEngine @Inject constructor(
         compositionPlayer?.pause()
     }
 
+    // Several video inputs keep their ended state, so a seek back from the end builds the player again at the target.
+    private var pendingSeekMs: Long? = null
+
+    private fun positionBefore(previous: Player?) = pendingSeekMs ?: previous?.currentPosition ?: 0L
+
+    private fun hasEnded() = compositionPlayer?.playbackState == Player.STATE_ENDED || endedByPosition
+
+    private fun seekAfterEnd(positionMs: Long): Boolean {
+        val timeline = lastTimeline ?: return false
+        val quality = lastQuality ?: return false
+        if (!multipleInputs || !hasEnded()) return false
+        pendingSeekMs = positionMs.coerceIn(0, totalMs)
+        try {
+            load(timeline, quality)
+        } finally {
+            pendingSeekMs = null
+        }
+        return true
+    }
+
     override fun seekTo(positionMs: Long) {
+        if (hasComposition && seekAfterEnd(positionMs)) {
+            endedByPosition = false
+            publish()
+            return
+        }
         endedByPosition = false
         if (hasComposition) compositionPlayer?.seekTo(positionMs.coerceIn(0, totalMs))
         publish()

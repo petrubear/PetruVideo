@@ -99,4 +99,151 @@ class TransitionPlaybackTest {
         waitFor { engine.state.value.ended }
         engine.state.value.error shouldBe null
     }
+
+    @Test
+    fun threeClipsWithTwoTransitionsPlayToTheEnd() {
+        val a = item("video_with_audio.mp4")
+        val b = item("video_silent.mp4")
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            media = listOf(a, b).associateBy { it.id },
+            videoLane = listOf(
+                VideoClip("c1", a.id, 0, 1_500, true, transitionOut = Transition(TransitionKind.Dissolve, 500)),
+                VideoClip("c2", b.id, 0, 1_500, false, transitionOut = Transition(TransitionKind.Dissolve, 500)),
+                VideoClip("c3", a.id, 0, 1_500, true),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+    }
+
+    @Test
+    fun everyEffectOnAMiddleClipPlaysThroughTwoTransitions() {
+        val a = item("video_with_audio.mp4")
+        val b = item("video_silent.mp4")
+        for (kind in EffectKind.entries) {
+            val timeline = Timeline(
+                projectId = "p", format = ProjectFormat(320, 180, 30),
+                media = listOf(a, b).associateBy { it.id },
+                videoLane = listOf(
+                    VideoClip("c1", a.id, 0, 1_500, true, transitionOut = Transition(TransitionKind.Dissolve, 500)),
+                    VideoClip(
+                        "c2", b.id, 0, 1_500, false, transitionOut = Transition(TransitionKind.Dissolve, 500),
+                        effects = listOf(ClipEffect(kind, 60)),
+                    ),
+                    VideoClip("c3", a.id, 0, 1_500, true),
+                ),
+            )
+            onMain { engine.load(timeline, PreviewQuality.Full) }
+            onMain { engine.play() }
+            waitFor { engine.state.value.ended || engine.state.value.error != null }
+            check(engine.state.value.error == null) { "$kind: ${engine.state.value.error}" }
+        }
+    }
+
+    @Test
+    fun twoPiecesOfOneSourceWithFadeBlackAndEffectsPlayToTheEnd() {
+        val a = item("video_with_audio.mp4")
+        val total = a.durationMs!!
+        val cut = total / 3
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            media = mapOf(a.id to a),
+            videoLane = listOf(
+                VideoClip(
+                    "c1", a.id, 0, cut, true, transitionOut = Transition(TransitionKind.FadeBlack, 1_000),
+                    effects = listOf(ClipEffect(EffectKind.Pixelate, 50)),
+                ),
+                VideoClip("c2", a.id, cut, total, true, effects = listOf(ClipEffect(EffectKind.Mirror, 50))),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+    }
+
+    @Test
+    fun playingFromTheMiddleOfAProjectWithATransitionReachesTheEnd() {
+        val a = item("video_with_audio.mp4")
+        val b = item("video_silent.mp4")
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            media = listOf(a, b).associateBy { it.id },
+            videoLane = listOf(
+                VideoClip("c1", a.id, 0, 1_500, true, transitionOut = Transition(TransitionKind.FadeBlack, 1_000)),
+                VideoClip("c2", b.id, 0, 2_000, false, effects = listOf(ClipEffect(EffectKind.Mirror, 50))),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        // Each run ends the project, so every start after the first is a seek back from the end.
+        for (from in listOf(300L, 1_000L, 2_000L, 0L)) {
+            onMain { engine.seekTo(from) }
+            onMain { engine.play() }
+            waitFor { engine.state.value.ended || engine.state.value.error != null }
+            check(engine.state.value.error == null) { "from $from: ${engine.state.value.error}" }
+        }
+    }
+
+    @Test
+    fun threeSegmentsOfOneSourceEachWithItsOwnEffectAndTransitionPlayToTheEnd() {
+        val a = item("video_with_audio.mp4")
+        val total = a.durationMs!!
+        val p1 = total / 3
+        val p2 = total * 2 / 3
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            media = mapOf(a.id to a),
+            videoLane = listOf(
+                VideoClip(
+                    "c1", a.id, 0, p1, true, transitionOut = Transition(TransitionKind.FadeBlack, 500),
+                    effects = listOf(ClipEffect(EffectKind.Pixelate, 50)),
+                ),
+                VideoClip(
+                    "c2", a.id, p1, p2, true, transitionOut = Transition(TransitionKind.Slide, 500),
+                    effects = listOf(ClipEffect(EffectKind.Mirror, 50)),
+                ),
+                VideoClip(
+                    "c3", a.id, p2, total, true, transitionOut = Transition(TransitionKind.Dissolve, 500),
+                    effects = listOf(ClipEffect(EffectKind.Glitch, 50)),
+                ),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+    }
+
+    @Test
+    fun threeFullHdSegmentsAt50FpsEachWithItsOwnEffectAndTransitionPlayToTheEnd() {
+        val a = item("video_1080p50.mp4")
+        val total = a.durationMs!!
+        val p1 = total / 3
+        val p2 = total * 2 / 3
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(1080, 1920, 30),
+            media = mapOf(a.id to a),
+            videoLane = listOf(
+                VideoClip(
+                    "c1", a.id, 0, p1, true, transitionOut = Transition(TransitionKind.FadeBlack, 1_000),
+                    effects = listOf(ClipEffect(EffectKind.Pixelate, 50)),
+                ),
+                VideoClip(
+                    "c2", a.id, p1, p2, true, transitionOut = Transition(TransitionKind.Slide, 1_000),
+                    effects = listOf(ClipEffect(EffectKind.Mirror, 50)),
+                ),
+                VideoClip(
+                    "c3", a.id, p2, total, true, transitionOut = Transition(TransitionKind.Dissolve, 1_000),
+                    effects = listOf(ClipEffect(EffectKind.Glitch, 50)),
+                ),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+    }
 }
