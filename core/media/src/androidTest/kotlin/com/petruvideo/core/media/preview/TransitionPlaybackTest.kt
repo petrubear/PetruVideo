@@ -302,4 +302,16 @@ class TransitionPlaybackTest {
         engine.state.value.error shouldBe null
         check(before != null && engine.player === before)
     }
+
+    @Test
+    fun slowFadeWithThreeLongVideosOfDifferentSizesPlaysToTheEnd() {
+        val items = listOf(item("video_fhd_portrait.mp4"), item("video_hd_portrait.mp4"), item("video_fhd_landscape.mp4"))
+        val template = TemplateCatalog.all.first { it.id == "slow-fade" }
+        var n = 0
+        val fill = TemplateFiller.fill(template, items, "p") { "id${n++}" }!!
+        onMain { engine.load(fill.timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        waitFor(60_000) { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+    }
 }

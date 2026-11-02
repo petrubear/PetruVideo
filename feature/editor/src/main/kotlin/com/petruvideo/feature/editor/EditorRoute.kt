@@ -100,7 +100,8 @@ fun EditorRoute(
     CompositionLocalProvider(LocalMediaLoaders provides mediaViewModel.loaders) {
         EditorScreen(
             state = state,
-            player = remember(previewEpoch) { viewModel.previewPlayer },
+            // Read at every composition; the epoch makes the screen compose again once the player was built again.
+            player = previewEpoch.let { viewModel.previewPlayer },
             onEvent = viewModel::onEvent,
             onBack = { viewModel.flush(); onBack() },
             modifier = modifier,

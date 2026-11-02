@@ -3,12 +3,28 @@
 All notable changes to PetruVideo are listed here. The format follows [Keep a Changelog](https://keepachangelog.com),
 and versions follow [Semantic Versioning](https://semver.org): while the major version is 0, a minor bump (0.x.0) adds
 features and a patch bump (0.x.y) only fixes. The version is set in one place, `appVersion` in
-[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.3 is 203).
+[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.5 is 205).
 
 To release: move the Unreleased notes under a new version heading with its date, change `appVersion`, commit, and tag
 the commit `vX.Y.Z`.
 
 ## [Unreleased]
+
+## [0.2.5] - 2026-11-01
+
+### Fixed
+- The preview stayed black after the 0.2.3 change for returning from another app; it shows the picture again.
+- Audio of every section of a project with transitions now plays (each stream advances on its own).
+
+### Known issues
+- On some phones the picture of a project with transitions stops at the first cut while the sound and the clock go on
+  (seen with a Samsung SM-F976B and three clips from different sources). Under investigation.
+
+## [0.2.4] - 2026-11-01
+
+### Fixed
+- Projects with transitions (including every template) stopped with an error in the last moments of playback, and Play
+  then did nothing. An error in the last 0.6 seconds now counts as reaching the end.
 
 ## [0.2.3] - 2026-11-01
 

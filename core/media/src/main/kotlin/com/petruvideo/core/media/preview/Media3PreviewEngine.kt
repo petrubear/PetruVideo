@@ -96,11 +96,22 @@ class Media3PreviewEngine @Inject constructor(
 
         override fun onPlayerError(error: PlaybackException) {
             android.util.Log.e("PreviewEngine", "Playback error ${error.errorCodeName}", error)
+            if (failedAtTheEnd()) {
+                // The compositor fails on the last frames when its inputs end; the project did play to its end.
+                endedByPosition = true
+                publish()
+                return
+            }
             publish(error = "Playback stopped: ${error.errorCodeName}")
         }
     }
 
     private var playbackStats: PlaybackStats? = null
+
+    private fun failedAtTheEnd(): Boolean {
+        val position = compositionPlayer?.currentPosition ?: return false
+        return multipleInputs && totalMs > 0 && position >= totalMs - END_TOLERANCE_MS
+    }
 
     private fun isDebuggable() =
         context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
@@ -110,7 +121,10 @@ class Media3PreviewEngine @Inject constructor(
 
     private fun playerBuilder(multi: Boolean): CompositionPlayer.Builder {
         val builder = CompositionPlayer.Builder(context)
-        if (multi) builder.setVideoGraphFactory(androidx.media3.effect.MultipleInputVideoGraph.Factory())
+        if (multi) {
+            builder.setVideoGraphFactory(androidx.media3.effect.MultipleInputVideoGraph.Factory())
+            builder.setPerStreamMediaProgressionEnabled(true)
+        }
         return builder
     }
 
@@ -383,6 +397,7 @@ class Media3PreviewEngine @Inject constructor(
 
     private companion object {
         const val POLL_MS = 33L
+        const val END_TOLERANCE_MS = 600L
         const val REFRESH_MS = 40L
     }
 }
