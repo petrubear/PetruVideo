@@ -50,7 +50,7 @@ class TemplateFillerTest {
     @Test
     fun `a short video shortens its slot, fewer items drop the unused slots, extra items are counted`() {
         val few = TemplateFiller.fill(memories, listOf(video("a", 1_500), video("b")), "p", ::id)!!
-        few.timeline.videoLane.map { it.lengthMs } shouldBe listOf(1_500L, 3_000L)
+        few.timeline.videoLane.map { it.lengthMs } shouldBe listOf(1_500L, 3_000L, 3_000L, 3_000L)
         few.timeline.videoLane[0].transitionOut?.lengthMs shouldBe 700
         val many = TemplateFiller.fill(memories, List(7) { video("v$it") }, "p", ::id)!!
         many.timeline.videoLane shouldHaveSize 4
@@ -68,10 +68,29 @@ class TemplateFillerTest {
 
     @Test
     fun `a single item has no transition and a template without one has none`() {
-        val one = TemplateFiller.fill(memories, listOf(video("a")), "p", ::id)!!
+        val one = TemplateFiller.fill(memories, listOf(video("a", 3_000)), "p", ::id)!!
         one.timeline.videoLane.single().transitionOut shouldBe null
         val quickCuts = TemplateCatalog.all.first { it.id == "quick-cuts" }
         val quick = TemplateFiller.fill(quickCuts, listOf(video("a"), video("b")), "p", ::id)!!
         quick.timeline.videoLane.all { it.transitionOut == null } shouldBe true
+    }
+
+    @Test
+    fun `one long video fills every slot with the next part of it`() {
+        val quickCuts = TemplateCatalog.all.first { it.id == "quick-cuts" }
+        val fill = TemplateFiller.fill(quickCuts, listOf(video("a", 10_000)), "p", ::id)!!
+        val lane = fill.timeline.videoLane
+        lane shouldHaveSize 6
+        lane.map { it.sourceStartMs } shouldBe listOf(0L, 1_500L, 3_000L, 4_500L, 6_000L, 7_500L)
+        lane.map { it.lengthMs } shouldBe List(6) { 1_500L }
+        TimelineInvariants.violations(fill.timeline) shouldBe emptyList()
+    }
+
+    @Test
+    fun `two videos alternate and run out in their own time`() {
+        val quickCuts = TemplateCatalog.all.first { it.id == "quick-cuts" }
+        val fill = TemplateFiller.fill(quickCuts, listOf(video("a", 3_000), video("b", 10_000)), "p", ::id)!!
+        fill.timeline.videoLane.map { it.mediaItemId } shouldBe listOf("a", "b", "a", "b", "b", "b")
+        fill.timeline.videoLane.map { it.sourceStartMs } shouldBe listOf(0L, 0L, 1_500L, 1_500L, 3_000L, 4_500L)
     }
 }

@@ -17,6 +17,8 @@ import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.Transition
 import com.petruvideo.core.model.TransitionKind
 import com.petruvideo.core.model.VideoClip
+import com.petruvideo.core.model.template.TemplateCatalog
+import com.petruvideo.core.model.template.TemplateFiller
 import io.kotest.matchers.shouldBe
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -245,5 +247,23 @@ class TransitionPlaybackTest {
         onMain { engine.play() }
         waitFor { engine.state.value.ended || engine.state.value.error != null }
         engine.state.value.error shouldBe null
+    }
+
+    @Test
+    fun everyTemplateFilledWithOneOrTwoVideosPlaysToTheEnd() {
+        val a = item("video_1080p50.mp4")
+        val b = item("video_with_audio.mp4")
+        var n = 0
+        for (template in TemplateCatalog.all) {
+            for (items in listOf(listOf(a), listOf(a, b))) {
+                val fill = TemplateFiller.fill(template, items, "p") { "id${n++}" }!!
+                onMain { engine.load(fill.timeline, PreviewQuality.Full) }
+                onMain { engine.play() }
+                waitFor(60_000) { engine.state.value.ended || engine.state.value.error != null }
+                check(engine.state.value.error == null) {
+                    "${template.id} with ${items.size}: ${engine.state.value.error}"
+                }
+            }
+        }
     }
 }

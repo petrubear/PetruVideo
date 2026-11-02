@@ -72,14 +72,23 @@ data class TemplateFill(val timeline: Timeline, val unusedItems: Int)
 object TemplateFiller {
     /**
      * Places [items] in order into the template's slots (spec FR-014): a video keeps its start and is cut to the slot,
-     * or to its own length when shorter; a photo takes the slot length; items beyond the slots are not used and unused
-     * slots are dropped. Returns null when there is nothing usable (no items, audio only, or missing files).
+     * or to its own length when shorter; a photo takes the slot length; items beyond the slots are not used. When there
+     * are fewer items than slots, the slots left over continue through the footage that is still unused, one video
+     * after another, so a single long video fills the whole template; slots with nothing left are dropped. Returns
+     * null when there is nothing usable (no items, audio only, or missing files).
      */
     fun fill(template: Template, items: List<MediaItem>, projectId: String, newId: () -> String): TemplateFill? {
         val usable = items.filter { it.kind != MediaKind.Audio && it.availability == Availability.Available }
         val chosen = usable.take(template.slotCount)
-        val clips = chosen.mapIndexedNotNull { i, media -> clipFor(media, template.slotsMs[i], newId) }
-        if (clips.isEmpty()) return null
+        val cursors = mutableMapOf<String, Long>()
+        val uses = mutableMapOf<String, Int>()
+        val placed = mutableListOf<Pair<MediaItem, VideoClip>>()
+        for (slotMs in template.slotsMs) {
+            val next = nextPiece(chosen, cursors, uses, slotMs, newId) ?: continue
+            placed += next
+        }
+        if (placed.isEmpty()) return null
+        val clips = placed.map { it.second }
         val withEffects = clips.mapIndexed { i, clip ->
             val next = clips.getOrNull(i + 1)
             clip.copy(
@@ -87,18 +96,38 @@ object TemplateFiller {
                 transitionOut = template.transition?.let { transitionFor(it, clip, next) }.takeIf { next != null },
             )
         }
-        val first = chosen.first { m -> clips.first().mediaItemId == m.id }
-        val used = usable.filter { m -> clips.any { it.mediaItemId == m.id } }.associateBy { it.id }
-        val base = Timeline(projectId, deriveFormat(first), used, withEffects)
+        val used = placed.map { it.first }.associateBy { it.id }
+        val base = Timeline(projectId, deriveFormat(placed.first().first), used, withEffects)
         val title = template.title?.let { titleClip(it, base.videoLengthMs, newId) }
-        return TemplateFill(base.copy(textLane = listOfNotNull(title)), items.size - clips.size)
+        return TemplateFill(base.copy(textLane = listOfNotNull(title)), items.size - chosen.size)
     }
 
-    private fun clipFor(media: MediaItem, slotMs: Long, newId: () -> String): VideoClip? {
-        if (media.kind == MediaKind.Photo) return VideoClip(newId(), media.id, 0, slotMs, attachedAudio = false)
-        val length = minOf(slotMs, media.durationMs ?: return null)
+    /** The next slot's clip: the item used least so far that still has footage, from where its last piece ended. */
+    private fun nextPiece(
+        chosen: List<MediaItem>,
+        cursors: MutableMap<String, Long>,
+        uses: MutableMap<String, Int>,
+        slotMs: Long,
+        newId: () -> String,
+    ): Pair<MediaItem, VideoClip>? {
+        for (media in chosen.sortedBy { uses[it.id] ?: 0 }) {
+            val from = cursors[media.id] ?: 0L
+            val clip = clipFor(media, from, slotMs, newId) ?: continue
+            cursors[media.id] = clip.sourceEndMs
+            uses[media.id] = (uses[media.id] ?: 0) + 1
+            return media to clip
+        }
+        return null
+    }
+
+    private fun clipFor(media: MediaItem, fromMs: Long, slotMs: Long, newId: () -> String): VideoClip? {
+        if (media.kind == MediaKind.Photo) {
+            return if (fromMs > 0) null else VideoClip(newId(), media.id, 0, slotMs, attachedAudio = false)
+        }
+        val left = (media.durationMs ?: return null) - fromMs
+        val length = minOf(slotMs, left)
         if (length < MIN_CLIP_MS) return null
-        return VideoClip(newId(), media.id, 0, length, attachedAudio = media.hasAudio)
+        return VideoClip(newId(), media.id, fromMs, fromMs + length, attachedAudio = media.hasAudio)
     }
 
     /** The template's transition, shortened to what the two clips allow, or none when they are too short. */
