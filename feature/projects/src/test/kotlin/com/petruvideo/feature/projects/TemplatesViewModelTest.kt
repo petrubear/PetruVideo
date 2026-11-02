@@ -58,7 +58,7 @@ class TemplatesViewModelTest {
             awaitItem() shouldBe TemplatesEffect.OpenEditor("new-1")
         }
         repo.saved shouldHaveSize 1
-        repo.saved.single().second.videoLane shouldHaveSize 3
+        repo.saved.single().second.videoLane shouldHaveSize 4
         repo.renamed.single() shouldBe ("new-1" to "Memories")
     }
 
