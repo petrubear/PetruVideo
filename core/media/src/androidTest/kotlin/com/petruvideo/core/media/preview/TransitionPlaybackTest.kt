@@ -266,4 +266,40 @@ class TransitionPlaybackTest {
             }
         }
     }
+
+    @Test
+    fun everyTemplateFilledWithThreeDifferentVideosPlaysToTheEnd() {
+        val items = listOf(item("video_1080p50.mp4"), item("video_portrait.mp4"), item("video_rotated.mp4"))
+        var n = 0
+        for (template in TemplateCatalog.all) {
+            val fill = TemplateFiller.fill(template, items, "p") { "id${n++}" }!!
+            onMain { engine.load(fill.timeline, PreviewQuality.Full) }
+            onMain { engine.play() }
+            waitFor(60_000) { engine.state.value.ended || engine.state.value.error != null }
+            check(engine.state.value.error == null) { "${template.id}: ${engine.state.value.error}" }
+        }
+    }
+
+    @Test
+    fun aRebuiltPlayerKeepsThePositionAndPlaysToTheEnd() {
+        val a = item("video_1080p50.mp4")
+        val total = a.durationMs!!
+        val timeline = Timeline(
+            projectId = "p", format = ProjectFormat(320, 180, 30),
+            media = mapOf(a.id to a),
+            videoLane = listOf(
+                VideoClip("c1", a.id, 0, total / 2, true, transitionOut = Transition(TransitionKind.Dissolve, 500)),
+                VideoClip("c2", a.id, total / 2, total, true),
+            ),
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.seekTo(2_000) }
+        onMain { engine.rebuild() }
+        val before = engine.player
+        check(engine.state.value.positionMs in 1_500..2_500) { "position ${engine.state.value.positionMs}" }
+        onMain { engine.play() }
+        waitFor { engine.state.value.ended || engine.state.value.error != null }
+        engine.state.value.error shouldBe null
+        check(before != null && engine.player === before)
+    }
 }

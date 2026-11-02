@@ -35,6 +35,9 @@ interface PreviewEngine {
     /** Replaces the content, keeping the current position where it still exists. Missing media is skipped. */
     fun load(timeline: Timeline, quality: PreviewQuality)
 
+    /** Builds the player again at the same position, after the app was away and the system took its decoders. */
+    fun rebuild() = Unit
+
     fun play()
 
     fun pause()

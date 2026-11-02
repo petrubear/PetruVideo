@@ -195,6 +195,19 @@ class Media3PreviewEngine @Inject constructor(
         }
     }
 
+    override fun rebuild() {
+        val timeline = lastTimeline
+        val quality = lastQuality
+        if (!hasComposition || timeline == null || quality == null) return
+        pendingSeekMs = compositionPlayer?.currentPosition
+        discardPlayer()
+        try {
+            load(timeline, quality)
+        } finally {
+            pendingSeekMs = null
+        }
+    }
+
     override fun pause() {
         compositionPlayer?.pause()
     }

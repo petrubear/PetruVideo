@@ -30,7 +30,12 @@ fun PreviewSurface(player: Player?, modifier: Modifier = Modifier) {
                         importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                     }
                 },
-                update = { it.player = player },
+                update = {
+                    if (it.player !== player) {
+                        it.detachPlayer()
+                        it.player = player
+                    }
+                },
                 onRelease = { it.detachPlayer() },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -49,5 +54,7 @@ internal fun PlayerView.detachPlayer() {
         player = null
     } catch (_: IllegalArgumentException) {
         // The output belongs to another view now.
+    } catch (_: IllegalStateException) {
+        // The player was released while the app was away.
     }
 }

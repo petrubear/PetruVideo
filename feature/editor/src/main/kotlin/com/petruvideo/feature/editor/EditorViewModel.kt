@@ -342,6 +342,21 @@ class EditorViewModel @Inject constructor(
         viewModelScope.launch { session.flush() }
     }
 
+    private var wasAway = false
+
+    /** The app left the screen: playback pauses where it is. */
+    fun onAway() {
+        wasAway = true
+        pause()
+    }
+
+    /** The app is back: the system may have taken the player's decoders and its picture, so the preview is rebuilt. */
+    fun onBack() {
+        if (!wasAway) return
+        wasAway = false
+        engine.rebuild()
+    }
+
     override fun onCleared() {
         engine.release()
     }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +40,7 @@ fun EditorRoute(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var relinkTarget by remember { mutableStateOf<String?>(null) }
+    var previewEpoch by remember { mutableIntStateOf(0) }
     val currentAddMedia by rememberUpdatedState(onAddMedia)
     val currentExport by rememberUpdatedState(onExport)
 
@@ -81,6 +83,11 @@ fun EditorRoute(
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         viewModel.onEvent(EditorEvent.VoiceOverInterrupted)
         viewModel.flush()
+        viewModel.onAway()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        viewModel.onBack()
+        previewEpoch++
     }
     // Coming back from freeing space retries a save that failed for lack of it.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.flush() }
@@ -93,7 +100,7 @@ fun EditorRoute(
     CompositionLocalProvider(LocalMediaLoaders provides mediaViewModel.loaders) {
         EditorScreen(
             state = state,
-            player = viewModel.previewPlayer,
+            player = remember(previewEpoch) { viewModel.previewPlayer },
             onEvent = viewModel::onEvent,
             onBack = { viewModel.flush(); onBack() },
             modifier = modifier,

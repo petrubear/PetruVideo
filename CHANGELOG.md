@@ -3,12 +3,18 @@
 All notable changes to PetruVideo are listed here. The format follows [Keep a Changelog](https://keepachangelog.com),
 and versions follow [Semantic Versioning](https://semver.org): while the major version is 0, a minor bump (0.x.0) adds
 features and a patch bump (0.x.y) only fixes. The version is set in one place, `appVersion` in
-[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.2 is 202).
+[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.3 is 203).
 
 To release: move the Unreleased notes under a new version heading with its date, change `appVersion`, commit, and tag
 the commit `vX.Y.Z`.
 
 ## [Unreleased]
+
+## [0.2.3] - 2026-11-01
+
+### Fixed
+- After switching to another app and coming back, the preview went black and Play did nothing. Playback now pauses when
+  the app leaves the screen, and the preview player is built again at the same position when it returns.
 
 ## [0.2.2] - 2026-11-01
 
