@@ -10,7 +10,7 @@
 
 ## Scope note
 
-A main-track clip that has its own sound gets a tool, Split voice, that makes two audio clips from it: Voice and Backing (everything that is not the voice, e.g. a guitar, piano, cello, violin, bass, flute, or harmonica). The two sit on the audio lane at the clip's place, the clip's own sound is turned off, and every audio tool (volume, reverb, equaliser, effects, ducking) then works on each separately. Not included: separating several instruments from each other, splitting audio-lane clips, clips that are reversed or on a speed curve, and drums or bass as their own parts.
+A main-track clip that has its own sound gets a tool, Split voice, that makes two audio clips from it: Voice and Backing (everything that is not the voice, e.g. a guitar, piano, cello, violin, bass, flute, or harmonica). The two sit on the audio lane at the clip's place, the clip's own sound is turned off, and every audio tool (volume, reverb, equaliser, effects, ducking) then works on each separately. The audio lane gains parallel rows so the two clips can play at once (up to 3 layers). Not included: separating several instruments from each other, splitting audio-lane clips, clips that are reversed or on a speed curve, and drums or bass as their own parts.
 
 ## Clarifications
 
@@ -21,6 +21,8 @@ A main-track clip that has its own sound gets a tool, Split voice, that makes tw
 - Q: Where is the tool? → A: On the clip tools of a selected main-track clip with attached sound, next to Detach audio.
 - Q: What if the clip is trimmed or sped up? → A: Only the trimmed range is separated; a constant speed is kept on both new clips; a reversed clip or a speed curve is refused with a message.
 - Q: How long does it take, and can it be cancelled? → A: It shows a progress bar with Cancel; nothing changes when cancelled or when it fails.
+- Q: How do Voice and Backing play together, when the audio lane today allows no overlap? → A: Audio clips may overlap. The audio lane shows parallel rows (like the overlay lane) up to 3 layers, and the player mixes them. This also lets music sit under a voice-over.
+- Q: What if the clip is edited while it is being split? → A: Editing stays open; trimming, splitting, changing the speed of, moving, or deleting the clip being split cancels the job with a message and adds nothing.
 - Q: Quality? → A: Not studio quality; some voice may remain in Backing and the voice may sound slightly thin. Said once in the panel.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -39,8 +41,9 @@ A user recorded themselves singing while playing guitar. They select the clip, t
 2. **Given** Split voice, **When** tapped, **Then** a progress bar with Cancel shows and the editor stays usable for viewing.
 3. **Given** the separation finished, **When** it completes, **Then** two audio clips, Voice and Backing, are on the audio lane at the clip's place with its length, the clip's own sound is off, and this is one undo step.
 4. **Given** the two clips, **When** the user adds reverb to one, **Then** only that clip has it, in the preview and the export.
-5. **Given** Cancel or a failure, **When** it happens, **Then** nothing is added and the clip is unchanged, with a message on failure.
-6. **Given** a clip without sound, a reversed clip, or a clip on a speed curve, **When** selected, **Then** the tool is unavailable with the reason.
+5. **Given** the clip is trimmed, split, moved, sped up or slowed, or deleted while the job runs, **When** it changes, **Then** the job is cancelled with a message and nothing is added.
+6. **Given** Cancel or a failure, **When** it happens, **Then** nothing is added and the clip is unchanged, with a message on failure.
+7. **Given** a clip without sound, a reversed clip, or a clip on a speed curve, **When** selected, **Then** the tool is unavailable with the reason.
 
 ---
 
@@ -67,6 +70,8 @@ The two clips are saved with the project, survive reopen and duplicate, and are 
 - **FR-002**: Split voice MUST separate the clip's trimmed range into Voice and Backing on the device with no network, where Backing is the original minus Voice.
 - **FR-003**: It MUST show progress and allow Cancel; cancel and failure MUST leave the project unchanged.
 - **FR-004**: On success it MUST add two audio clips (Voice, Backing) at the clip's start with its length and speed, turn off the clip's own sound, and be one undo step.
+- **FR-004a**: Audio-lane clips MUST be allowed to overlap in time, up to 3 at any moment; the lane MUST show overlapping clips on separate rows, the preview and the export MUST mix them, and adding a clip that would be a fourth layer MUST be refused with a message. Existing projects (no overlaps) MUST look and sound as before.
+- **FR-004b**: Changing the clip being split while the job runs MUST cancel the job with a message.
 - **FR-005**: The two clips MUST be ordinary audio clips: all audio tools, ducking, and export work on each.
 - **FR-006**: The results MUST be stored in the app's storage, saved with the project, reused when the same range is split again, and removed when no project uses them.
 - **FR-007**: The panel MUST state once that the split is approximate.
@@ -84,6 +89,7 @@ The two clips are saved with the project, survive reopen and duplicate, and are 
 - **SC-002**: Voice plus Backing equals the original within a small tolerance (error below 1% of full scale) in an automated test.
 - **SC-003**: On a flagship phone a one-minute clip is separated in under about 60 seconds; the progress bar updates at least every 2 seconds.
 - **SC-004**: A repeated split of the same range returns in under 1 second.
+- **SC-006**: Two overlapping audio clips are heard together in an export (the mixed level matches the sum of the two within a small tolerance), and a project with no overlapping audio exports identically to before.
 - **SC-005**: 100% of results survive close and reopen, undo, redo, and project duplicate in automated tests.
 
 ## Assumptions

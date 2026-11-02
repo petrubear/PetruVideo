@@ -6,3 +6,5 @@
 - [X] No [NEEDS CLARIFICATION] markers remain
 - [X] Requirements testable, success criteria measurable
 - [X] Scope bounded (single instrument plus voice; no multi-instrument split)
+
+- [X] Clarify session 2026-11-01: overlap decision and edit-during-split decision recorded

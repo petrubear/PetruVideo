@@ -6,6 +6,9 @@ A new `VoiceSplitService` in `core/media/voicesplit`: decode the clip's trimmed 
 
 ## Design
 
+- **Overlapping audio (prerequisite, decided in clarify)**: relax the audio-lane invariant from "no overlap" to "at most 3 clips at any moment" (`AudioPlacement` returns the same start when a free row exists, otherwise snaps as today); `CompositionBuilder.audioSequence` builds one sequence per row (rows assigned greedily by start time) and the player mixes them; `DuckingPlanner` already treats other clips as triggers; the audio lane view draws rows like `OverlayLaneView`. Existing no-overlap projects produce one row, so nothing changes for them.
+- **Cancel on edit**: the view model watches the clip being split (its id, trim, speed, position) and cancels the job when any of them changes or the clip is deleted.
+
 - **Model**: `core/media/src/main/assets/voicesplit/umx-hq-vocals.onnx` (17,820,856 bytes, SHA-256 `3d05709f...6ccb`, MIT). Input `float32[1,2,2049,frames]` magnitudes, output the same shape. Licence note in `licenses/`.
 - **Runtime**: `com.microsoft.onnxruntime:onnxruntime-android`.
 - **DSP** (`Stft.kt`, pure Kotlin, unit tested): n_fft 4096, hop 1024, periodic Hann, centred with reflect padding; inverse with overlap-add and window-square normalisation.
