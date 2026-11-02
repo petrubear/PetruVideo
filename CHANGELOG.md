@@ -3,12 +3,18 @@
 All notable changes to PetruVideo are listed here. The format follows [Keep a Changelog](https://keepachangelog.com),
 and versions follow [Semantic Versioning](https://semver.org): while the major version is 0, a minor bump (0.x.0) adds
 features and a patch bump (0.x.y) only fixes. The version is set in one place, `appVersion` in
-[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.0 is 200).
+[app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.1 is 201).
 
 To release: move the Unreleased notes under a new version heading with its date, change `appVersion`, commit, and tag
 the commit `vX.Y.Z`.
 
 ## [Unreleased]
+
+## [0.2.1] - 2026-11-01
+
+### Fixed
+- The app crashed after folding and unfolding the phone with a project open: the old layout's preview released the
+  player after the new layout had taken it.
 
 ## [0.2.0] - 2026-11-01
 

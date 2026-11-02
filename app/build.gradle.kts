@@ -4,8 +4,8 @@ plugins {
     id("petru.android.hilt")
 }
 
-// The one place the version is set (see CHANGELOG.md). The version code follows from it: 0.2.0 is 200, 1.3.4 is 10304.
-val appVersion = "0.2.0"
+// The one place the version is set (see CHANGELOG.md). The version code follows from it: 0.2.1 is 201, 1.3.4 is 10304.
+val appVersion = "0.2.1"
 val appVersionCode = appVersion.split(".").map { it.toInt() }.let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 
 android {

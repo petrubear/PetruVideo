@@ -20,4 +20,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
     androidTestImplementation(libs.compose.ui.test.accessibility)
+    androidTestImplementation(libs.media3.transformer)
 }

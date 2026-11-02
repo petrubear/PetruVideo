@@ -31,9 +31,23 @@ fun PreviewSurface(player: Player?, modifier: Modifier = Modifier) {
                     }
                 },
                 update = { it.player = player },
-                onRelease = { it.player = null },
+                onRelease = { it.detachPlayer() },
                 modifier = Modifier.fillMaxSize(),
             )
         }
+    }
+}
+
+/**
+ * Lets go of the player when the view leaves the screen. On a fold or unfold the new layout's view has already taken
+ * the player's video output, and the composition player refuses to clear an output it no longer has; that must not
+ * end the app, since the new view is the one that keeps drawing.
+ */
+@OptIn(UnstableApi::class)
+internal fun PlayerView.detachPlayer() {
+    try {
+        player = null
+    } catch (_: IllegalArgumentException) {
+        // The output belongs to another view now.
     }
 }
