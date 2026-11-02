@@ -11,7 +11,7 @@ A native Android video editor. Everything runs on the device: no account, no net
 - **Keyframes**: zoom, pan, and fade over time for video, overlays, and text.
 - **Overlays**: picture in picture with opacity, chroma key, and shape masks (circle, rectangle, linear).
 - **Text and stickers**: styled text with animations, stickers and shapes, and auto captions from the on-device speech recogniser.
-- **Audio**: volume, mute, detach, music, voice-over recording, reverb, noise reduction, equaliser, voice effects, and audio ducking.
+- **Audio**: volume, mute, detach, split voice into voice and backing stems, up to three overlapping audio layers, music, voice-over recording, reverb, noise reduction, equaliser, voice effects, and audio ducking.
 - **Templates** for quick starts.
 - **Export**: 720p to 4K at 24 to 60 fps, saved to `Movies/PetruVideo`, with an exports list.
 - **Foldables**: portrait, unfolded, and tabletop layouts.
@@ -50,7 +50,7 @@ The editing model is a single immutable timeline changed only by pure commands, 
 
 ## Development process
 
-Features are developed with Spec Kit: each one has a folder in [specs/](specs) with its spec, plan, tasks, and test notes (001 to 026). Project rules for contributors are in [CLAUDE.md](CLAUDE.md).
+Features are developed with Spec Kit: each one has a folder in [specs/](specs) with its spec, plan, tasks, and test notes (001 to 027). Project rules for contributors are in [CLAUDE.md](CLAUDE.md).
 
 ## Licenses
 
