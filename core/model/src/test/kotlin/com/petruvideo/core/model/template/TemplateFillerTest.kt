@@ -93,4 +93,13 @@ class TemplateFillerTest {
         fill.timeline.videoLane.map { it.mediaItemId } shouldBe listOf("a", "b", "a", "b", "b", "b")
         fill.timeline.videoLane.map { it.sourceStartMs } shouldBe listOf(0L, 0L, 1_500L, 1_500L, 3_000L, 4_500L)
     }
+
+    @Test
+    fun `files that cannot be used are not counted as left over`() {
+        val audio = video("s").copy(kind = MediaKind.Audio)
+        val missing = video("m").copy(availability = Availability.Missing)
+        val fill = TemplateFiller.fill(memories, List(4) { video("v$it") } + audio + missing, "p", ::id)!!
+        fill.unusedItems shouldBe 0
+        TemplateFiller.fill(memories, List(6) { video("w$it") } + audio, "p", ::id)!!.unusedItems shouldBe 2
+    }
 }

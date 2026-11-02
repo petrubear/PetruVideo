@@ -131,6 +131,11 @@ class ExportCoordinator(
                 finish(job, end)
             }
             throw e
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            // A failure in the render or in saving its result ends the job instead of reaching the app scope.
+            withContext(NonCancellable) {
+                runCatching { finish(job, ExportState.Failed(ExportFailure.EncoderError(e.message.orEmpty()))) }
+            }
         } finally {
             withContext(NonCancellable) { file.delete() }
         }

@@ -99,7 +99,7 @@ object TemplateFiller {
         val used = placed.map { it.first }.associateBy { it.id }
         val base = Timeline(projectId, deriveFormat(placed.first().first), used, withEffects)
         val title = template.title?.let { titleClip(it, base.videoLengthMs, newId) }
-        return TemplateFill(base.copy(textLane = listOfNotNull(title)), items.size - chosen.size)
+        return TemplateFill(base.copy(textLane = listOfNotNull(title)), usable.size - chosen.size)
     }
 
     /** The next slot's clip: the item used least so far that still has footage, from where its last piece ended. */

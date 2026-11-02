@@ -171,7 +171,7 @@ class Media3PreviewEngine @Inject constructor(
         hasComposition = true
         val reused = previous != null && player === previous
         val resume = if (reused) player.isPlaying else resumeBefore
-        val position = (if (reused) player.currentPosition else positionBefore).coerceIn(0, totalMs)
+        val position = positionBefore.coerceIn(0, totalMs)
         player.setComposition(composition, position)
         player.prepare()
         if (resume) player.play()

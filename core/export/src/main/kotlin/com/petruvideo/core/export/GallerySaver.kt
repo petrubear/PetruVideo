@@ -6,6 +6,7 @@ import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -20,10 +21,14 @@ import kotlin.coroutines.resume
  */
 class GallerySaver(private val context: Context) : ExportSaver {
     override suspend fun save(file: File, displayName: String): SavedVideo? = withContext(Dispatchers.IO) {
-        runCatching {
+        try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) saveWithMediaStore(file, displayName)
             else saveLegacy(file, displayName)
-        }.getOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (@Suppress("TooGenericExceptionCaught") _: Exception) {
+            null
+        }
     }
 
     private fun saveWithMediaStore(file: File, displayName: String): SavedVideo? {

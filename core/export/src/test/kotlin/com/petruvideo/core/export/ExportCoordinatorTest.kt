@@ -208,6 +208,16 @@ class ExportCoordinatorTest {
     }
 
     @Test
+    fun `an exception in the render fails the job instead of escaping`() = runTest {
+        val e = env()
+        e.coordinator.start("p", "Trip", timeline(), settings)
+        advanceUntilIdle()
+        e.runner.gate.completeExceptionally(IllegalStateException("boom"))
+        advanceUntilIdle()
+        e.coordinator.job.value!!.state shouldBe ExportState.Failed(ExportFailure.EncoderError("boom"))
+    }
+
+    @Test
     fun `blockers for no clips, missing media, and too little storage`() = runTest {
         val e = env()
         e.coordinator.start("p", "Trip", Timeline("p"), settings) shouldBe Blocker.NoClips
