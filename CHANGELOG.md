@@ -10,6 +10,11 @@ the commit `vX.Y.Z`.
 
 ## [Unreleased]
 
+## [0.2.7]
+
+### Fixed
+- Exported videos with transitions: every second clip (the ones on the second video input) was blown up after its transition. The picture is now scaled by its own size.
+
 ## [0.2.6]
 
 ### Fixed

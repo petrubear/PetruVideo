@@ -67,27 +67,32 @@ class OverlayLayout(
             timeMs in it.startMs until it.endMs && (inputId == it.from || inputId == it.to)
         }
         val active = plan.ranges[inputId].orEmpty().any { timeMs in it }
-        if (window == null) return placed(if (active) 1f else 0f, 0f, 0f, 1f)
+        if (window == null) return placed(inputId, if (active) 1f else 0f, 0f, 0f, 1f)
         val p = (timeMs - window.startMs).toFloat() / (window.endMs - window.startMs)
         val outgoing = inputId == window.from
         val onTop = inputId == minOf(window.from, window.to)
         val own = if (outgoing) 1f - p else p
         return when (window.kind) {
-            TransitionKind.Dissolve -> placed(if (onTop) own else 1f, 0f, 0f, 1f)
+            TransitionKind.Dissolve -> placed(inputId, if (onTop) own else 1f, 0f, 0f, 1f)
             TransitionKind.FadeBlack -> placed(
+                inputId,
                 (if (outgoing) 1f - 2f * p else 2f * p - 1f).coerceAtLeast(0f), 0f, 0f, 1f,
             )
-            TransitionKind.Slide -> placed(1f, if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f)
-            TransitionKind.Cover -> placed(1f, if (!onTop) 0f else if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f)
+            TransitionKind.Slide -> placed(inputId, 1f, if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f)
+            TransitionKind.Cover -> placed(
+                inputId, 1f, if (!onTop) 0f else if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f,
+            )
             TransitionKind.Zoom -> placed(
+                inputId,
                 if (onTop) own else 1f, 0f, 0f, 1f + ZOOM_SPAN * (if (outgoing) p else 1f - p),
             )
         }
     }
 
     /** Full-frame settings for a main input: [alpha], the center moved by ([x], [y]) in frame halves, and [zoom]. */
-    private fun placed(alpha: Float, x: Float, y: Float, zoom: Float): OverlaySettings {
-        val own = inputSizes.firstOrNull()?.width?.takeIf { it > 0 } ?: frameWidth
+    private fun placed(inputId: Int, alpha: Float, x: Float, y: Float, zoom: Float): OverlaySettings {
+        // The input's own size: the other main input may be a 16 by 16 gap while this one plays.
+        val own = inputSizes.getOrNull(inputId)?.width?.takeIf { it > 0 } ?: frameWidth
         val scale = zoom * frameWidth / own
         return object : OverlaySettings {
             override fun getAlphaScale() = alpha
