@@ -8,7 +8,8 @@ import java.io.File
 
 /**
  * Keeps a project's thumbnail equal to the first frame of the first clip on its timeline. [save] stores the
- * resulting reference (a file path) on the project, e.g. `repository::setThumbnail`.
+ * resulting reference (a file path) on the project, e.g. `repository::setThumbnail`. The file name follows the first
+ * clip (see [ProjectThumbFiles]), and the project's earlier pictures are deleted.
  */
 class ProjectThumbnailUpdater(
     private val context: Context,
@@ -24,17 +25,20 @@ class ProjectThumbnailUpdater(
         lastKey = projectId to key
         val media = first?.let { timeline.media[it.mediaItemId] }
         val bitmap = media?.let { generator.frame(it, first.sourceStartMs, PROJECT_THUMB_HEIGHT_PX) }
-        if (bitmap == null) {
+        val dir = File(context.filesDir, "project-thumbs").apply { mkdirs() }
+        if (bitmap == null || key == null) {
             save(projectId, null)
+            ProjectThumbFiles.deleteOthers(dir, projectId, keep = null)
         } else {
-            save(projectId, write(projectId, bitmap).path)
+            val file = ProjectThumbFiles.fileFor(dir, projectId, key)
+            write(file, bitmap)
+            save(projectId, file.path)
+            ProjectThumbFiles.deleteOthers(dir, projectId, keep = file)
         }
     }
 
-    private fun write(projectId: String, bitmap: Bitmap): File {
-        val file = File(File(context.filesDir, "project-thumbs").apply { mkdirs() }, "$projectId.png")
+    private fun write(file: File, bitmap: Bitmap) {
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, PNG_QUALITY, it) }
-        return file
     }
 
     private companion object {

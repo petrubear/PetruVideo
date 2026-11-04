@@ -62,15 +62,15 @@ fun ProjectDetailPane(
         val thumbWidth = if (short) SHORT_THUMB_WIDTH else THUMB_WIDTH
         Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             if (stacked) {
-                PlaceholderThumbnail(
-                    seed = project.id,
+                ProjectThumbnail(
+                    project = project,
                     modifier = Modifier.fillMaxWidth().aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
                 )
                 ProjectFacts(summary, onOpen)
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                    PlaceholderThumbnail(
-                        seed = project.id,
+                    ProjectThumbnail(
+                        project = project,
                         modifier = Modifier.width(thumbWidth).aspectRatio(THUMB_RATIO).clip(PetruShapes.Sheet),
                     )
                     ProjectFacts(summary, onOpen, Modifier.weight(1f))

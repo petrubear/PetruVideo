@@ -11,6 +11,7 @@ import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.Timeline
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -114,6 +115,8 @@ class RoomProjectRepository @Inject constructor(
             createdAt = now,
             modifiedAt = now,
             status = ProjectStatus.Draft,
+            // The picture is the original's file; the copy gets its own when it is shown or opened.
+            thumbnailRef = null,
         )
         projects.upsert(copy.toEntity(source.timeline.playheadMs))
 
@@ -145,7 +148,9 @@ class RoomProjectRepository @Inject constructor(
     }
 
     override suspend fun deleteProject(id: String) {
+        val picture = projects.get(id)?.thumbnailRef
         projects.delete(id)
+        picture?.let { runCatching { File(it).delete() } }
         onDeleted(timelines.allMediaUris().toSet())
     }
 

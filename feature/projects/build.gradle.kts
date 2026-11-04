@@ -18,5 +18,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.coil.compose)
     androidTestImplementation(libs.compose.ui.test.accessibility)
 }

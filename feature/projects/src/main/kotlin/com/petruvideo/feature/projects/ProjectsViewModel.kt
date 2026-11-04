@@ -5,16 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.ProjectStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -24,11 +29,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
     private val repository: ProjectRepository,
+    private val thumbnails: ThumbnailRefresher,
 ) : ViewModel() {
 
     /** Screen-only state that is not stored with the projects. */
@@ -59,6 +66,31 @@ class ProjectsViewModel @Inject constructor(
 
     val state: StateFlow<ProjectsState> = combine(projects, ui, detailMedia.onStart { emit(emptyList()) }, ::toState)
         .stateIn(viewModelScope, SharingStarted.Eagerly, ProjectsState())
+
+    /** Projects already tried for a picture this session, so one that cannot get one is not retried on every change. */
+    private val triedForPicture = mutableSetOf<String>()
+
+    init {
+        viewModelScope.launch { projects.collectLatest { makeMissingPictures(it) } }
+    }
+
+    /** Makes the picture of projects that have clips but none (never opened, or the file is gone), one at a time. */
+    private suspend fun makeMissingPictures(all: List<ProjectSummary>) {
+        for (summary in all) {
+            val project = summary.project
+            if (summary.clipCount == 0 || project.id in triedForPicture || hasPicture(project.thumbnailRef)) continue
+            val loaded = repository.loadProject(project.id)
+            if (loaded != null) {
+                // A source that cannot be read leaves the colored box; the next project goes on.
+                runCatching { thumbnails.refresh(project.id, loaded.timeline) }
+                    .onFailure { if (it is CancellationException) throw it }
+            }
+            triedForPicture += project.id
+        }
+    }
+
+    private suspend fun hasPicture(ref: String?): Boolean =
+        ref != null && withContext(Dispatchers.IO) { File(ref).exists() }
 
     fun onEvent(event: ProjectsEvent) {
         when (event) {

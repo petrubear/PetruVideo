@@ -261,6 +261,18 @@ class EditorViewModelTest {
     }
 
     @Test
+    fun `the project thumbnail follows a change of the first clip`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.TrimClip("c1", start = true, newSourceMs = 1_000))
+        advanceUntilIdle()
+        e.thumbnails.refreshed.last().second.videoLane.first().sourceStartMs shouldBe 1_000
+
+        e.vm.onEvent(EditorEvent.RemoveMissing("m1"))
+        advanceUntilIdle()
+        e.thumbnails.refreshed.last().second.videoLane.first().id shouldBe "c2"
+    }
+
+    @Test
     fun `memory pressure lowers quality with a message and critical pressure pauses playback`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Play)

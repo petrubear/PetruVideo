@@ -46,7 +46,7 @@ fun ProjectRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PlaceholderThumbnail(project.id, Modifier.size(width = 84.dp, height = 60.dp).clip(PetruShapes.Chip))
+        ProjectThumbnail(project, Modifier.size(width = 84.dp, height = 60.dp).clip(PetruShapes.Chip))
         Column(Modifier.weight(1f)) {
             Text(
                 project.name,

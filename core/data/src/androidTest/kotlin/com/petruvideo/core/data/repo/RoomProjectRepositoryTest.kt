@@ -17,6 +17,7 @@ import com.petruvideo.core.model.VideoClip
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -143,6 +144,32 @@ class RoomProjectRepositoryTest {
         duplicate.timeline.videoLane.map { it.sourceEndMs } shouldBe original.timeline.videoLane.map { it.sourceEndMs }
         duplicate.timeline.playheadMs shouldBe 2_500
         duplicate.project.status shouldBe ProjectStatus.Draft
+    }
+
+    @Test
+    fun deleteRemovesTheProjectPictureFile() = runBlocking<Unit> {
+        val p = repo.createProject()
+        val picture = File.createTempFile("thumb", ".png").apply { writeText("x") }
+        repo.setThumbnail(p.id, picture.path)
+
+        repo.deleteProject(p.id)
+
+        picture.exists() shouldBe false
+    }
+
+    @Test
+    fun aDuplicateDoesNotShareThePictureOfTheOriginal() = runBlocking<Unit> {
+        val p = repo.createProject()
+        repo.saveTimeline(p.id, timeline(p.id))
+        val picture = File.createTempFile("thumb", ".png").apply { writeText("x") }
+        repo.setThumbnail(p.id, picture.path)
+
+        val copy = repo.duplicateProject(p.id)!!
+
+        repo.loadProject(copy.id)!!.project.thumbnailRef shouldBe null
+        repo.deleteProject(copy.id)
+        picture.exists() shouldBe true
+        picture.delete()
     }
 
     @Test

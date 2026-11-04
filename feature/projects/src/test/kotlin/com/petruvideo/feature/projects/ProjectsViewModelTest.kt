@@ -31,7 +31,10 @@ class ProjectsViewModelTest {
         summary("e", "Hike", ProjectStatus.Draft, modifiedAt = 100),
     )
 
-    private fun viewModel(repo: FakeProjectsRepository = FakeProjectsRepository(sample)) = ProjectsViewModel(repo)
+    private fun viewModel(
+        repo: FakeProjectsRepository = FakeProjectsRepository(sample),
+        thumbnails: RecordingThumbnails = RecordingThumbnails(),
+    ) = ProjectsViewModel(repo, thumbnails)
 
     @Test
     fun `counts reflect all projects whatever the filter`() {
@@ -190,5 +193,57 @@ class ProjectsViewModelTest {
 
         vm.state.value.selectedMedia.map { it.id } shouldContainExactly listOf("m2", "m3")
         vm.state.value.selectedProjectId shouldBe "b"
+    }
+
+    /** The picture pass checks files on the IO dispatcher, so the result arrives a moment later. */
+    private fun settled(thumbnails: RecordingThumbnails, count: Int) {
+        val end = System.currentTimeMillis() + 2_000
+        while (thumbnails.refreshed.size < count && System.currentTimeMillis() < end) Thread.sleep(10)
+        Thread.sleep(100)
+    }
+
+    private val noMedia = mapOf("a" to emptyList<com.petruvideo.core.model.MediaItem>(), "b" to emptyList(),
+        "c" to emptyList(), "no-clips" to emptyList())
+
+    @Test
+    fun `a project with clips and no picture is asked for one, in list order, once`() {
+        val thumbnails = RecordingThumbnails()
+        val picture = java.io.File.createTempFile("picture", ".png").also { it.deleteOnExit() }
+        val repo = FakeProjectsRepository(
+            listOf(summary("a"), summary("b", thumbnail = picture.path), summary("c"), summary("no-clips", clips = 0)),
+            noMedia,
+        )
+        viewModel(repo, thumbnails)
+        settled(thumbnails, 2)
+
+        thumbnails.refreshed shouldContainExactly listOf("a", "c")
+
+        // The list changes again (a project was renamed): nothing is asked twice.
+        repo.projects.value = repo.projects.value.map { it }
+        settled(thumbnails, 3)
+        thumbnails.refreshed shouldContainExactly listOf("a", "c")
+    }
+
+    @Test
+    fun `a project whose picture file is gone is asked for one again`() {
+        val thumbnails = RecordingThumbnails()
+        val repo = FakeProjectsRepository(listOf(summary("a", thumbnail = "/does/not/exist.png")), noMedia)
+        viewModel(repo, thumbnails)
+        settled(thumbnails, 1)
+
+        thumbnails.refreshed shouldContainExactly listOf("a")
+    }
+
+    @Test
+    fun `a project that fails does not stop the others and is not retried`() {
+        val thumbnails = RecordingThumbnails(failing = setOf("a"))
+        val repo = FakeProjectsRepository(listOf(summary("a"), summary("b"), summary("c")), noMedia)
+        viewModel(repo, thumbnails)
+        settled(thumbnails, 3)
+
+        thumbnails.refreshed shouldContainExactly listOf("a", "b", "c")
+        repo.projects.value = repo.projects.value.map { it }
+        settled(thumbnails, 4)
+        thumbnails.refreshed shouldContainExactly listOf("a", "b", "c")
     }
 }

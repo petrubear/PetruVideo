@@ -53,8 +53,8 @@ fun ContinueEditingCard(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PlaceholderThumbnail(
-            seed = summary.project.id,
+        ProjectThumbnail(
+            project = summary.project,
             modifier = Modifier.size(96.dp).clip(RoundedCornerShape(14.dp)),
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {

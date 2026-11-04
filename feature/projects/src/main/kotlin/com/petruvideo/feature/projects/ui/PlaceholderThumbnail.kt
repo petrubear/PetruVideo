@@ -17,7 +17,7 @@ private val gradients = listOf(
     listOf(Color(0xFFE2EDB8), Color(0xFF74A96D), Color(0xFF23422F)),
 )
 
-/** Stand-in until the project's first-frame thumbnail is available (see ProjectThumbnailUpdater). */
+/** The colored box shown under a project picture, and alone when a project has none (see ProjectThumbnail). */
 @Composable
 fun PlaceholderThumbnail(seed: String, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit = {}) {
     val colors = gradients[(seed.hashCode() and Int.MAX_VALUE) % gradients.size]

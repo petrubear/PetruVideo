@@ -43,8 +43,8 @@ fun ProjectCard(
 ) {
     val project = summary.project
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PlaceholderThumbnail(
-            seed = project.id,
+        ProjectThumbnail(
+            project = project,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f / 0.82f)

@@ -4,6 +4,7 @@ import com.petruvideo.core.data.repo.LoadedProject
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.data.repo.ProjectRepository
 import com.petruvideo.core.data.repo.ProjectSummary
+import com.petruvideo.core.media.preview.ThumbnailRefresher
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.Project
 import com.petruvideo.core.model.ProjectStatus
@@ -64,9 +65,20 @@ fun summary(
     modifiedAt: Long = 0,
     clips: Int = 3,
     durationMs: Long = 60_000,
+    thumbnail: String? = null,
 ) = ProjectSummary(
-    project = Project(id, name, createdAt = 0, modifiedAt = modifiedAt, status = status),
+    project = Project(id, name, createdAt = 0, modifiedAt = modifiedAt, status = status, thumbnailRef = thumbnail),
     clipCount = clips,
     durationMs = durationMs,
     playheadMs = 0,
 )
+
+/** Records which projects were asked for a picture, in order; [failing] ones throw. */
+class RecordingThumbnails(private val failing: Set<String> = emptySet()) : ThumbnailRefresher {
+    val refreshed = mutableListOf<String>()
+
+    override suspend fun refresh(projectId: String, timeline: Timeline) {
+        refreshed += projectId
+        if (projectId in failing) error("cannot read $projectId")
+    }
+}

@@ -10,6 +10,11 @@ the commit `vX.Y.Z`.
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Added
+- The Projects screen shows a picture of each project's first clip instead of the colored box (Continue editing card, grid, list, and detail pane). Projects that never had a picture, such as ones made from a template or by an older version, get one made in the background. Deleting a project removes its picture.
+
 ## [0.2.7]
 
 ### Fixed
