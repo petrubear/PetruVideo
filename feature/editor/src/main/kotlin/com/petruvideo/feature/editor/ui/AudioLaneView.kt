@@ -192,6 +192,7 @@ private fun Waveform(
     }
 }
 
+@Composable
 private fun selectionOutline(selected: Boolean): Modifier =
     if (selected) Modifier.border(2.5.dp, PetruColors.OnBackground, WAVE_SHAPE) else Modifier
 

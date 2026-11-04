@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruTheme
@@ -19,7 +20,7 @@ import org.junit.Test
 /** Golden for the shared components on the dark theme; reviewed by the designer before approval. */
 class ComponentsScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5)
+    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT))
 
     @Composable
     private fun Sample() {

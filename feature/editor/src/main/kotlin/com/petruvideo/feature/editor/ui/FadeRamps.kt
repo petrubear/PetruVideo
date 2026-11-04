@@ -23,19 +23,20 @@ internal fun fadeRampFractions(fade: Fade, clipLengthMs: Long): Pair<Float, Floa
 fun FadeRamps(fade: Fade, clipLengthMs: Long, modifier: Modifier = Modifier) {
     val (inFraction, outFraction) = fadeRampFractions(fade, clipLengthMs)
     if (inFraction == 0f && outFraction == 0f) return
+    val accent = PetruColors.Accent
     Canvas(modifier.fillMaxSize()) {
         val dim = Color.Black.copy(alpha = 0.45f)
         val line = Stroke(width = 1.5f)
         if (inFraction > 0f) {
             val w = size.width * inFraction
             drawPath(Path().apply { moveTo(0f, 0f); lineTo(w, 0f); lineTo(0f, size.height); close() }, dim)
-            drawLine(PetruColors.Accent, Offset(0f, size.height), Offset(w, 0f), strokeWidth = line.width)
+            drawLine(accent, Offset(0f, size.height), Offset(w, 0f), strokeWidth = line.width)
         }
         if (outFraction > 0f) {
             val w = size.width * outFraction
             val x = size.width
             drawPath(Path().apply { moveTo(x, 0f); lineTo(x - w, 0f); lineTo(x, size.height); close() }, dim)
-            drawLine(PetruColors.Accent, Offset(x - w, 0f), Offset(x, size.height), strokeWidth = line.width)
+            drawLine(accent, Offset(x - w, 0f), Offset(x, size.height), strokeWidth = line.width)
         }
     }
 }

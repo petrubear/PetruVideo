@@ -41,6 +41,7 @@ fun TimelineRuler(
     }
 }
 
+@Composable
 private fun Modifier.tick(): Modifier =
     this.then(Modifier.background(PetruColors.OnSurfaceMuted.copy(alpha = 0.5f)))
 

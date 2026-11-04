@@ -4,6 +4,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import com.petruvideo.core.data.autosave.SaveStatus
@@ -24,6 +25,7 @@ class CoverScreenshotTest {
     @get:Rule
     val paparazzi = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_5.copy(
+            nightMode = NightMode.NIGHT,
             screenWidth = 1_080, screenHeight = 2_160, xdpi = 480, ydpi = 480, density = Density.XXHIGH,
         ),
     )

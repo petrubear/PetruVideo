@@ -3,6 +3,7 @@ package com.petruvideo.feature.export
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import com.android.resources.ScreenOrientation
@@ -28,7 +29,7 @@ import org.junit.Test
 /** Goldens for the export screen, reviewed against design/reference/Export.png. */
 class ExportScreenshotTest {
     @get:Rule
-    val phone = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 2_300))
+    val phone = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 2_300))
 
     private val settings = ExportSettings(Resolution.R1080, FrameRate.F30, Quality.Recommended)
     private val caps = ExportCaps(Resolution.R1080, FrameRate.F30)
@@ -82,6 +83,7 @@ class ExportFoldScreenshotTest {
     @get:Rule
     val fold = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_5.copy(
+            nightMode = NightMode.NIGHT,
             screenWidth = 2_080, screenHeight = 1_560, xdpi = 320, ydpi = 320, density = Density.XHIGH,
             orientation = ScreenOrientation.LANDSCAPE,
         ),

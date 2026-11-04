@@ -1,6 +1,7 @@
 package com.petruvideo.feature.projects
 
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.data.repo.ProjectFilter
 import com.petruvideo.core.designsystem.PetruTheme
@@ -12,7 +13,9 @@ import org.junit.Test
 /** Golden for the compact Projects screen; reviewed against design/reference/Main.png before approval. */
 class ProjectsScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 1_900))
+    val paparazzi = Paparazzi(
+        deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 1_900),
+    )
 
     private val now = 10_000_000_000L
     private val latest = summary(
@@ -49,6 +52,20 @@ class ProjectsScreenshotTest {
     fun emptyProjects() {
         paparazzi.snapshot {
             PetruTheme { ProjectsScreen(ProjectsState(isLoading = false), onEvent = {}, nowMs = now) }
+        }
+    }
+
+    @Test
+    fun lightCompactProjects() {
+        paparazzi.snapshot { PetruTheme(darkTheme = false) { ProjectsScreen(state, onEvent = {}, nowMs = now) } }
+    }
+
+    @Test
+    fun lightEmptyProjects() {
+        paparazzi.snapshot {
+            PetruTheme(darkTheme = false) {
+                ProjectsScreen(ProjectsState(isLoading = false), onEvent = {}, nowMs = now)
+            }
         }
     }
 }

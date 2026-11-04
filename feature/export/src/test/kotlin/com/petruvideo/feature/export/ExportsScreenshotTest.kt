@@ -3,6 +3,7 @@ package com.petruvideo.feature.export
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.designsystem.PetruTheme
 import com.petruvideo.core.model.export.ExportRecord
@@ -19,7 +20,7 @@ import org.junit.Test
 /** Goldens for the Exports list. */
 class ExportsScreenshotTest {
     @get:Rule
-    val phone = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 1_800))
+    val phone = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 1_800))
 
     private fun record(id: String, name: String, at: Long, settings: ExportSettings) =
         ExportRecord(id, name, "content://media/$id", 21_000, 32_000_000, settings, at)
@@ -43,8 +44,8 @@ class ExportsScreenshotTest {
     }
 
     @Composable
-    private fun Show(state: ExportsUiState) {
-        PetruTheme { ExportsScreen(state, onEvent = {}, onBack = {}) }
+    private fun Show(state: ExportsUiState, darkTheme: Boolean = true) {
+        PetruTheme(darkTheme) { ExportsScreen(state, onEvent = {}, onBack = {}) }
     }
 
     @Test
@@ -52,6 +53,12 @@ class ExportsScreenshotTest {
 
     @Test
     fun empty() = phone.snapshot { Show(ExportsUiState(emptyList(), loaded = true)) }
+
+    @Test
+    fun lightWithExports() = phone.snapshot { Show(ExportsUiState(rows, loaded = true), darkTheme = false) }
+
+    @Test
+    fun lightEmpty() = phone.snapshot { Show(ExportsUiState(emptyList(), loaded = true), darkTheme = false) }
 
     @Test
     fun withUndoBar() = phone.snapshot { Show(ExportsUiState(rows.drop(1), loaded = true, undo = rows[0].record)) }

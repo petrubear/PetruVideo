@@ -10,6 +10,11 @@ the commit `vX.Y.Z`.
 
 ## [Unreleased]
 
+## [0.5.0]
+
+### Added
+- The app has a light look next to the dark one and follows the phone's light or dark setting. It changes while the app is open, without restarting, and the status bar, navigation bar and first frame match the look. Dark looks as before.
+
 ## [0.4.0]
 
 ### Added

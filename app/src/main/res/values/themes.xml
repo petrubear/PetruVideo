@@ -1,7 +1,9 @@
 <resources>
-    <style name="Theme.PetruVideo" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0B0C10</item>
+    <!-- Light look; the dark look is in values-night. The window background is what shows before the first frame. -->
+    <style name="Theme.PetruVideo" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F6F7FA</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

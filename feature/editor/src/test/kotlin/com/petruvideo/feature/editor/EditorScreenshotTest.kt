@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.data.autosave.SaveStatus
 import com.petruvideo.core.designsystem.PetruTheme
@@ -29,7 +30,9 @@ import org.junit.Test
 @Suppress("LargeClass")
 class EditorScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 2_000))
+    val paparazzi = Paparazzi(
+        deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 2_000),
+    )
 
     /** Gradient tiles and a synthetic waveform stand in for real footage, as in the designer's mock. */
     private val loaders = object : MediaLoaders {
@@ -836,6 +839,75 @@ class EditorScreenshotTest {
                     onEvent = {},
                     onBack = {},
                 )
+            }
+        }
+    }
+
+    @Test
+    fun lightCompactEditor() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme(darkTheme = false) { EditorScreen(state(), player = null, onEvent = {}, onBack = {}) }
+            }
+        }
+    }
+
+    @Test
+    fun lightSelectedVideoClipShowsAnOutline() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme(darkTheme = false) {
+                    EditorScreen(state(selection = ClipSelection.Video("c2")), player = null, onEvent = {}, onBack = {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun lightSelectedDetachedAudioShowsHandlesAndAudioTools() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme(darkTheme = false) {
+                    EditorScreen(state(selection = ClipSelection.Audio("a1")), player = null, onEvent = {}, onBack = {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun lightVolumeSheetAndBadges() {
+        val sheet = SheetState(ClipTool.Volume, "c1", "m1.mp4", 40, 4_000)
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme(darkTheme = false) {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c1"), edited = true, sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun lightOverlayLaneWithOverlappingClips() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme(darkTheme = false) {
+                EditorScreen(
+                    state(selection = ClipSelection.Overlay("v1"), overlays = overlays, playheadMs = 3_000),
+                    player = null, onEvent = {}, onBack = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun lightOverlayTabOffersAddOverlay() = paparazzi.snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme(darkTheme = false) {
+                EditorScreen(state(tab = ToolbarTab.Overlay), player = null, onEvent = {}, onBack = {})
             }
         }
     }

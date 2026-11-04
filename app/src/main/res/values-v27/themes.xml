@@ -1,0 +1,10 @@
+<resources>
+    <!-- Dark navigation bar icons on the light window; the night version below keeps them light. -->
+    <style name="Theme.PetruVideo" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F6F7FA</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

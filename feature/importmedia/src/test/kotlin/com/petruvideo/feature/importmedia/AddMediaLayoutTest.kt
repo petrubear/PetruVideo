@@ -1,6 +1,7 @@
 package com.petruvideo.feature.importmedia
 
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
 import com.android.resources.ScreenOrientation
@@ -19,7 +20,7 @@ class AddMediaLayoutTest {
     @get:Rule
     val paparazzi = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_5.copy(
-            screenWidth = 2_080,
+            nightMode = NightMode.NIGHT, screenWidth = 2_080,
             screenHeight = 1_560,
             xdpi = 320,
             ydpi = 320,

@@ -27,12 +27,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PetruVideo">
 
-        <!-- resizeableActivity plus the configChanges list keep fold, resize and rotation from restarting the activity -->
+        <!-- resizeableActivity plus the configChanges list keep fold, resize, rotation and a light/dark switch (uiMode) from restarting the activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:resizeableActivity="true"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden|navigation|density|layoutDirection">
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden|navigation|density|layoutDirection|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

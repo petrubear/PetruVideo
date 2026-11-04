@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,16 +23,20 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // The app is dark only: keep system bar icons light whatever the system theme is.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-        )
         val arrangementProvider = WindowArrangementProvider(this, lifecycleScope)
         setContent {
             val input by arrangementProvider.input.collectAsStateWithLifecycle()
+            val darkTheme = isSystemInDarkTheme()
+            // System bar icons follow the look, at start and whenever the phone switches between light and dark.
+            DisposableEffect(darkTheme) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                )
+                onDispose {}
+            }
             CompositionLocalProvider(LocalArrangement provides ArrangementResolver.resolve(input)) {
-                PetruTheme { PetruNavHost() }
+                PetruTheme(darkTheme) { PetruNavHost() }
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.petruvideo.feature.importmedia
 
 import app.cash.paparazzi.DeviceConfig
+import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.data.importing.ImportProgress
 import com.petruvideo.core.designsystem.PetruTheme
@@ -12,7 +13,7 @@ import org.junit.Test
 /** Golden for the compact Add media screen; reviewed against design/reference/Import.png before approval. */
 class AddMediaScreenshotTest {
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5)
+    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT))
 
     private val durations = listOf(14, 32, 8, 65, 21, 11, 47, 19, 26, 9, 38, 15)
     private val selectedOrder = mapOf(0 to 1, 2 to 2, 3 to 3, 6 to 4, 8 to 5)

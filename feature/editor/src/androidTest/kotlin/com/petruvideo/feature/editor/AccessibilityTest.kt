@@ -25,10 +25,19 @@ import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-/** Runs the Android accessibility checks (touch target size, labels, contrast) over the editor. */
+/** Runs the Android accessibility checks (touch target size, labels, contrast) over the editor, in both looks. */
 @OptIn(ExperimentalTestApi::class)
-class AccessibilityTest {
+@RunWith(Parameterized::class)
+class AccessibilityTest(private val darkTheme: Boolean) {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "dark={0}")
+        fun looks() = listOf(true, false)
+    }
+
     private val media = MediaItem(
         "a", MediaKind.Video, "content://x/a", "a.mp4", 10_000, 100, 100, 30f, true,
         Fingerprint(1, 1, 10_000, "video/mp4"), Availability.Available,
@@ -97,7 +106,7 @@ class AccessibilityTest {
             setContent {
                 val density = LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
-                    PetruTheme { EditorScreen(state, null, {}, {}) }
+                    PetruTheme(darkTheme) { EditorScreen(state, null, {}, {}) }
                 }
             }
             onRoot().tryPerformAccessibilityChecks()

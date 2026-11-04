@@ -51,6 +51,7 @@ private val LANE_HEIGHT = 56.dp
 private val TILE_WIDTH = 40.dp
 private val CLIP_SHAPE = RoundedCornerShape(8.dp)
 
+@Composable
 private fun outline(selected: Boolean): Modifier =
     if (selected) Modifier.border(2.5.dp, PetruColors.OnBackground, CLIP_SHAPE) else Modifier
 

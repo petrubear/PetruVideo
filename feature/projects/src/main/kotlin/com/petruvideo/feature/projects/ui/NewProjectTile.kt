@@ -31,6 +31,7 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 /** The dashed "New project" tile that starts the grid. */
 @Composable
 fun NewProjectTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dash = PetruColors.OutlineDashed
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -38,7 +39,7 @@ fun NewProjectTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .clip(PetruShapes.Card)
             .drawBehind {
                 drawRoundRect(
-                    color = PetruColors.OutlineDashed,
+                    color = dash,
                     cornerRadius = CornerRadius(20.dp.toPx()),
                     style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))),
                 )

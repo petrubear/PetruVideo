@@ -143,6 +143,7 @@ private fun CropOverlay(box: CropBox, shape: CropShape, width: Dp, height: Dp, o
     val top = height * box.top / CROP_FULL
     val boxWidth = width * box.widthPermille / CROP_FULL
     val boxHeight = height * box.heightPermille / CROP_FULL
+    val accent = PetruColors.Accent
     Canvas(Modifier.fillMaxSize().graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)) {
         drawRect(Color.Black.copy(alpha = DIM))
         drawRect(
@@ -150,7 +151,7 @@ private fun CropOverlay(box: CropBox, shape: CropShape, width: Dp, height: Dp, o
             blendMode = BlendMode.Clear,
         )
         drawRect(
-            PetruColors.Accent, Offset(left.toPx(), top.toPx()), Size(boxWidth.toPx(), boxHeight.toPx()),
+            accent, Offset(left.toPx(), top.toPx()), Size(boxWidth.toPx(), boxHeight.toPx()),
             style = Stroke(BORDER_PX),
         )
     }
