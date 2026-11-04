@@ -5,7 +5,7 @@ plugins {
 }
 
 // The one place the version is set (see CHANGELOG.md). The version code follows from it: 0.2.5 is 205, 1.3.4 is 10304.
-val appVersion = "0.5.0"
+val appVersion = "0.5.1"
 val appVersionCode = appVersion.split(".").map { it.toInt() }.also {
     require(it.size == 3 && it.all { part -> part in 0..99 }) { "appVersion must be MAJOR.MINOR.PATCH with each part 0 to 99" }
 }.let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
@@ -20,8 +20,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // The release key comes from the environment (the release workflow sets it from repository secrets), so it is never
+    // in the repository. Without it the release build stays unsigned, as local builds and CI have always been.
+    val releaseKeystore = System.getenv("RELEASE_KEYSTORE_FILE")
+    if (!releaseKeystore.isNullOrBlank()) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseKeystore)
+            storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

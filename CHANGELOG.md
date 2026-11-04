@@ -5,10 +5,20 @@ and versions follow [Semantic Versioning](https://semver.org): while the major v
 features and a patch bump (0.x.y) only fixes. The version is set in one place, `appVersion` in
 [app/build.gradle.kts](app/build.gradle.kts); the version code is derived from it (0.2.5 is 205).
 
-To release: move the Unreleased notes under a new version heading with its date, change `appVersion`, commit, and tag
-the commit `vX.Y.Z`.
+To release: move the Unreleased notes under a new version heading, change `appVersion`, commit, tag the commit `vX.Y.Z`,
+and push the commit and the tag. The Release workflow then publishes the signed APK and the notes of that version, which
+are read from this file, so the heading must be exactly `## [X.Y.Z]` and its section must not be empty. The one-time key
+setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
+
+## [0.5.1]
+
+### Added
+- Each version tag (`vX.Y.Z`) now publishes a GitHub release with the signed APK (`PetruVideo-X.Y.Z.apk`), its SHA-256 checksum, and the notes of that version from this file. A tag that already exists can be published by running the Release workflow by hand. The README explains how to install the APK and how to set up the signing key and cut a release.
+
+### Fixed
+- The minimized release build keeps the ONNX Runtime classes by name, so the voice split model can load in the app that is published.
 
 ## [0.5.0]
 
