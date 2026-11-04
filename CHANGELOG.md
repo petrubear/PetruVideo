@@ -10,6 +10,11 @@ the commit `vX.Y.Z`.
 
 ## [Unreleased]
 
+## [0.2.6]
+
+### Fixed
+- Projects with transitions or templates play to the end in the preview. The preview shows the transitions as hard cuts at the same moments, because two video inputs froze the picture on some phones. The export still blends them.
+
 ## [0.2.5] - 2026-11-01
 
 ### Fixed

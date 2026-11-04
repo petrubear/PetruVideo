@@ -12,6 +12,7 @@ import androidx.media3.transformer.CompositionPlayer
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.composition.usesMultipleInputs
+import com.petruvideo.core.media.composition.withTransitionsAsCuts
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipFilter
@@ -142,7 +143,8 @@ class Media3PreviewEngine @Inject constructor(
         lastQuality = quality
         val sources = reverse.sources(timeline)
         val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality), armedFraming, reversed = sources)
-        val composition = builder.build(timeline)
+        val playable = withTransitionsAsCuts(timeline)
+        val composition = builder.build(playable)
         gains = builder.gains
         reverbs = builder.reverbs
         voiceFxs = builder.voiceFxs
@@ -169,7 +171,7 @@ class Media3PreviewEngine @Inject constructor(
         val previous = compositionPlayer
         val resumeBefore = previous?.isPlaying == true
         val positionBefore = positionBefore(previous)
-        val multi = usesMultipleInputs(timeline)
+        val multi = usesMultipleInputs(playable)
         if (previous != null && (multi || multi != multipleInputs)) discardPlayer()
         multipleInputs = multi
         val player = compositionPlayer ?: playerBuilder(multi).build()
