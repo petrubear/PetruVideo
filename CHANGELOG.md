@@ -12,6 +12,9 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+### Fixed
+- The Release workflow no longer ends when looking up `apksigner` on the runner; the lookup now tolerates unreadable folders and reports a clear error if the tool is missing.
+
 ## [0.5.1]
 
 ### Added

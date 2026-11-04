@@ -96,7 +96,12 @@ jobs:
 
       - name: Verify the signature and name the file
         run: |
-          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          # find can exit non-zero on a folder it cannot read, which would end this step under the shell's strict mode
+          apksigner=$(find "$sdk/build-tools" -name apksigner -type f 2>/dev/null | sort -V | tail -n 1 || true)
+          if [ -z "$apksigner" ]; then
+            echo "::error::apksigner was not found under $sdk/build-tools"; exit 1
+          fi
           apk=app/build/outputs/apk/release/app-release.apk
           "$apksigner" verify --print-certs "$apk" | grep -E 'Signer #1 certificate (DN|SHA-256)'
           mkdir -p dist
