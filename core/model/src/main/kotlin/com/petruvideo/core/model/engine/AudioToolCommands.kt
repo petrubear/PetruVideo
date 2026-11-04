@@ -27,22 +27,39 @@ abstract class ReverbCommand internal constructor(
 
     override fun apply(timeline: Timeline): CommandResult {
         val videoIndex = timeline.videoLane.indexOfFirst { it.id == clipId }
-        if (videoIndex >= 0) {
-            val clip = timeline.videoLane[videoIndex]
-            val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
-            if (photo || !clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
-            val reverb = next(clip.reverb)
-            if (reverb == clip.reverb) return CommandResult.Rejected(RejectReason.OutOfRange)
-            val lane = timeline.videoLane.toMutableList().also { it[videoIndex] = clip.copy(reverb = reverb) }
-            return CommandResult.Applied(timeline.copy(videoLane = lane), label)
-        }
+        if (videoIndex >= 0) return applyToVideo(timeline, videoIndex)
+        val overlayIndex = timeline.overlayLane.indexOfFirst { it.id == clipId }
+        if (overlayIndex >= 0) return applyToOverlay(timeline, overlayIndex)
         val audioIndex = timeline.audioLane.indexOfFirst { it.id == clipId }
         if (audioIndex < 0) return CommandResult.Rejected(RejectReason.NotFound)
-        val clip = timeline.audioLane[audioIndex]
+        return applyToAudio(timeline, audioIndex)
+    }
+
+    private fun applyToVideo(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.videoLane[index]
+        val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
+        if (photo || !clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
         val reverb = next(clip.reverb)
         if (reverb == clip.reverb) return CommandResult.Rejected(RejectReason.OutOfRange)
-        val lane = timeline.audioLane.toMutableList().also { it[audioIndex] = clip.copy(reverb = reverb) }
+        val lane = timeline.videoLane.toMutableList().also { it[index] = clip.copy(reverb = reverb) }
+        return CommandResult.Applied(timeline.copy(videoLane = lane), label)
+    }
+
+    private fun applyToAudio(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.audioLane[index]
+        val reverb = next(clip.reverb)
+        if (reverb == clip.reverb) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.audioLane.toMutableList().also { it[index] = clip.copy(reverb = reverb) }
         return CommandResult.Applied(timeline.copy(audioLane = lane), label)
+    }
+
+    private fun applyToOverlay(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.overlayLane[index]
+        if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        val reverb = next(clip.reverb)
+        if (reverb == clip.reverb) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.overlayLane.toMutableList().also { it[index] = clip.copy(reverb = reverb) }
+        return CommandResult.Applied(timeline.copy(overlayLane = lane), label)
     }
 }
 

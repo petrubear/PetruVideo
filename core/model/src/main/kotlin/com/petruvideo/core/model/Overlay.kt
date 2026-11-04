@@ -8,8 +8,9 @@ const val OVERLAY_MIN_MS = 500L
 
 /**
  * A picture-in-picture clip: a video or photo shown over the main video. Its place is given as shares of the frame
- * (center, and width as a share of the frame width), so it looks the same at any export size. It has no sound of its
- * own and plays at normal speed.
+ * (center, and width as a share of the frame width), so it looks the same at any export size. Its video can have
+ * sound of its own ([attachedAudio], feature 029) with a volume, mute, reverb, and effects like a base-lane clip. It
+ * plays at normal speed.
  */
 data class OverlayClip(
     val id: String,
@@ -26,6 +27,12 @@ data class OverlayClip(
     val chroma: ChromaKey = ChromaKey(),
     /** Shows only part of the picture (feature 024). */
     val mask: OverlayMask = OverlayMask(),
+    /** The clip's own sound plays; off for photos, silent videos, older projects, and after a detach (feature 029). */
+    val attachedAudio: Boolean = false,
+    val muted: Boolean = false,
+    val volumePercent: Int = VOLUME_DEFAULT_PERCENT,
+    val reverb: Reverb = Reverb(),
+    val fx: AudioFx = AudioFx(),
 ) {
     val durationMs: Long get() = sourceEndMs - sourceStartMs
     val endMs: Long get() = startMs + durationMs
@@ -67,6 +74,8 @@ data class OverlayClip(
         keyframes = Keyframes.normalized(keyframes, durationMs, OVERLAY_WIDTH_MIN..OVERLAY_WIDTH_MAX),
         chroma = chroma.normalized(),
         mask = mask.normalized(),
+        volumePercent = volumePercent.coerceIn(0, VOLUME_MAX_PERCENT),
+        fx = fx.copy(fade = fx.fade.limitedTo(durationMs)),
     )
 
     val inRange: Boolean get() = normalized() == this && durationMs >= OVERLAY_MIN_MS && sourceStartMs >= 0

@@ -76,25 +76,41 @@ class SetSpeed(private val clipId: String, private val speedMilli: Int) : Comman
 }
 
 /**
- * Sets the volume of a clip that has sound: any audio clip, or a video clip whose sound is still attached.
+ * Sets the volume of a clip that has sound: any audio clip, or a video or overlay clip whose sound is still attached.
  * Independent of mute.
  */
 class SetVolume(private val clipId: String, private val percent: Int) : Command {
     override fun apply(timeline: Timeline): CommandResult {
         val value = percent.coerceIn(0, VOLUME_MAX_PERCENT)
         val videoIndex = timeline.videoLane.indexOfFirst { it.id == clipId }
-        if (videoIndex >= 0) {
-            val clip = timeline.videoLane[videoIndex]
-            if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
-            if (clip.volumePercent == value) return CommandResult.Rejected(RejectReason.OutOfRange)
-            val lane = timeline.videoLane.toMutableList().also { it[videoIndex] = clip.copy(volumePercent = value) }
-            return CommandResult.Applied(timeline.copy(videoLane = lane), "Change volume")
-        }
+        if (videoIndex >= 0) return setVideoVolume(timeline, videoIndex, value)
+        val overlayIndex = timeline.overlayLane.indexOfFirst { it.id == clipId }
+        if (overlayIndex >= 0) return setOverlayVolume(timeline, overlayIndex, value)
         val audioIndex = timeline.audioLane.indexOfFirst { it.id == clipId }
         if (audioIndex < 0) return CommandResult.Rejected(RejectReason.NotFound)
-        val clip = timeline.audioLane[audioIndex]
-        if (clip.volumePercent == value) return CommandResult.Rejected(RejectReason.OutOfRange)
-        val lane = timeline.audioLane.toMutableList().also { it[audioIndex] = clip.copy(volumePercent = value) }
-        return CommandResult.Applied(timeline.copy(audioLane = lane), "Change volume")
+        return setAudioVolume(timeline, audioIndex, value)
     }
+}
+
+private fun setVideoVolume(timeline: Timeline, index: Int, value: Int): CommandResult {
+    val clip = timeline.videoLane[index]
+    if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+    if (clip.volumePercent == value) return CommandResult.Rejected(RejectReason.OutOfRange)
+    val lane = timeline.videoLane.toMutableList().also { it[index] = clip.copy(volumePercent = value) }
+    return CommandResult.Applied(timeline.copy(videoLane = lane), "Change volume")
+}
+
+private fun setAudioVolume(timeline: Timeline, index: Int, value: Int): CommandResult {
+    val clip = timeline.audioLane[index]
+    if (clip.volumePercent == value) return CommandResult.Rejected(RejectReason.OutOfRange)
+    val lane = timeline.audioLane.toMutableList().also { it[index] = clip.copy(volumePercent = value) }
+    return CommandResult.Applied(timeline.copy(audioLane = lane), "Change volume")
+}
+
+private fun setOverlayVolume(timeline: Timeline, index: Int, value: Int): CommandResult {
+    val clip = timeline.overlayLane[index]
+    if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+    if (clip.volumePercent == value) return CommandResult.Rejected(RejectReason.OutOfRange)
+    val lane = timeline.overlayLane.toMutableList().also { it[index] = clip.copy(volumePercent = value) }
+    return CommandResult.Applied(timeline.copy(overlayLane = lane), "Change volume")
 }

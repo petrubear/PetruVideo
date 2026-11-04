@@ -3,19 +3,23 @@ package com.petruvideo.core.media.preview
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.annotation.OptIn
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.video.VideoFrameMetadataListener
 import androidx.media3.transformer.CompositionPlayer
 import com.petruvideo.core.media.composition.BuildSpec
 import com.petruvideo.core.media.composition.CompositionBuilder
 import com.petruvideo.core.media.composition.usesMultipleInputs
 import com.petruvideo.core.media.composition.withTransitionsAsCuts
+import com.petruvideo.core.media.composition.withoutOverlaySound
 import com.petruvideo.core.media.pressure.PreviewQuality
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ClipFilter
+import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.TextClip
@@ -83,6 +87,7 @@ class Media3PreviewEngine @Inject constructor(
     private val poll = object : Runnable {
         override fun run() {
             publish()
+            if (polling) checkStall()
             if (polling) handler.postDelayed(this, POLL_MS)
         }
     }
@@ -108,6 +113,57 @@ class Media3PreviewEngine @Inject constructor(
     }
 
     private var playbackStats: PlaybackStats? = null
+
+    /** Set when the picture stalled with overlay sound on: the preview then plays without it (feature 029). */
+    private var overlaySoundOff = false
+    private var lastFrameAtMs = 0L
+    private var lastMoveAtMs = 0L
+    private var lastPositionMs = -1L
+
+    private val frameWatch = VideoFrameMetadataListener { presentationTimeUs, releaseTimeNs, format, mediaFormat ->
+        lastFrameAtMs = SystemClock.elapsedRealtime()
+        playbackStats?.onVideoFrameAboutToBeRendered(presentationTimeUs, releaseTimeNs, format, mediaFormat)
+    }
+
+    /**
+     * Two inputs of sound next to the picture inputs can stall some phones' decoders. If the position or the picture
+     * stops for [STALL_MS] while playing with overlay sound on, the preview is built again without the overlay sound
+     * at the same place and keeps playing; the export is not affected.
+     */
+    private fun checkStall() {
+        val timeline = lastTimeline ?: return
+        val player = compositionPlayer ?: return
+        if (overlaySoundOff || !player.isPlaying || !hasOverlaySound(timeline)) return
+        val now = SystemClock.elapsedRealtime()
+        val position = player.currentPosition
+        if (position != lastPositionMs) {
+            lastPositionMs = position
+            lastMoveAtMs = now
+        }
+        val pictureStalled = lastFrameAtMs != 0L && now - lastFrameAtMs > STALL_MS && !hasStillPicture(timeline)
+        if (now - lastMoveAtMs > STALL_MS || pictureStalled) dropOverlaySound()
+    }
+
+    private fun hasOverlaySound(timeline: Timeline) = timeline.overlayLane.any { it.attachedAudio && !it.muted }
+
+    private fun hasStillPicture(timeline: Timeline) =
+        timeline.videoLane.any { timeline.media[it.mediaItemId]?.kind == MediaKind.Photo } ||
+            timeline.overlayLane.any { timeline.media[it.mediaItemId]?.kind == MediaKind.Photo }
+
+    private fun dropOverlaySound() {
+        android.util.Log.w("PreviewEngine", "Picture stalled with overlay sound; playing without it")
+        overlaySoundOff = true
+        val wasPlaying = compositionPlayer?.isPlaying == true
+        rebuild()
+        if (wasPlaying) play()
+    }
+
+    private fun resetStallWatch() {
+        val now = SystemClock.elapsedRealtime()
+        lastFrameAtMs = 0L
+        lastMoveAtMs = now
+        lastPositionMs = -1L
+    }
 
     private fun failedAtTheEnd(): Boolean {
         val position = compositionPlayer?.currentPosition ?: return false
@@ -143,7 +199,7 @@ class Media3PreviewEngine @Inject constructor(
         lastQuality = quality
         val sources = reverse.sources(timeline)
         val builder = CompositionBuilder(BuildSpec.forPreview(timeline, quality), armedFraming, reversed = sources)
-        val playable = withTransitionsAsCuts(timeline)
+        val playable = withTransitionsAsCuts(timeline).let { if (overlaySoundOff) it.withoutOverlaySound() else it }
         val composition = builder.build(playable)
         gains = builder.gains
         reverbs = builder.reverbs
@@ -179,9 +235,9 @@ class Media3PreviewEngine @Inject constructor(
                 it.addListener(listener)
                 if (isDebuggable()) PlaybackStats().let { stats ->
                     playbackStats = stats
-                    it.setVideoFrameMetadataListener(stats)
                     it.addAnalyticsListener(stats)
                 }
+                it.setVideoFrameMetadataListener(frameWatch)
                 compositionPlayer = it
             }
         hasComposition = true
@@ -190,6 +246,7 @@ class Media3PreviewEngine @Inject constructor(
         val position = positionBefore.coerceIn(0, totalMs)
         player.setComposition(composition, position)
         player.prepare()
+        resetStallWatch()
         if (resume) player.play()
         publish()
     }
@@ -394,12 +451,14 @@ class Media3PreviewEngine @Inject constructor(
             durationMs = totalMs,
             ended = reachedEnd,
             error = error ?: _state.value.error.takeIf { player?.playerError != null },
+            overlaySoundOff = overlaySoundOff,
         )
     }
 
     private companion object {
         const val POLL_MS = 33L
         const val END_TOLERANCE_MS = 600L
+        const val STALL_MS = 3_000L
         const val REFRESH_MS = 40L
     }
 }

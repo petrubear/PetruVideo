@@ -19,7 +19,7 @@ private fun newId() = UUID.randomUUID().toString()
 class DetachAudio(private val videoClipId: String, private val newClipId: () -> String = ::newId) : Command {
     override fun apply(timeline: Timeline): CommandResult {
         val index = timeline.videoLane.indexOfFirst { it.id == videoClipId }
-        if (index < 0) return CommandResult.Rejected(RejectReason.NotFound)
+        if (index < 0) return detachOverlay(timeline)
         val clip = timeline.videoLane[index]
         if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
         val desired = timeline.videoStartOf(clip.id) ?: return CommandResult.Rejected(RejectReason.NotFound)
@@ -49,6 +49,39 @@ class DetachAudio(private val videoClipId: String, private val newClipId: () -> 
             notices = if (start != desired) listOf(Notice.Snapped) else emptyList(),
         )
     }
+
+    /** From an overlay: its sound must stay in sync with the picture, so there is no snapping, only a refusal. */
+    private fun detachOverlay(timeline: Timeline): CommandResult {
+        val index = timeline.overlayLane.indexOfFirst { it.id == videoClipId }
+        if (index < 0) return CommandResult.Rejected(RejectReason.NotFound)
+        val clip = timeline.overlayLane[index]
+        if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        if (!AudioPlacement.fits(timeline.audioLane, clip.startMs, clip.durationMs)) {
+            return CommandResult.Rejected(RejectReason.LimitReached)
+        }
+        val audio = AudioClip(
+            id = newClipId(),
+            mediaItemId = clip.mediaItemId,
+            sourceStartMs = clip.sourceStartMs,
+            sourceEndMs = clip.sourceEndMs,
+            timelineStartMs = clip.startMs,
+            origin = AudioOrigin.Detached,
+            volumePercent = clip.volumePercent,
+            muted = clip.muted,
+            reverb = clip.reverb,
+            fx = clip.fx,
+        )
+        val overlays = timeline.overlayLane.toMutableList().also {
+            it[index] = clip.copy(attachedAudio = false, muted = false)
+        }
+        return CommandResult.Applied(
+            timeline = timeline.copy(
+                overlayLane = overlays,
+                audioLane = (timeline.audioLane + audio).sortedBy { it.timelineStartMs },
+            ),
+            label = "Detach audio",
+        )
+    }
 }
 
 /** Repositions an audio clip. An overlap with another audio clip snaps to the next free position. */
@@ -71,6 +104,13 @@ class MoveAudioClip(private val clipId: String, private val newStartMs: Long) : 
 
 class SetMuted(private val clipId: String, private val muted: Boolean) : Command {
     override fun apply(timeline: Timeline): CommandResult {
+        val overlay = timeline.overlayLane.firstOrNull { it.id == clipId }
+        if (overlay != null) {
+            if (!overlay.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+            if (overlay.muted == muted) return CommandResult.Rejected(RejectReason.OutOfRange)
+            val lane = timeline.overlayLane.map { if (it.id == clipId) it.copy(muted = muted) else it }
+            return CommandResult.Applied(timeline.copy(overlayLane = lane), if (muted) "Mute audio" else "Unmute audio")
+        }
         val clip = timeline.audioLane.firstOrNull { it.id == clipId }
             ?: return CommandResult.Rejected(RejectReason.NotFound)
         if (clip.muted == muted) return CommandResult.Rejected(RejectReason.OutOfRange)

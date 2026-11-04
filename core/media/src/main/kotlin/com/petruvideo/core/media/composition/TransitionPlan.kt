@@ -11,6 +11,14 @@ fun hasTransitions(timeline: Timeline): Boolean =
 /** True when the composition needs the multiple-input video graph (overlays or transitions). */
 fun usesMultipleInputs(timeline: Timeline): Boolean = timeline.overlayLane.isNotEmpty() || hasTransitions(timeline)
 
+/** The timeline with the sound of every overlay turned off, for a preview that cannot play it (feature 029). */
+fun Timeline.withoutOverlaySound(): Timeline =
+    if (overlayLane.none { it.attachedAudio }) {
+        this
+    } else {
+        copy(overlayLane = overlayLane.map { it.copy(attachedAudio = false) })
+    }
+
 /**
  * The timeline with every transition replaced by a hard cut at the same moment: the clip before it ends where the
  * transition starts. The preview plays this, because two video inputs freeze on some phones' hardware decoders; the

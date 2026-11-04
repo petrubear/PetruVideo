@@ -136,7 +136,7 @@ class CompositionBuilder(
         val overlays = overlaySequences(timeline)
         val transitions = hasTransitions(timeline)
         val main = if (transitions) transitionSequences(timeline) else listOfNotNull(videoSequence(timeline))
-        val sequences = overlays + main + audioSequences(timeline)
+        val sequences = overlays + main + audioSequences(timeline) + overlayAudioSequences(timeline)
         if (sequences.isEmpty()) return null
         val builder = Composition.Builder(sequences)
         textEffects(timeline)?.let { builder.setEffects(it) }
@@ -258,7 +258,8 @@ class CompositionBuilder(
 
     /**
      * One video-only sequence per overlay clip: a gap up to its start, then the clip. The compositor draws input 0
-     * (the main video) first and each overlay over it, placed by [OverlayLayout]. Overlays have no sound.
+     * (the main video) first and each overlay over it, placed by [OverlayLayout]. The sound of an overlay is in its own
+     * sequence ([overlayAudioSequences]), so the picture inputs and their order do not depend on it.
      */
     private fun overlaySequences(timeline: Timeline): List<EditedMediaItemSequence> =
         timeline.overlayLane.mapNotNull { clip ->
@@ -287,6 +288,33 @@ class CompositionBuilder(
             // An ended input would keep showing its last frame, so a gap runs on to the end of the project.
             val tailMs = timeline.totalDurationMs - clip.endMs
             if (tailMs > 0) builder.addGap(tailMs * US_PER_MS)
+            builder.build()
+        }
+
+    /**
+     * One audio-only sequence per overlay with sound on: a gap up to its start, then the clip's sound with the same
+     * effects chain a base-lane clip has. After the picture sequences, so the video input order is unchanged.
+     */
+    private fun overlayAudioSequences(timeline: Timeline): List<EditedMediaItemSequence> =
+        timeline.overlayLane.mapNotNull { clip ->
+            val media = timeline.media[clip.mediaItemId]
+            val sounds = clip.attachedAudio && !clip.muted && media != null &&
+                media.kind == MediaKind.Video && media.availability != Availability.Missing
+            if (!sounds || media == null) return@mapNotNull null
+            val builder = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_AUDIO))
+            if (clip.startMs > 0) builder.addGap(clip.startMs * US_PER_MS)
+            builder.addItem(
+                EditedMediaItem.Builder(clipped(media.uri, clip.sourceStartMs, clip.sourceEndMs))
+                    .setDurationUs(sourceDurationUs(media.durationMs, clip.sourceEndMs))
+                    .setRemoveVideo(true)
+                    .setEffects(
+                        Effects(
+                            soundEffects(clip.id, clip.reverb, clip.volumePercent, true, clip.fx, clip.durationMs),
+                            emptyList(),
+                        ),
+                    )
+                    .build(),
+            )
             builder.build()
         }
 

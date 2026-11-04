@@ -31,6 +31,7 @@ internal data class OpenEffect(val kind: EffectToolKind, val clipId: String)
 
 internal fun soundClipReverb(timeline: Timeline, id: String): Reverb? =
     timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.reverb
+        ?: timeline.overlayLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.reverb
         ?: timeline.audioLane.firstOrNull { it.id == id }?.reverb
 
 internal fun filterPanelFor(
@@ -163,28 +164,48 @@ internal fun textPanelFor(
 
 internal fun soundClip(timeline: Timeline, id: String): Pair<AudioFx, Long>? =
     timeline.videoLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.let { it.fx to it.lengthMs }
+        ?: timeline.overlayLane.firstOrNull { it.id == id }?.takeIf { it.attachedAudio }?.let { it.fx to it.durationMs }
         ?: timeline.audioLane.firstOrNull { it.id == id }?.let { it.fx to it.lengthMs }
 
 internal fun isMuted(timeline: Timeline?, id: String?) =
     timeline?.audioLane?.firstOrNull { it.id == id }?.muted
-        ?: timeline?.videoLane?.firstOrNull { it.id == id }?.muted ?: false
+        ?: timeline?.videoLane?.firstOrNull { it.id == id }?.muted
+        ?: timeline?.overlayLane?.firstOrNull { it.id == id }?.muted ?: false
+
+/** What the sound panels read from a video, audio, or overlay clip, whichever the id belongs to. */
+private class ClipFacts(
+    val mediaItemId: String,
+    val volumePercent: Int,
+    val muted: Boolean,
+    val reverb: Reverb,
+    val speedMilli: Int?,
+    val sourceLengthMs: Long,
+)
+
+private fun clipFacts(timeline: Timeline, id: String): ClipFacts? =
+    timeline.videoLane.firstOrNull { it.id == id }?.let {
+        ClipFacts(it.mediaItemId, it.volumePercent, it.muted, it.reverb, it.speedMilli, it.sourceLengthMs)
+    } ?: timeline.audioLane.firstOrNull { it.id == id }?.let {
+        ClipFacts(it.mediaItemId, it.volumePercent, it.muted, it.reverb, it.speedMilli, it.sourceLengthMs)
+    } ?: timeline.overlayLane.firstOrNull { it.id == id }?.let {
+        ClipFacts(it.mediaItemId, it.volumePercent, it.muted, it.reverb, null, it.durationMs)
+    }
 
 internal fun audioPanelFor(timeline: Timeline?, selection: ClipSelection?, open: OpenAudio?): AudioPanelState? {
     if (timeline == null || selection == null || open == null) return null
     if (open.clipId != selection.clipId) return null
     val (fx, length) = soundClip(timeline, open.clipId) ?: return null
-    val video = timeline.videoLane.firstOrNull { it.id == open.clipId }
+    val facts = clipFacts(timeline, open.clipId)
     val audio = timeline.audioLane.firstOrNull { it.id == open.clipId }
-    val media = timeline.media[video?.mediaItemId ?: audio?.mediaItemId]
     return AudioPanelState(
         kind = open.kind,
         clipId = open.clipId,
-        clipName = media?.displayName.orEmpty(),
+        clipName = timeline.media[facts?.mediaItemId]?.displayName.orEmpty(),
         fx = fx,
         clipLengthMs = length,
-        volumePercent = video?.volumePercent ?: audio?.volumePercent ?: VOLUME_DEFAULT_PERCENT,
-        muted = video?.muted ?: audio?.muted ?: false,
-        reverb = video?.reverb ?: audio?.reverb ?: Reverb(),
+        volumePercent = facts?.volumePercent ?: VOLUME_DEFAULT_PERCENT,
+        muted = facts?.muted ?: false,
+        reverb = facts?.reverb ?: Reverb(),
         ducking = audio?.ducking,
         duckingIdle = audio != null && !DuckingPlanner.hasTriggerOver(timeline, audio),
     )
@@ -194,12 +215,14 @@ internal fun reverbPanelFor(timeline: Timeline?, selection: ClipSelection?, open
     if (timeline == null || selection == null || open != selection.clipId) return null
     val reverb = soundClipReverb(timeline, open) ?: return null
     val mediaId = timeline.videoLane.firstOrNull { it.id == open }?.mediaItemId
+        ?: timeline.overlayLane.firstOrNull { it.id == open }?.mediaItemId
         ?: timeline.audioLane.firstOrNull { it.id == open }?.mediaItemId
     return ReverbPanelState(open, timeline.media[mediaId]?.displayName.orEmpty(), reverb)
 }
 
 internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): Map<ClipTool, String> {
     if (timeline == null || selection == null) return emptyMap()
+    if (selection is ClipSelection.Overlay) return disabledOverlayTools(timeline, selection.clipId)
     val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
         ?: return emptyMap()
     val noSound = "This clip has no sound"
@@ -239,22 +262,30 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
     }
 }
 
+/** An overlay with no sound of its own has no sound tools; a photo has none either. */
+private fun disabledOverlayTools(timeline: Timeline, clipId: String): Map<ClipTool, String> {
+    val clip = timeline.overlayLane.firstOrNull { it.id == clipId } ?: return emptyMap()
+    if (!clip.attachedAudio) {
+        val note = "This clip has no sound"
+        return mapOf(
+            ClipTool.Volume to note, ClipTool.Mute to note, ClipTool.Reverb to note, ClipTool.Audio to note,
+            ClipTool.Detach to note, ClipTool.SplitVoice to note,
+        )
+    }
+    return VoiceSplitRules.reasonNot(timeline, clip.id)?.let { mapOf(ClipTool.SplitVoice to it) }.orEmpty()
+}
+
 internal fun sheetFor(timeline: Timeline?, selection: ClipSelection?, open: OpenSheet?): SheetState? {
     if (timeline == null || selection == null || open == null) return null
     if (open.clipId != selection.clipId) return null
-    val video = timeline.videoLane.firstOrNull { it.id == open.clipId }
-    val audio = timeline.audioLane.firstOrNull { it.id == open.clipId }
-    val committed = when (open.tool) {
-        ClipTool.Speed -> video?.speedMilli ?: audio?.speedMilli
-        else -> video?.volumePercent ?: audio?.volumePercent
-    } ?: return null
-    val media = timeline.media[video?.mediaItemId ?: audio?.mediaItemId]
+    val facts = clipFacts(timeline, open.clipId) ?: return null
+    val committed = (if (open.tool == ClipTool.Speed) facts.speedMilli else facts.volumePercent) ?: return null
     return SheetState(
         tool = open.tool,
         clipId = open.clipId,
-        clipName = media?.displayName.orEmpty(),
+        clipName = timeline.media[facts.mediaItemId]?.displayName.orEmpty(),
         value = committed,
-        sourceLengthMs = video?.sourceLengthMs ?: audio?.sourceLengthMs ?: 0L,
+        sourceLengthMs = facts.sourceLengthMs,
     )
 }
 
@@ -277,9 +308,7 @@ internal fun clipToolsFor(
         ToolbarTab.Audio -> audioTabTools(timeline, selection)
         else -> videoTools(timeline, selection)
     }
-    is ClipSelection.Overlay -> listOf(
-        ClipTool.OverlayOpacity, ClipTool.Keyframes, ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
-    )
+    is ClipSelection.Overlay -> overlayTools(timeline, selection)
     is ClipSelection.Text -> listOf(
         ClipTool.TextEdit, ClipTool.TextStyle, ClipTool.TextAnim, ClipTool.Keyframes, ClipTool.Split,
         ClipTool.Duplicate, ClipTool.Delete,
@@ -293,6 +322,25 @@ internal fun clipToolsFor(
             ClipTool.Duplicate,
             ClipTool.Delete,
         )
+}
+
+/** The overlay tools; the sound tools appear when its video has a sound track (feature 029). */
+private fun overlayTools(timeline: Timeline?, selection: ClipSelection): List<ClipTool> {
+    val clip = timeline?.overlayLane?.firstOrNull { it.id == selection.clipId }
+    val media = clip?.let { timeline.media[it.mediaItemId] }
+    val hasSound = media?.kind == MediaKind.Video && media.hasAudio
+    val attached = clip?.attachedAudio == true
+    return listOfNotNull(
+        ClipTool.OverlayOpacity,
+        ClipTool.Keyframes,
+        ClipTool.Audio.takeIf { attached },
+        ClipTool.SoundOn.takeIf { hasSound && !attached },
+        ClipTool.Detach.takeIf { attached },
+        ClipTool.SplitVoice.takeIf { attached },
+        ClipTool.Split,
+        ClipTool.Duplicate,
+        ClipTool.Delete,
+    )
 }
 
 internal fun videoTools(timeline: Timeline?, selection: ClipSelection): List<ClipTool> {
@@ -345,6 +393,12 @@ internal data class VoiceSplitSnapshot(
 internal data class VoiceSplitRun(val clipId: String, val snapshot: VoiceSplitSnapshot, val progress: Int) {
     companion object {
         fun of(timeline: Timeline, clipId: String): VoiceSplitSnapshot? {
+            timeline.overlayLane.firstOrNull { it.id == clipId }?.let { overlay ->
+                return VoiceSplitSnapshot(
+                    overlay.mediaItemId, overlay.sourceStartMs, overlay.sourceEndMs, SPEED_UNIT, overlay.startMs,
+                    overlay.attachedAudio, reversed = false, curved = false,
+                )
+            }
             val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return null
             val start = timeline.videoStartOf(clipId) ?: return null
             return VoiceSplitSnapshot(

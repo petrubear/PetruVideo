@@ -5,6 +5,7 @@ import com.petruvideo.core.media.pressure.ResourcePressureMonitor
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.engine.SetOverlaySound
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,5 +106,72 @@ class EditorViewModelOverlayTest {
         e.vm.onEvent(EditorEvent.AddOverlayMedia(clip.copy(kind = MediaKind.Audio)))
         e.overlays shouldBe emptyList()
         e.state.message shouldBe "This file cannot be used as an overlay"
+    }
+
+    private val sounding = clip.copy(id = "ovs", hasAudio = true)
+
+    private fun Env.addSounding(): String {
+        vm.onEvent(EditorEvent.AddOverlayMedia(sounding))
+        return overlays.single().id
+    }
+
+    @Test
+    fun `an overlay with sound offers the sound tools and a silent one does not`() = runTest {
+        val e = env()
+        e.addSounding()
+        e.state.clipTools shouldBe listOf(
+            ClipTool.OverlayOpacity, ClipTool.Keyframes, ClipTool.Audio, ClipTool.Detach, ClipTool.SplitVoice,
+            ClipTool.Split, ClipTool.Duplicate, ClipTool.Delete,
+        )
+    }
+
+    @Test
+    fun `volume and mute of an overlay are edits that undo`() = runTest {
+        val e = env()
+        val id = e.addSounding()
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
+        e.vm.onEvent(EditorEvent.SheetPreview(ClipTool.Volume, 40))
+        e.overlays.single().volumePercent shouldBe 100
+        e.vm.onEvent(EditorEvent.SheetCommit(ClipTool.Volume, 40))
+        e.overlays.single().volumePercent shouldBe 40
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
+        e.overlays.single().muted shouldBe true
+        e.state.selectedAudioMuted shouldBe true
+        e.vm.onEvent(EditorEvent.Undo)
+        e.overlays.single().muted shouldBe false
+        e.vm.onEvent(EditorEvent.Undo)
+        e.overlays.single().volumePercent shouldBe 100
+        e.overlays.single().id shouldBe id
+    }
+
+    @Test
+    fun `detaching an overlay moves its sound to the audio lane and undo brings it back`() = runTest {
+        val e = env()
+        e.addSounding()
+        val before = e.session.timeline.value!!.audioLane.size
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.Detach))
+        e.overlays.single().attachedAudio shouldBe false
+        e.session.timeline.value!!.audioLane.size shouldBe before + 1
+        e.vm.onEvent(EditorEvent.Undo)
+        e.overlays.single().attachedAudio shouldBe true
+        e.session.timeline.value!!.audioLane.size shouldBe before
+    }
+
+    @Test
+    fun `sound can be turned on again for a silent overlay with sound in its video`() = runTest {
+        val e = env()
+        val id = e.addSounding()
+        e.session.apply(SetOverlaySound(id, false))
+        e.state.clipTools.contains(ClipTool.SoundOn) shouldBe true
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.SoundOn))
+        e.overlays.single().attachedAudio shouldBe true
+    }
+
+    @Test
+    fun `a preview that gives up overlay sound tells the user the export has it`() = runTest {
+        val e = env()
+        e.addSounding()
+        e.engine.dropOverlaySound()
+        e.state.message shouldBe "Overlay sound plays in the export, not in this preview"
     }
 }

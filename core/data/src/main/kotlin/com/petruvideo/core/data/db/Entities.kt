@@ -253,6 +253,11 @@ data class OverlayClipEntity(
     @ColumnInfo(defaultValue = "70") val maskSize: Int = MASK_SIZE_DEFAULT,
     @ColumnInfo(defaultValue = "20") val maskFeather: Int = MASK_FEATHER_DEFAULT,
     @ColumnInfo(defaultValue = "0") val maskInvert: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val attachedAudio: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val muted: Boolean = false,
+    @ColumnInfo(defaultValue = "100") val volumePercent: Int = 100,
+    @Embedded(prefix = "reverb_") val reverb: ReverbColumns = ReverbColumns(),
+    @Embedded(prefix = "fx_") val fx: AudioFxColumns = AudioFxColumns(),
 )
 
 /** One keyframe of an overlay or text clip; [ownerId] is the clip's id (the two lanes live in two tables). */

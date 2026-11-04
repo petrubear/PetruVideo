@@ -118,6 +118,7 @@ import com.petruvideo.core.model.engine.SetMuted
 import com.petruvideo.core.model.engine.SetNoiseReduction
 import com.petruvideo.core.model.engine.SetChromaKey
 import com.petruvideo.core.model.engine.SetOverlayMask
+import com.petruvideo.core.model.engine.SetOverlaySound
 import com.petruvideo.core.model.engine.VoiceSplitRules
 import com.petruvideo.core.model.engine.SplitVoice
 import com.petruvideo.core.model.engine.SetOverlayOpacity
@@ -328,6 +329,11 @@ class EditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             engine.state.map { it.error }.filterNotNull().distinctUntilChanged().collect { onPlaybackError() }
+        }
+        viewModelScope.launch {
+            engine.state.map { it.overlaySoundOff }.distinctUntilChanged().collect { off ->
+                if (off) say("Overlay sound plays in the export, not in this preview")
+            }
         }
     }
 
@@ -1143,13 +1149,12 @@ class EditorViewModel @Inject constructor(
     private fun startVoiceSplit(timeline: Timeline, clipId: String) {
         VoiceSplitRules.reasonNot(timeline, clipId)?.let { return say(it) }
         if (local.value.voiceSplit != null) return say("A voice split is already running")
-        val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return
-        val media = timeline.media[clip.mediaItemId] ?: return
         val snapshot = VoiceSplitRun.of(timeline, clipId) ?: return
+        val media = timeline.media[snapshot.mediaItemId] ?: return
         local.update { it.copy(voiceSplit = VoiceSplitRun(clipId, snapshot, 0)) }
         voiceSplitJob = viewModelScope.launch {
             try {
-                val stems = voiceSplitter.split(media, clip.sourceStartMs, clip.sourceEndMs) { percent ->
+                val stems = voiceSplitter.split(media, snapshot.sourceStartMs, snapshot.sourceEndMs) { percent ->
                     local.update { state -> state.copy(voiceSplit = state.voiceSplit?.copy(progress = percent)) }
                 }
                 // The run ends before the edit, so the edit is not mistaken for a change of the clip.
@@ -1498,7 +1503,8 @@ class EditorViewModel @Inject constructor(
             ClipTool.Speed, ClipTool.Volume -> openSheet(tool, timeline, selection)
             ClipTool.Audio -> openAudio(AudioToolKind.List)
             ClipTool.Split -> run(Split(id, engine.state.value.positionMs))
-            ClipTool.Detach -> run(DetachAudio(id))
+            ClipTool.Detach -> detach(id)
+            ClipTool.SoundOn -> run(SetOverlaySound(id, true))
             ClipTool.SplitVoice -> startVoiceSplit(timeline, id)
             ClipTool.Duplicate -> run(Duplicate(id))
             ClipTool.Delete -> run(Delete(id))
@@ -1521,11 +1527,23 @@ class EditorViewModel @Inject constructor(
         }
     }
 
+    private fun detach(id: String) {
+        val result = session.apply(DetachAudio(id))
+        when {
+            result is CommandResult.Rejected && result.reason == RejectReason.LimitReached ->
+                say("Up to 3 audio layers play together")
+            result is CommandResult.Applied && Notice.Snapped in result.notices ->
+                say("Audio moved to the next free spot")
+        }
+    }
+
     private fun toggleMute(timeline: Timeline, id: String) {
         val audio = timeline.audioLane.firstOrNull { it.id == id }
         val video = timeline.videoLane.firstOrNull { it.id == id }
+        val overlay = timeline.overlayLane.firstOrNull { it.id == id }
         when {
             audio != null -> run(SetMuted(id, !audio.muted))
+            overlay?.attachedAudio == true -> run(SetMuted(id, !overlay.muted))
             video?.attachedAudio == true -> run(SetVideoMuted(id, !video.muted))
             else -> say("This clip has no sound")
         }

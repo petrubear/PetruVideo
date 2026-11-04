@@ -113,4 +113,22 @@ class EditorViewModelVoiceSplitTest {
         e.state.message shouldBe "A voice split is already running"
         e.progress.size shouldBe 1
     }
+
+    @Test
+    fun `an overlay with sound splits its voice into Voice and Backing and goes silent`() = runTest {
+        val e = env()
+        val media = MediaItem(
+            "ovs", MediaKind.Video, "content://ovs", "pip.mp4", 6_000, 1280, 720, 30f, true,
+            Fingerprint(1, 1, 6_000, "video/mp4"),
+        )
+        e.vm.onEvent(EditorEvent.AddOverlayMedia(media))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.SplitVoice))
+        e.state.voiceSplitProgress shouldBe 0
+        e.result.complete(SplitStems(stem("voice"), stem("backing")))
+        e.audio.map { it.mediaItemId } shouldBe listOf("voice", "backing")
+        e.session.timeline.value!!.overlayLane.single().attachedAudio shouldBe false
+        e.vm.onEvent(EditorEvent.Undo)
+        e.audio shouldBe emptyList()
+        e.session.timeline.value!!.overlayLane.single().attachedAudio shouldBe true
+    }
 }

@@ -10,6 +10,13 @@ the commit `vX.Y.Z`.
 
 ## [Unreleased]
 
+## [0.4.0]
+
+### Added
+- Picture-in-picture videos now have sound. An overlay with a video that has sound is heard together with the base video and the other overlays, in the preview and in the export, so several instruments recorded on separate videos can play together.
+- Each overlay with sound has volume, mute, fade, noise reduction, equalizer, voice effects and reverb, plus Detach audio and Split voice, like a clip on the main lane. Overlays made before this version stay silent until you tap Sound on.
+- If the preview cannot play the overlay sound without stalling, it keeps the picture running without it and says so; the export always has it.
+
 ## [0.3.0]
 
 ### Added

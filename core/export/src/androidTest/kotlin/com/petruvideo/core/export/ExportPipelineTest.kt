@@ -119,6 +119,8 @@ class ExportPipelineTest {
 
     private val repo = Repo()
 
+    private val CLIP_LEVEL = 0.999
+
     private fun coordinator(saver: ExportSaver = GallerySaver(context)) =
         ExportCoordinator(TransformerRunner(context), saver, repo, encoders, { Long.MAX_VALUE }, cache, scope)
 
@@ -372,8 +374,52 @@ class ExportPipelineTest {
         check(three > two * 1.2f) { "three layers $three against two $two" }
     }
 
+    /** Feature 029 (T029): three loud overlays and the base mixed together must not hit the ceiling. */
+    @Test
+    fun threeLoudOverlaysMixedTogetherDoNotClip() {
+        val base = item("video_with_audio.mp4")
+        val clip = item("video_with_audio.mp4")
+        val overlays = (0 until 3).map {
+            OverlayClip("o$it", clip.id, 0, 1_500, 200L, xPermille = 250 + it * 250, attachedAudio = true)
+        }
+        val timeline = project(VideoClip("c1", base.id, 0, 2_000, true), media = listOf(base, clip))
+            .copy(overlayLane = overlays)
+        val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), "pipeline-overlay-mix")
+        state.shouldBeFinished()
+        audioRms(uri!!, listOf(300L to 1_500L))
+        println("overlay mix: peak=$lastPeak clipped=$lastClipped of $lastSamples")
+        check(lastClipped * 1000 <= lastSamples) { "clipped $lastClipped of $lastSamples samples, peak $lastPeak" }
+    }
+
+    /** Feature 029: the sound of an overlay is in the export, at its place, and follows its volume. */
+    @Test
+    fun aSoundingOverlayIsHeardInTheExportAtItsPlaceAndFollowsItsVolume() {
+        val base = item("video_silent.mp4")
+        val clip = item("video_with_audio.mp4")
+        fun level(volume: Int, name: String): List<Float> {
+            val overlay = OverlayClip("o", clip.id, 0, 1_500, 500, attachedAudio = true, volumePercent = volume)
+            val timeline = project(VideoClip("c1", base.id, 0, 2_500, false), media = listOf(base, clip))
+                .copy(overlayLane = listOf(overlay))
+            val (state, uri) = export(timeline, ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller), name)
+            state.shouldBeFinished()
+            return audioRms(uri!!, listOf(700L to 1_700L, 0L to 300L))
+        }
+        val full = level(100, "pipeline-overlay-sound-full")
+        val half = level(50, "pipeline-overlay-sound-half")
+        check(full[0] > 0.005f) { "no overlay sound: ${full[0]}" }
+        check(full[1] < full[0] * 0.1f) { "sound before the overlay starts: ${full[1]} against ${full[0]}" }
+        check(half[0] > full[0] * 0.35f && half[0] < full[0] * 0.65f) { "half volume ${half[0]} against ${full[0]}" }
+    }
+
     /** Decodes the audio track and returns the RMS (0..1) of each [windows] range in milliseconds. */
+    private var lastPeak = 0.0
+    private var lastClipped = 0L
+    private var lastSamples = 0L
+
     private fun audioRms(uri: String, windows: List<Pair<Long, Long>>): List<Float> {
+        lastPeak = 0.0
+        lastClipped = 0
+        lastSamples = 0
         val extractor = MediaExtractor().apply { setDataSource(context, Uri.parse(uri), null) }
         val track = (0 until extractor.trackCount).first {
             extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("audio/")
@@ -418,6 +464,9 @@ class ExportPipelineTest {
                     sample /= channels
                     windows.forEachIndexed { i, (from, to) ->
                         if (timeMs in from until to) {
+                            lastSamples++
+                            lastPeak = maxOf(lastPeak, kotlin.math.abs(sample))
+                            if (kotlin.math.abs(sample) >= CLIP_LEVEL) lastClipped++
                             sums[i] += sample * sample
                             counts[i]++
                         }

@@ -48,7 +48,10 @@ class AddOverlay(
             else -> minOf(media.durationMs ?: OVERLAY_DEFAULT_MS, OVERLAY_VIDEO_MAX_MS)
         }
         if (length < OVERLAY_MIN_MS) return CommandResult.Rejected(RejectReason.BelowMinimumLength)
-        val clip = OverlayClip(newId(), media.id, 0, length, atMs.coerceAtLeast(0))
+        val clip = OverlayClip(
+            newId(), media.id, 0, length, atMs.coerceAtLeast(0),
+            attachedAudio = media.kind == MediaKind.Video && media.hasAudio,
+        )
         val lane = (timeline.overlayLane + clip).sortedBy { it.startMs }
         return CommandResult.Applied(
             timeline.copy(media = timeline.media + (media.id to media), overlayLane = lane),
@@ -123,6 +126,22 @@ class SetChromaKey(clipId: String, private val chroma: ChromaKey) : OverlayComma
 }
 
 /** Sets the mask of the overlay (feature 024). */
+/** Turns the overlay's own sound on or off; on only when its video has a sound track (feature 029). */
+class SetOverlaySound(private val clipId: String, private val on: Boolean) : Command {
+    override fun apply(timeline: Timeline): CommandResult {
+        val index = timeline.overlayLane.indexOfFirst { it.id == clipId }
+        if (index < 0) return CommandResult.Rejected(RejectReason.NotFound)
+        val clip = timeline.overlayLane[index]
+        val media = timeline.media[clip.mediaItemId]
+        if (on && (media?.kind != MediaKind.Video || !media.hasAudio)) {
+            return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        }
+        if (clip.attachedAudio == on) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.overlayLane.toMutableList().also { it[index] = clip.copy(attachedAudio = on) }
+        return CommandResult.Applied(timeline.copy(overlayLane = lane), if (on) "Sound on" else "Sound off")
+    }
+}
+
 class SetOverlayMask(clipId: String, private val mask: OverlayMask) : OverlayCommand(clipId, "Overlay mask") {
     override fun next(clip: OverlayClip, media: MediaItem?) = clip.copy(mask = mask.normalized())
 }

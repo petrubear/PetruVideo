@@ -10,7 +10,7 @@ import com.petruvideo.core.model.NoiseReduction
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VoiceFx
 
-/** Changes one part of a clip's [AudioFx]; only for clips with sound. */
+/** Changes one part of a clip's [AudioFx]; only for video, overlay, and audio clips with sound. */
 abstract class AudioFxCommand internal constructor(
     private val clipId: String,
     private val label: String,
@@ -21,22 +21,39 @@ abstract class AudioFxCommand internal constructor(
 
     override fun apply(timeline: Timeline): CommandResult {
         val videoIndex = timeline.videoLane.indexOfFirst { it.id == clipId }
-        if (videoIndex >= 0) {
-            val clip = timeline.videoLane[videoIndex]
-            val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
-            if (photo || !clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
-            val fx = next(clip.fx, clip.lengthMs)
-            if (fx == clip.fx) return CommandResult.Rejected(RejectReason.OutOfRange)
-            val lane = timeline.videoLane.toMutableList().also { it[videoIndex] = clip.copy(fx = fx) }
-            return CommandResult.Applied(timeline.copy(videoLane = lane), label, notices(fx))
-        }
+        if (videoIndex >= 0) return applyToVideo(timeline, videoIndex)
+        val overlayIndex = timeline.overlayLane.indexOfFirst { it.id == clipId }
+        if (overlayIndex >= 0) return applyToOverlay(timeline, overlayIndex)
         val audioIndex = timeline.audioLane.indexOfFirst { it.id == clipId }
         if (audioIndex < 0) return CommandResult.Rejected(RejectReason.NotFound)
-        val clip = timeline.audioLane[audioIndex]
+        return applyToAudio(timeline, audioIndex)
+    }
+
+    private fun applyToVideo(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.videoLane[index]
+        val photo = timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo
+        if (photo || !clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
         val fx = next(clip.fx, clip.lengthMs)
         if (fx == clip.fx) return CommandResult.Rejected(RejectReason.OutOfRange)
-        val lane = timeline.audioLane.toMutableList().also { it[audioIndex] = clip.copy(fx = fx) }
+        val lane = timeline.videoLane.toMutableList().also { it[index] = clip.copy(fx = fx) }
+        return CommandResult.Applied(timeline.copy(videoLane = lane), label, notices(fx))
+    }
+
+    private fun applyToAudio(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.audioLane[index]
+        val fx = next(clip.fx, clip.lengthMs)
+        if (fx == clip.fx) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.audioLane.toMutableList().also { it[index] = clip.copy(fx = fx) }
         return CommandResult.Applied(timeline.copy(audioLane = lane), label, notices(fx))
+    }
+
+    private fun applyToOverlay(timeline: Timeline, index: Int): CommandResult {
+        val clip = timeline.overlayLane[index]
+        if (!clip.attachedAudio) return CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        val fx = next(clip.fx, clip.durationMs)
+        if (fx == clip.fx) return CommandResult.Rejected(RejectReason.OutOfRange)
+        val lane = timeline.overlayLane.toMutableList().also { it[index] = clip.copy(fx = fx) }
+        return CommandResult.Applied(timeline.copy(overlayLane = lane), label, notices(fx))
     }
 }
 

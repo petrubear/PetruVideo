@@ -46,6 +46,7 @@ enum class ClipTool(val label: String, val active: Boolean) {
     Duplicate("Duplicate", true),
     Delete("Delete", true),
     Mute("Mute", true),
+    SoundOn("Sound on", true),
     Reverb("Reverb", true),
     Replace("Replace", true),
     TextEdit("Edit", true),

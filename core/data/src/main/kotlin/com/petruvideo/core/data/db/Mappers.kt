@@ -225,6 +225,8 @@ fun OverlayClipEntity.toModel() =
         mask = OverlayMask(
             MaskKind.entries.firstOrNull { it.name == maskKind } ?: MaskKind.None, maskSize, maskFeather, maskInvert,
         ),
+        attachedAudio = attachedAudio, muted = muted, volumePercent = volumePercent,
+        reverb = reverb.toModel(), fx = fx.toModel(),
     )
 
 fun OverlayClip.toEntity(projectId: String) =
@@ -233,6 +235,7 @@ fun OverlayClip.toEntity(projectId: String) =
         xPermille, yPermille, widthPermille, opacityPercent,
         chroma.enabled, chroma.color, chroma.strength, chroma.smoothness, chroma.spill,
         mask.kind.name, mask.size, mask.feather, mask.invert,
+        attachedAudio, muted, volumePercent, reverb.toColumns(), fx.toColumns(),
     )
 
 fun TransitionColumns.toModel(): Transition? =

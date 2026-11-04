@@ -107,4 +107,45 @@ class OverlayPlaybackTest {
         waitFor { engine.state.value.ended }
         engine.state.value.error shouldBe null
     }
+
+    @Test
+    fun aSoundingOverlayPlaysToTheEndAndItsVolumeChangesLive() {
+        val base = item("video_silent.mp4")
+        val clip = item("video_with_audio.mp4")
+        val overlay = OverlayClip("o3", clip.id, 0, 1_500, 400, attachedAudio = true)
+        onMain { engine.load(project(base, listOf(clip), overlay), PreviewQuality.Full) }
+        onMain { engine.play() }
+        onMain { engine.setClipVolumeLive("o3", 50) }
+        waitFor { engine.state.value.ended }
+        engine.state.value.error shouldBe null
+        (engine.gainOf("o3") != null) shouldBe true
+    }
+
+    /** The case that froze the picture on the phone's hardware decoders: several clips with overlays. */
+    @Test
+    fun threeSoundingOverlaysOverSeveralClipsPlayToTheEndWithoutStalling() {
+        val base = item("video_silent.mp4")
+        val clip = item("video_with_audio.mp4")
+        val overlays = (0 until 3).map {
+            OverlayClip("s$it", clip.id, 0, 1_500, it * 1_500L, xPermille = 250 + it * 250, attachedAudio = true)
+        }
+        val timeline = project(base, listOf(clip)).copy(
+            videoLane = (0 until 3).map { VideoClip("c$it", base.id, 0, 2_000, attachedAudio = false) },
+            overlayLane = overlays,
+        )
+        onMain { engine.load(timeline, PreviewQuality.Full) }
+        onMain { engine.play() }
+        var last = -1L
+        var stalledSince = System.currentTimeMillis()
+        waitFor(60_000) {
+            val now = engine.state.value.positionMs
+            if (now != last) {
+                last = now
+                stalledSince = System.currentTimeMillis()
+            }
+            check(System.currentTimeMillis() - stalledSince < 5_000) { "position stuck at $last ms" }
+            engine.state.value.ended
+        }
+        engine.state.value.error shouldBe null
+    }
 }

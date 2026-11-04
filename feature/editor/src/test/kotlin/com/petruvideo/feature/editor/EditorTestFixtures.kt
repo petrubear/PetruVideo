@@ -50,6 +50,10 @@ class FakePreviewEngine : PreviewEngine {
     fun fail(message: String) {
         _state.value = _state.value.copy(error = message)
     }
+    fun dropOverlaySound() {
+        _state.value = _state.value.copy(overlaySoundOff = true)
+    }
+
     val loads = mutableListOf<Pair<Timeline, PreviewQuality>>()
     val calls = mutableListOf<String>()
     var released = false

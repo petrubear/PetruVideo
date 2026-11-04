@@ -5,11 +5,15 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.petruvideo.core.data.db.PetruDatabase
 import com.petruvideo.core.model.AudioClip
+import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.Fingerprint
 import com.petruvideo.core.model.MediaItem
+import com.petruvideo.core.model.Fade
 import com.petruvideo.core.model.MediaKind
+import com.petruvideo.core.model.OverlayClip
+import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ProjectFormat
 import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.Timeline
@@ -99,6 +103,18 @@ class RoomProjectRepositoryTest {
 
         repo.observeProjects(query = "road").first().map { it.project.id } shouldContainExactly listOf(a.id)
         repo.observeProjects(query = "zzz").first() shouldBe emptyList()
+    }
+
+    @Test
+    fun anOverlaysSoundSettingsRoundTrip() = runBlocking<Unit> {
+        val p = repo.createProject()
+        val overlay = OverlayClip(
+            "o1", "m2", 0, 3_000, 500, attachedAudio = true, muted = true, volumePercent = 60,
+            reverb = Reverb(enabled = true, mix = 45), fx = AudioFx(fade = Fade(300, 200)),
+        )
+        repo.saveTimeline(p.id, timeline(p.id).copy(overlayLane = listOf(overlay)))
+
+        repo.loadProject(p.id)!!.timeline.overlayLane shouldBe listOf(overlay)
     }
 
     @Test

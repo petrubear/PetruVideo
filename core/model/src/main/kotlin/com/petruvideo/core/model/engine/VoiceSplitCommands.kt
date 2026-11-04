@@ -17,6 +17,13 @@ private fun newId() = UUID.randomUUID().toString()
 /** Why the voice of the video clip [clipId] cannot be split, or null when it can. */
 object VoiceSplitRules {
     fun reasonNot(timeline: Timeline, clipId: String): String? {
+        timeline.overlayLane.firstOrNull { it.id == clipId }?.let { overlay ->
+            return when {
+                !overlay.attachedAudio -> "No sound in this clip"
+                overlay.durationMs > VOICE_SPLIT_MAX_MS -> "Works on clips up to 5 minutes"
+                else -> null
+            }
+        }
         val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return "Select a clip"
         return when {
             !clip.attachedAudio -> "No sound in this clip"
@@ -41,6 +48,7 @@ class SplitVoice(
 ) : Command {
     override fun apply(timeline: Timeline): CommandResult {
         val index = timeline.videoLane.indexOfFirst { it.id == videoClipId }
+        if (index < 0) return splitOverlay(timeline)
         val clip = timeline.videoLane.getOrNull(index) ?: return CommandResult.Rejected(RejectReason.NotFound)
         refusal(timeline, clip)?.let { return CommandResult.Rejected(it) }
         val start = timeline.videoStartOf(clip.id) ?: return CommandResult.Rejected(RejectReason.NotFound)
@@ -72,6 +80,51 @@ class SplitVoice(
         return CommandResult.Applied(
             timeline = timeline.copy(
                 videoLane = video,
+                media = timeline.media + (voice.id to voice) + (backing.id to backing),
+                audioLane = lane.sortedBy { it.timelineStartMs },
+            ),
+            label = "Split voice",
+        )
+    }
+
+    /** From an overlay: the stems play for the overlay's length at its start, with its volume, reverb, and effects. */
+    private fun splitOverlay(timeline: Timeline): CommandResult {
+        val index = timeline.overlayLane.indexOfFirst { it.id == videoClipId }
+        val clip = timeline.overlayLane.getOrNull(index) ?: return CommandResult.Rejected(RejectReason.NotFound)
+        val refused = when {
+            !clip.attachedAudio -> RejectReason.NoAttachedAudio
+            timeline.media[clip.mediaItemId]?.availability == Availability.Missing -> RejectReason.MissingMedia
+            VoiceSplitRules.reasonNot(timeline, clip.id) != null -> RejectReason.OutOfRange
+            listOf(voice, backing).any { it.kind != MediaKind.Audio || it.availability == Availability.Missing } ->
+                RejectReason.MissingMedia
+            else -> null
+        }
+        if (refused != null) return CommandResult.Rejected(refused)
+        fun stem(media: MediaItem) = AudioClip(
+            id = newClipId(),
+            mediaItemId = media.id,
+            sourceStartMs = 0,
+            sourceEndMs = minOf(clip.durationMs, media.durationMs ?: clip.durationMs),
+            timelineStartMs = clip.startMs,
+            muted = clip.muted,
+            origin = AudioOrigin.Detached,
+            volumePercent = clip.volumePercent,
+            reverb = clip.reverb,
+            fx = clip.fx,
+        )
+        var lane = timeline.audioLane
+        for (added in listOf(stem(voice), stem(backing))) {
+            if (!AudioPlacement.fits(lane, added.timelineStartMs, added.lengthMs)) {
+                return CommandResult.Rejected(RejectReason.LimitReached)
+            }
+            lane = lane + added
+        }
+        val overlays = timeline.overlayLane.toMutableList().also {
+            it[index] = clip.copy(attachedAudio = false, muted = false)
+        }
+        return CommandResult.Applied(
+            timeline = timeline.copy(
+                overlayLane = overlays,
                 media = timeline.media + (voice.id to voice) + (backing.id to backing),
                 audioLane = lane.sortedBy { it.timelineStartMs },
             ),

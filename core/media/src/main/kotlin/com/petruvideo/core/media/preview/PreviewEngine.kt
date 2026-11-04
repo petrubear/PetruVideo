@@ -20,6 +20,8 @@ data class PreviewState(
     val ended: Boolean = false,
     /** Set when playback stopped because it cannot continue (e.g. under heavy pressure); cleared on next play. */
     val error: String? = null,
+    /** The preview gave up playing the sound of overlays because the picture stalled; the export still has it. */
+    val overlaySoundOff: Boolean = false,
 )
 
 /**
