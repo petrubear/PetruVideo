@@ -15,6 +15,7 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.ClipEffect
 import com.petruvideo.core.model.EFFECT_MAX
+import com.petruvideo.core.model.EffectKind
 import com.petruvideo.core.model.ClipFilter
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.engine.RemoveTransition
@@ -1068,6 +1069,8 @@ class EditorViewModel @Inject constructor(
         val result = session.apply(SetClipEffect(id, effect.kind, effect.strength))
         if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
             say(UiText.Res(R.string.editor_effect_limit, EFFECT_MAX))
+        } else if (result is CommandResult.Applied && effect.kind in FLASHING_EFFECTS && effect.strength > 0) {
+            say(UiText.Res(R.string.editor_flashing_lights_notice))
         }
         session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.effects
             ?.forEach { engine.setClipEffectLive(id, it) }
@@ -1721,6 +1724,9 @@ class EditorViewModel @Inject constructor(
 
 
     private companion object {
+        /** Effects that blink the picture; applying one shows a notice about flashing lights. */
+        val FLASHING_EFFECTS = setOf(EffectKind.Flash, EffectKind.Strobe)
+
         val CHANGED_MESSAGE = UiText.Res(R.string.editor_split_cancelled_because_the_clip)
 
         val VOICE_OVER_EVENTS = setOf<EditorEvent>(

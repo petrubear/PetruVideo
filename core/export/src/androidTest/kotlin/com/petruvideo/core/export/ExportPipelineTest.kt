@@ -848,9 +848,16 @@ class ExportPipelineTest {
     }
 
     @Test
-    fun transitionsBlendTheTwoClipsAndShortenTheProject() {
+    fun transitionsBlendTheTwoClipsAndShortenTheProject() = checkTransitions(TransitionKind.entries, blueMin = 150)
+
+    /** The ten transitions of feature 035, with a little more room for the colors a phone's encoder shifts. */
+    @Test
+    fun theNewTransitionsExportAndEndOnTheSecondClip() =
+        checkTransitions(TransitionKind.entries.drop(5), blueMin = 120)
+
+    private fun checkTransitions(kinds: List<TransitionKind>, blueMin: Int) {
         val settings = ExportSettings(Resolution.R720, FrameRate.F30, Quality.Smaller)
-        for (kind in TransitionKind.entries) {
+        for (kind in kinds) {
             val (timeline, _, _) = twoPhotos(kind)
             val (state, uri) = export(timeline, settings, "pipeline-tr-${kind.name}")
             check(state is ExportState.Finished) { "$kind export: $state" }
@@ -859,7 +866,7 @@ class ExportPipelineTest {
             val early = meanRgb(frameAt(uri, 1_000), 0f, 1f)
             val late = meanRgb(frameAt(uri, 4_000), 0f, 1f)
             check(early[0] > 70 && early[2] < 30) { "$kind: first clip not brown before the transition ${early.toList()}" }
-            check(late[2] > 150 && late[0] < 30) { "$kind: second clip not blue after the transition ${late.toList()}" }
+            check(late[2] > blueMin && late[0] < 30) { "$kind: second clip not blue after the transition ${late.toList()}" }
             val mid = frameAt(uri, 2_500)
             val all = meanRgb(mid, 0f, 1f)
             val left = meanRgb(mid, 0f, 0.4f)
@@ -869,8 +876,17 @@ class ExportPipelineTest {
                 TransitionKind.Dissolve, TransitionKind.Zoom ->
                     check(all[0] in 20..75 && all[2] in 40..130) { "not a blend: $msg" }
                 TransitionKind.FadeBlack -> check(all.max() < 25) { "not black in the middle: $msg" }
-                TransitionKind.Slide, TransitionKind.Cover ->
+                TransitionKind.Slide, TransitionKind.Cover, TransitionKind.WhipPan ->
                     check(left[0] > 80 && left[2] < 40 && right[2] > 100 && right[0] < 40) { "not a side by side: $msg" }
+                TransitionKind.PushRight ->
+                    check(left[2] > 100 && left[0] < 40 && right[0] > 80 && right[2] < 40) { "not pushed right: $msg" }
+                TransitionKind.PushUp, TransitionKind.PushDown ->
+                    check(left[0] in 30..100 && right[0] in 30..100 && left[2] in 50..150) { "not a vertical push: $msg" }
+                TransitionKind.TiltSlide ->
+                    check(left[0] > left[2] && right[2] > right[0]) { "not a tilted side by side: $msg" }
+                TransitionKind.Flip, TransitionKind.DipZoom -> check(all.max() < 40) { "not dark in the middle: $msg" }
+                TransitionKind.Spin, TransitionKind.ZoomOut, TransitionKind.Drop ->
+                    check(!(all[0] > 110 && all[2] < 30) && !(all[2] > 170 && all[0] < 30)) { "not moving: $msg" }
             }
         }
     }

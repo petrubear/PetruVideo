@@ -13,6 +13,18 @@ enum class TransitionKind {
     Slide,
     Cover,
     Zoom,
+
+    // Added in feature 035; appended so the five above keep their place.
+    Spin,
+    Flip,
+    PushUp,
+    PushDown,
+    PushRight,
+    ZoomOut,
+    WhipPan,
+    Drop,
+    DipZoom,
+    TiltSlide,
 }
 
 /** A blend between a clip and the next one; the next clip starts [lengthMs] earlier. */
@@ -31,6 +43,18 @@ enum class EffectKind {
     Glow,
     Vhs,
     Grain,
+
+    // Added in feature 035; appended so the nine above keep their place.
+    ZoomPulse,
+    Flash,
+    LightLeak,
+    Letterbox,
+    ZoomBlur,
+    Fisheye,
+    Ripple,
+    Strobe,
+    OldFilm,
+    Cartoon,
 }
 
 data class ClipEffect(val kind: EffectKind, val strength: Int = EFFECT_STRENGTH_DEFAULT) {

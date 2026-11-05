@@ -403,4 +403,5 @@
     <string name="editor_ratio">Ratio</string>
     <string name="editor_attack">Attack</string>
     <string name="editor_release">Release</string>
+    <string name="editor_flashing_lights_notice">Flashing lights: this effect may be uncomfortable for people sensitive to flicker.</string>
 </resources>

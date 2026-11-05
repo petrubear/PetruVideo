@@ -12,6 +12,16 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-05
+
+### Added
+- Ten new picture effects: Zoom pulse, Flash, Light leak, Letterbox, Zoom blur, Fisheye, Ripple, Strobe, Old film and Cartoon. They appear after the existing nine in the Effects tool, have a strength from 0 to 100, stack with the others, and are seen live in the preview and rendered by export. Flash and Strobe show a notice about flashing lights and never blink more than three times a second.
+- Ten new transitions: Spin, Flip, Push up, Push down, Push right, Zoom out, Whip pan, Drop, Dip zoom and Tilt slide. They appear after the existing five and work like them: the export shows the transition and the preview keeps cutting between the clips.
+- All of the new names are available in English and Spanish.
+
+### Changed
+- Nothing existing changes: the nine effects, the five transitions and every saved project look and export as before. A project that uses a kind a build does not know opens and ignores it.
+
 ## [0.8.0] - 2026-11-05
 
 ### Added

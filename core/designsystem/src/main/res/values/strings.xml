@@ -93,4 +93,24 @@
     <string name="compressor_Podcast">Podcast</string>
     <string name="compressor_Punchy">Punchy</string>
     <string name="compressor_Custom">Custom</string>
+    <string name="effect_ZoomPulse">Zoom pulse</string>
+    <string name="effect_Flash">Flash</string>
+    <string name="effect_LightLeak">Light leak</string>
+    <string name="effect_Letterbox">Letterbox</string>
+    <string name="effect_ZoomBlur">Zoom blur</string>
+    <string name="effect_Fisheye">Fisheye</string>
+    <string name="effect_Ripple">Ripple</string>
+    <string name="effect_Strobe">Strobe</string>
+    <string name="effect_OldFilm">Old film</string>
+    <string name="effect_Cartoon">Cartoon</string>
+    <string name="transition_Spin">Spin</string>
+    <string name="transition_Flip">Flip</string>
+    <string name="transition_PushUp">Push up</string>
+    <string name="transition_PushDown">Push down</string>
+    <string name="transition_PushRight">Push right</string>
+    <string name="transition_ZoomOut">Zoom out</string>
+    <string name="transition_WhipPan">Whip pan</string>
+    <string name="transition_Drop">Drop</string>
+    <string name="transition_DipZoom">Dip zoom</string>
+    <string name="transition_TiltSlide">Tilt slide</string>
 </resources>

@@ -403,4 +403,5 @@
     <string name="editor_ratio">Relación</string>
     <string name="editor_attack">Ataque</string>
     <string name="editor_release">Liberación</string>
+    <string name="editor_flashing_lights_notice">Luces parpadeantes: este efecto puede resultar incómodo para personas sensibles al parpadeo.</string>
 </resources>

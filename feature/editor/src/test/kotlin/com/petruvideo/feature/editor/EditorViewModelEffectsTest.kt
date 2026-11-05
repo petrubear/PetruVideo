@@ -118,4 +118,20 @@ class EditorViewModelEffectsTest {
         e.vm.onEvent(EditorEvent.EffectRemove(EffectKind.Glow))
         e.lane[1].effects.map { it.kind } shouldBe listOf(EffectKind.Blur, EffectKind.Grain)
     }
+
+    @Test
+    fun `flashing effects show a notice and the others do not`() = runTest {
+        val e = env()
+        e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
+        e.vm.onEvent(EditorEvent.UseTool(ClipTool.EffectFx))
+        e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Cartoon, 40)))
+        e.state.message shouldBe null
+        e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Strobe, 40)))
+        e.state.message shouldBe UiText.Res(R.string.editor_flashing_lights_notice)
+        e.vm.onEvent(EditorEvent.DismissMessage)
+        e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Flash, 0)))
+        e.state.message shouldBe null
+        e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Flash, 60)))
+        e.state.message shouldBe UiText.Res(R.string.editor_flashing_lights_notice)
+    }
 }

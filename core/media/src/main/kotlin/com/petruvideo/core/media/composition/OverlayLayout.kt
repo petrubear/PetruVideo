@@ -9,7 +9,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.StaticOverlaySettings
 import com.petruvideo.core.model.OverlayClip
 import com.petruvideo.core.model.TEXT_PERMILLE
-import com.petruvideo.core.model.TransitionKind
 
 /**
  * Where each overlay sequence is drawn over the main video: the center, the width as a share of the frame width, and
@@ -71,40 +70,28 @@ class OverlayLayout(
         val p = (timeMs - window.startMs).toFloat() / (window.endMs - window.startMs)
         val outgoing = inputId == window.from
         val onTop = inputId == minOf(window.from, window.to)
-        val own = if (outgoing) 1f - p else p
-        return when (window.kind) {
-            TransitionKind.Dissolve -> placed(inputId, if (onTop) own else 1f, 0f, 0f, 1f)
-            TransitionKind.FadeBlack -> placed(
-                inputId,
-                (if (outgoing) 1f - 2f * p else 2f * p - 1f).coerceAtLeast(0f), 0f, 0f, 1f,
-            )
-            TransitionKind.Slide -> placed(inputId, 1f, if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f)
-            TransitionKind.Cover -> placed(
-                inputId, 1f, if (!onTop) 0f else if (outgoing) -2f * p else 2f * (1f - p), 0f, 1f,
-            )
-            TransitionKind.Zoom -> placed(
-                inputId,
-                if (onTop) own else 1f, 0f, 0f, 1f + ZOOM_SPAN * (if (outgoing) p else 1f - p),
-            )
-        }
+        return placed(inputId, TransitionPoses.of(window.kind, p, outgoing, onTop))
     }
 
-    /** Full-frame settings for a main input: [alpha], the center moved by ([x], [y]) in frame halves, and [zoom]. */
-    private fun placed(inputId: Int, alpha: Float, x: Float, y: Float, zoom: Float): OverlaySettings {
+    /** Full-frame settings for a main input that is shown as [alpha] and not moved or resized. */
+    private fun placed(inputId: Int, alpha: Float, x: Float, y: Float, zoom: Float): OverlaySettings =
+        placed(inputId, TransitionPose(alpha, x, y, zoom))
+
+    /** Full-frame settings for a main input drawn as [pose]. */
+    private fun placed(inputId: Int, pose: TransitionPose): OverlaySettings {
         // The input's own size: the other main input may be a 16 by 16 gap while this one plays.
         val own = inputSizes.getOrNull(inputId)?.width?.takeIf { it > 0 } ?: frameWidth
-        val scale = zoom * frameWidth / own
+        val fit = frameWidth.toFloat() / own
         return object : OverlaySettings {
-            override fun getAlphaScale() = alpha
-            override fun getBackgroundFrameAnchor(): Pair<Float, Float> = Pair(x, y)
+            override fun getAlphaScale() = pose.alpha
+            override fun getBackgroundFrameAnchor(): Pair<Float, Float> = Pair(pose.x, pose.y)
             override fun getOverlayFrameAnchor(): Pair<Float, Float> = Pair(0f, 0f)
-            override fun getScale(): Pair<Float, Float> = Pair(scale, scale)
+            override fun getScale(): Pair<Float, Float> = Pair(pose.zoomX * fit, pose.zoomY * fit)
+            override fun getRotationDegrees() = pose.rotationDegrees
         }
     }
 
     private companion object {
-        const val ZOOM_SPAN = 0.3f
-
         const val PERCENT = 100f
         const val MICROS_PER_MS = 1_000L
     }
