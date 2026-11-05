@@ -12,6 +12,12 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-05
+
+### Changed
+- Debug builds now install beside the signed release (as `com.petruvideo.debug`) instead of trying to replace it, so testing a build no longer removes the app and its data.
+- The device tests now pass on a physical phone: the export tests judge effects at higher quality and the size estimate as an upper bound, the microphone test declares its permission, and the text fingerprint test runs only on the emulator whose fonts it was recorded with.
+
 ## [0.10.0] - 2026-11-05
 
 ### Added

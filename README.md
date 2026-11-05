@@ -18,14 +18,15 @@ To check the download, compare `sha256sum PetruVideo-X.Y.Z.apk` with the `.sha25
 - **Projects**: create, duplicate, and reopen projects; media is referenced in place and the originals are never changed.
 - **Timeline**: trim, split, duplicate, reorder, and delete clips, with undo and redo.
 - **Speed**: constant speed, speed ramps (curve editor), reverse, and freeze frame.
-- **Picture**: filters and looks, adjustments (brightness, contrast, exposure, gamma, highlights, shadows, saturation, warmth, tint, hue, sharpen, vignette), up to three stacked effects per clip (Blur, Pixelate, Mirror, Shake, Glitch, RGB split, Glow, VHS, Grain), transitions, transform (turn, mirror, crop), and canvas background (colour or blur).
+- **Picture**: filters and looks, adjustments (brightness, contrast, exposure, gamma, highlights, shadows, saturation, warmth, tint, hue, sharpen, vignette), up to three stacked effects per clip (19 effects, from Blur, Glitch and VHS to Fisheye, Old film and Cartoon), 15 transitions, transform (turn, mirror, crop), and canvas background (colour or blur).
 - **Keyframes**: zoom, pan, and fade over time for video, overlays, and text.
 - **Overlays**: picture in picture with opacity, chroma key, and shape masks (circle, rectangle, linear).
-- **Text and stickers**: styled text with animations, stickers and shapes, and auto captions from the on-device speech recogniser.
-- **Audio**: volume, mute, detach, split voice into voice and backing stems, up to three overlapping audio layers, music, voice-over recording, reverb, noise reduction, equaliser, voice effects, and audio ducking.
+- **Text and stickers**: styled text with animations, rotation, shadow, letter and line spacing, stickers and shapes, and auto captions from the on-device speech recogniser.
+- **Audio**: volume, mute, detach, split voice into voice and backing stems, up to three overlapping audio layers, music, voice-over recording, reverb, noise reduction, equaliser, compressor, voice effects, and audio ducking.
 - **Templates** for quick starts.
 - **Export**: 720p to 4K at 24 to 60 fps, saved to `Movies/PetruVideo`, with an exports list.
 - **Foldables**: portrait, unfolded, and tabletop layouts.
+- **Theme**: follow the phone's light or dark setting, or choose Light or Dark in Settings.
 - **Languages**: English and Spanish, following the phone's language (per-app language on Android 13 and newer). Translation rules are in [docs/glossary-es.md](docs/glossary-es.md); every text lives in string resources and the build checks it.
 
 ## Build
@@ -33,7 +34,7 @@ To check the download, compare `sha256sum PetruVideo-X.Y.Z.apk` with the `.sha25
 Requirements: JDK 17 or newer and the Android SDK (set `sdk.dir` in `local.properties`).
 
 ```bash
-./gradlew :app:installDebug      # build and install on a connected device
+./gradlew :app:installDebug      # build and install on a connected device (as com.petruvideo.debug, beside the release)
 ./gradlew testDebugUnitTest      # unit tests
 ./gradlew verifyPaparazziDebug   # screenshot tests
 ./gradlew detekt lintDebug       # static checks
