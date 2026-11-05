@@ -7,6 +7,7 @@ import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextFont
 import com.petruvideo.core.model.TextOutline
 import com.petruvideo.core.model.TextStyle
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.nio.ByteBuffer
 import java.security.MessageDigest
@@ -44,6 +45,8 @@ class TextRendererFingerprintTest {
 
     @Test
     fun defaultTextRendersExactlyAsBefore() {
+        // The hashes were recorded with the emulator's fonts; another maker's fonts draw the same text differently.
+        assumeTrue("pinned to the emulator's fonts", android.os.Build.FINGERPRINT.contains("generic") || android.os.Build.HARDWARE.contains("ranchu"))
         val actual = samples.mapValues { (_, clip) -> fingerprint(TextRenderer.render(clip, 1280, 720)) }
         val expected = EXPECTED
         check(actual == expected) { "fingerprints: $actual" }
