@@ -39,6 +39,9 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
 import com.petruvideo.core.model.VoiceFx
+import com.petruvideo.core.model.Compressor
+import com.petruvideo.core.model.CompressorPreset
+import com.petruvideo.core.model.CompressorPresets
 import com.petruvideo.core.model.ChromaKey
 import com.petruvideo.core.model.OverlayMask
 import com.petruvideo.core.model.Keyframes
@@ -109,6 +112,7 @@ import com.petruvideo.core.model.engine.RemoveFilter
 import com.petruvideo.core.model.engine.RemoveMissingMedia
 import com.petruvideo.core.model.engine.ReplaceAudio
 import com.petruvideo.core.model.engine.ResetFilterAdjustments
+import com.petruvideo.core.model.engine.SetCompressor
 import com.petruvideo.core.model.engine.SetEqualizer
 import com.petruvideo.core.model.engine.SetFade
 import com.petruvideo.core.model.engine.SetFilterAdjustments
@@ -1416,6 +1420,7 @@ class EditorViewModel @Inject constructor(
             SetFade(id, fx.fade).takeIf { fx.fade != current.fade },
             SetNoiseReduction(id, fx.noise).takeIf { fx.noise != current.noise },
             SetEqualizer(id, fx.eq).takeIf { fx.eq != current.eq },
+            SetCompressor(id, fx.compressor).takeIf { fx.compressor != current.compressor },
             SetVoiceFx(id, fx.voice).takeIf { fx.voice != current.voice },
         )
         var applied = false
@@ -1429,6 +1434,12 @@ class EditorViewModel @Inject constructor(
         if (!applied) restoreLiveFx(id)
     }
 
+    /** Back to the chosen preset (Voice when it is Custom), keeping the compressor on or off. */
+    private fun resetCompressor(current: Compressor): Compressor {
+        val preset = current.preset.takeIf { it != CompressorPreset.Custom } ?: CompressorPreset.Voice
+        return CompressorPresets.settings(preset, current.enabled)
+    }
+
     private fun resetFx(kind: AudioToolKind) {
         val id = selectedClipId() ?: return
         val current = session.timeline.value?.let { soundClip(it, id)?.first } ?: return
@@ -1437,6 +1448,7 @@ class EditorViewModel @Inject constructor(
                 AudioToolKind.Fade -> current.copy(fade = Fade())
                 AudioToolKind.Noise -> current.copy(noise = NoiseReduction())
                 AudioToolKind.Eq -> current.copy(eq = Equalizer())
+                AudioToolKind.Compressor -> current.copy(compressor = resetCompressor(current.compressor))
                 AudioToolKind.Voice -> current.copy(voice = VoiceFx())
                 AudioToolKind.List, AudioToolKind.Ducking -> current
             },

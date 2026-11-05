@@ -195,7 +195,10 @@ data class EffectColumns(
     @ColumnInfo(defaultValue = "50") val strength: Int = 50,
 )
 
-/** A clip's fade, noise reduction, equalizer and voice effects as columns `fx_fadeInMs`, `fx_nrEnabled`, and so on. */
+/**
+ * A clip's fade, noise reduction, equalizer, compressor and voice effects as columns `fx_fadeInMs`,
+ * `fx_nrEnabled`, and so on.
+ */
 data class AudioFxColumns(
     @ColumnInfo(defaultValue = "0") val fadeInMs: Long = 0,
     @ColumnInfo(defaultValue = "0") val fadeOutMs: Long = 0,
@@ -213,6 +216,13 @@ data class AudioFxColumns(
     @ColumnInfo(defaultValue = "4") val pitchSemitones: Int = 4,
     @ColumnInfo(defaultValue = "0") val bassEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "50") val bassAmount: Int = 50,
+    @ColumnInfo(defaultValue = "0") val cmpEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "'Voice'") val cmpPreset: String = "Voice",
+    @ColumnInfo(defaultValue = "-22") val cmpThreshold: Int = -22,
+    @ColumnInfo(defaultValue = "49") val cmpRatioTenths: Int = 49,
+    @ColumnInfo(defaultValue = "10") val cmpAttackMs: Int = 10,
+    @ColumnInfo(defaultValue = "120") val cmpReleaseMs: Int = 120,
+    @ColumnInfo(defaultValue = "2") val cmpLevel: Int = 2,
 )
 
 @Entity(

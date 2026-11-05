@@ -395,4 +395,12 @@
     <string name="editor_label_percent">%1$s, %2$d por ciento</string>
     <string name="editor_name_missing">Falta %1$s</string>
     <string name="editor_name_and_more_missing">Faltan %1$s y %2$d más</string>
+    <string name="editor_compressor">Compresor</string>
+    <string name="editor_level">Nivel</string>
+    <string name="editor_advanced">Avanzado</string>
+    <string name="editor_hide_advanced">Ocultar avanzado</string>
+    <string name="editor_threshold">Umbral</string>
+    <string name="editor_ratio">Relación</string>
+    <string name="editor_attack">Ataque</string>
+    <string name="editor_release">Liberación</string>
 </resources>

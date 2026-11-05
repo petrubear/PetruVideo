@@ -19,6 +19,8 @@ import com.petruvideo.core.model.TransitionKind
 import com.petruvideo.core.model.DuckSmoothness
 import com.petruvideo.core.model.Ducking
 import com.petruvideo.core.model.Echo
+import com.petruvideo.core.model.Compressor
+import com.petruvideo.core.model.CompressorPreset
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.Equalizer
 import com.petruvideo.core.model.Fade
@@ -167,6 +169,11 @@ fun AudioFxColumns.toModel(): AudioFx {
             Pitch(pitchEnabled, pitchSemitones),
             Bass(bassEnabled, bassAmount),
         ),
+        compressor = Compressor(
+            cmpEnabled,
+            CompressorPreset.entries.firstOrNull { it.name == cmpPreset } ?: CompressorPreset.Custom,
+            cmpThreshold, cmpRatioTenths, cmpAttackMs, cmpReleaseMs, cmpLevel,
+        ).normalized(),
     )
 }
 
@@ -174,6 +181,8 @@ fun AudioFx.toColumns() = AudioFxColumns(
     fade.inMs, fade.outMs, noise.enabled, noise.strength.name, eq.lowDb, eq.midDb, eq.highDb,
     voice.echo.enabled, voice.echo.delayMs, voice.echo.repeats, voice.robot.enabled, voice.robot.intensity,
     voice.pitch.enabled, voice.pitch.semitones, voice.bass.enabled, voice.bass.amount,
+    compressor.enabled, compressor.preset.name, compressor.thresholdDb, compressor.ratioTenths, compressor.attackMs,
+    compressor.releaseMs, compressor.levelDb,
 )
 
 fun TextClipEntity.toModel() = TextClip(

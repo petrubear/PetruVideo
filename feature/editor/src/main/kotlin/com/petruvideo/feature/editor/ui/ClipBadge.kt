@@ -39,6 +39,7 @@ internal fun badgeParts(
         "Fd".takeIf { fx?.fade?.isNeutral == false },
         "Nr".takeIf { fx?.noise?.enabled == true },
         "Eq".takeIf { fx?.eq?.isFlat == false },
+        "Cp".takeIf { fx?.compressor?.enabled == true },
         "Vx".takeIf { fx?.voice?.anyOn == true },
         "Fl".takeIf { filterOn },
         "Fx".takeIf { effectOn },

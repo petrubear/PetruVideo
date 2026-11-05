@@ -86,6 +86,7 @@ enum class AudioToolKind(@StringRes val labelRes: Int) {
     Fade(R.string.editor_fade),
     Noise(R.string.editor_noise_reduction),
     Eq(R.string.editor_equalizer),
+    Compressor(R.string.editor_compressor),
     Voice(R.string.editor_voice_effects),
     Ducking(R.string.editor_ducking),
 }

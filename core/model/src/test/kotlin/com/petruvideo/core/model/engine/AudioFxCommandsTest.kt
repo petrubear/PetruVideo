@@ -1,6 +1,8 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.AudioClip
+import com.petruvideo.core.model.Compressor
+import com.petruvideo.core.model.CompressorPreset
 import com.petruvideo.core.model.AudioOrigin
 import com.petruvideo.core.model.Availability
 import com.petruvideo.core.model.EqPreset
@@ -103,5 +105,28 @@ class AudioFxCommandsTest {
         val after = applied(SetFade("c1", Fade(500, 500))).timeline
         (after == before) shouldBe false
         before shouldBe timeline
+    }
+
+    @Test
+    fun `the compressor is set on video and audio clips and recomputes the preset`() {
+        val on = Compressor(enabled = true, levelDb = 5)
+        applied(SetCompressor("c1", on)).timeline.videoLane[0].fx.compressor.let {
+            it.enabled shouldBe true
+            it.levelDb shouldBe 5
+            it.preset shouldBe CompressorPreset.Custom
+        }
+        applied(SetCompressor("a1", Compressor(enabled = true)))
+            .timeline.audioLane[0].fx.compressor.enabled shouldBe true
+    }
+
+    @Test
+    fun `the compressor is clamped and refused where there is no sound`() {
+        applied(SetCompressor("c1", Compressor(enabled = true, levelDb = 99)))
+            .timeline.videoLane[0].fx.compressor.levelDb shouldBe 12
+        SetCompressor("c2", Compressor(enabled = true)).apply(timeline) shouldBe
+            CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        SetCompressor("c3", Compressor(enabled = true)).apply(timeline) shouldBe
+            CommandResult.Rejected(RejectReason.NoAttachedAudio)
+        SetCompressor("c1", Compressor()).apply(timeline) shouldBe CommandResult.Rejected(RejectReason.OutOfRange)
     }
 }

@@ -13,6 +13,7 @@ nameOf: () -> String = { "Voice-over" }
 "Fd".takeIf
 "Nr".takeIf
 "Eq".takeIf
+"Cp".takeIf
 "Vx".takeIf
 "Fl".takeIf
 "Fx".takeIf

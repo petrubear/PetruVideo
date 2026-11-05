@@ -1,6 +1,9 @@
 package com.petruvideo.core.media.dsp
 
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.Compressor
+import com.petruvideo.core.model.CompressorPreset
+import com.petruvideo.core.model.CompressorPresets
 import com.petruvideo.core.model.Echo
 import com.petruvideo.core.model.NoiseReduction
 import com.petruvideo.core.model.Pitch
@@ -46,5 +49,15 @@ class VoiceFxChainTest {
         val chain = VoiceFxChain(TEST_RATE, 2).also { it.setFx(fx) }
         val loud = FloatArray(TEST_RATE * 2) { if ((it / 2) % 50 < 25) 0.95f else -0.95f }
         chunked(loud, 2) { b, n -> chain.process(b, n) }.all { kotlin.math.abs(it) <= 1f } shouldBe true
+    }
+
+    @Test
+    fun `an audible compressor makes the chain active and is never bypassed under pressure`() {
+        val fx = AudioFx(compressor = CompressorPresets.settings(CompressorPreset.Voice, enabled = true))
+        val chain = VoiceFxChain(TEST_RATE, 1).also { it.setFx(fx, heavyAllowed = false) }
+        chain.active shouldBe true
+        val input = sine(300.0, 0.5, 0.8f)
+        (run(chain, input) == input) shouldBe false
+        VoiceFxChain(TEST_RATE, 1).also { it.setFx(AudioFx(compressor = Compressor())) }.active shouldBe false
     }
 }

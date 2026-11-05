@@ -1,6 +1,7 @@
 package com.petruvideo.core.model.engine
 
 import com.petruvideo.core.model.AudioFx
+import com.petruvideo.core.model.Compressor
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.EqPresets
 import com.petruvideo.core.model.Equalizer
@@ -84,4 +85,9 @@ class ApplyEqPreset(clipId: String, private val preset: EqPreset) : AudioFxComma
 /** Sets all four voice effects (clamped). */
 class SetVoiceFx(clipId: String, private val voice: VoiceFx) : AudioFxCommand(clipId, "Voice effects") {
     override fun next(current: AudioFx, clipLengthMs: Long) = current.copy(voice = voice.normalized())
+}
+
+/** Sets the compressor (clamped); the preset is recomputed. */
+class SetCompressor(clipId: String, private val compressor: Compressor) : AudioFxCommand(clipId, "Compressor") {
+    override fun next(current: AudioFx, clipLengthMs: Long) = current.copy(compressor = compressor.normalized())
 }

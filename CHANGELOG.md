@@ -12,6 +12,11 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-05
+
+### Added
+- A Compressor in the audio tools of every clip with sound (video, audio and overlay clips): presets Gentle, Voice, Podcast and Punchy, a Strength and a Level control, and an Advanced section with Threshold, Ratio, Attack and Release. It evens out loud and quiet parts, sits after the Equalizer in the sound chain, is heard live in the preview and rendered by export, and is saved with the project. Existing projects are unchanged because it is off by default. It is available in English and Spanish.
+
 ### Removed
 - The unused "coming soon" message and dimmed entries in the Projects navigation, the editor tool bar and the unfolded editor rail. Every entry has been active for a long time, so nothing changes on screen.
 

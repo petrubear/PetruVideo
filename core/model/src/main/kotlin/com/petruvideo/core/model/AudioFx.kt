@@ -105,14 +105,115 @@ data class VoiceFx(
     val anyOn: Boolean get() = echo.enabled || robot.enabled || pitch.enabled || bass.enabled
 }
 
+const val COMP_THRESHOLD_MIN_DB = -60
+const val COMP_RATIO_MIN_TENTHS = 10
+const val COMP_RATIO_MAX_TENTHS = 200
+const val COMP_ATTACK_MIN_MS = 1
+const val COMP_ATTACK_MAX_MS = 200
+const val COMP_RELEASE_MIN_MS = 20
+const val COMP_RELEASE_MAX_MS = 1_000
+const val COMP_LEVEL_MAX_DB = 12
+
+/** The named compressor settings; [Custom] is any other combination. */
+enum class CompressorPreset {
+    Gentle,
+    Voice,
+    Podcast,
+    Punchy,
+    Custom,
+}
+
+/**
+ * Evens out loudness (feature 034). [thresholdDb] is where compression starts, [ratioTenths] is the ratio times ten
+ * (30 means 3:1), [levelDb] is the manual makeup gain. Strength is a shortcut over threshold and ratio, not a
+ * separate stored value. Turning it off keeps the settings; the defaults are the Voice preset.
+ */
+data class Compressor(
+    val enabled: Boolean = false,
+    val preset: CompressorPreset = CompressorPreset.Voice,
+    val thresholdDb: Int = -22,
+    val ratioTenths: Int = 49,
+    val attackMs: Int = 10,
+    val releaseMs: Int = 120,
+    val levelDb: Int = 2,
+) {
+    /** 0..100: half from how low the threshold is, half from how high the ratio is. */
+    val strength: Int
+        get() {
+            val fromThreshold = (-thresholdDb / STRENGTH_THRESHOLD_SPAN).coerceIn(0f, 1f)
+            val fromRatio = ((ratioTenths - COMP_RATIO_MIN_TENTHS) / STRENGTH_RATIO_SPAN).coerceIn(0f, 1f)
+            return Math.round(HALF_STRENGTH * (fromThreshold + fromRatio))
+        }
+
+    /** The same compressor with threshold and ratio set from a 0..100 strength. */
+    fun withStrength(percent: Int): Compressor = withStrengthUnmatched(percent).normalized()
+
+    /** Like [withStrength] but without finding the preset, so the preset table can be built from it. */
+    internal fun withStrengthUnmatched(percent: Int): Compressor {
+        val p = percent.coerceIn(0, FX_PERCENT_MAX) / FX_PERCENT_MAX.toFloat()
+        return copy(
+            thresholdDb = -Math.round(p * STRENGTH_THRESHOLD_SPAN),
+            ratioTenths = COMP_RATIO_MIN_TENTHS + Math.round(p * STRENGTH_RATIO_SPAN),
+        )
+    }
+
+    fun normalized(): Compressor {
+        val clamped = copy(
+            thresholdDb = thresholdDb.coerceIn(COMP_THRESHOLD_MIN_DB, 0),
+            ratioTenths = ratioTenths.coerceIn(COMP_RATIO_MIN_TENTHS, COMP_RATIO_MAX_TENTHS),
+            attackMs = attackMs.coerceIn(COMP_ATTACK_MIN_MS, COMP_ATTACK_MAX_MS),
+            releaseMs = releaseMs.coerceIn(COMP_RELEASE_MIN_MS, COMP_RELEASE_MAX_MS),
+            levelDb = levelDb.coerceIn(-COMP_LEVEL_MAX_DB, COMP_LEVEL_MAX_DB),
+        )
+        return clamped.copy(preset = CompressorPresets.match(clamped))
+    }
+
+    val inRange: Boolean get() = normalized().copy(preset = preset) == this
+
+    /** True when it changes the sound: on, and either compressing or adding level. */
+    val audible: Boolean get() = enabled && (ratioTenths > COMP_RATIO_MIN_TENTHS && thresholdDb < 0 || levelDb != 0)
+
+    private companion object {
+        const val STRENGTH_THRESHOLD_SPAN = 40f
+        const val STRENGTH_RATIO_SPAN = 70f
+        const val HALF_STRENGTH = 50f
+    }
+}
+
+object CompressorPresets {
+    private fun named(strength: Int, levelDb: Int, attackMs: Int, releaseMs: Int) =
+        Compressor(false, CompressorPreset.Custom, 0, COMP_RATIO_MIN_TENTHS, attackMs, releaseMs, levelDb)
+            .withStrengthUnmatched(strength).copy(attackMs = attackMs, releaseMs = releaseMs, levelDb = levelDb)
+
+    private val values = mapOf(
+        CompressorPreset.Gentle to named(30, 0, 30, 250),
+        CompressorPreset.Voice to named(55, 2, 10, 120),
+        CompressorPreset.Podcast to named(75, 3, 8, 100),
+        CompressorPreset.Punchy to named(65, 2, 25, 80),
+    )
+
+    val all: List<CompressorPreset> = values.keys.toList()
+
+    /** The preset's settings with its own level, keeping whether the compressor is on. */
+    fun settings(preset: CompressorPreset, enabled: Boolean = false): Compressor =
+        (values[preset] ?: values.getValue(CompressorPreset.Voice)).copy(enabled = enabled, preset = preset)
+
+    fun match(c: Compressor): CompressorPreset =
+        values.entries.firstOrNull { (_, v) ->
+            v.thresholdDb == c.thresholdDb && v.ratioTenths == c.ratioTenths && v.attackMs == c.attackMs &&
+                v.releaseMs == c.releaseMs && v.levelDb == c.levelDb
+        }?.key ?: CompressorPreset.Custom
+}
+
 /** Everything a clip's sound gets beyond speed, volume, mute and reverb (feature 005). Defaults change nothing. */
 data class AudioFx(
     val fade: Fade = Fade(),
     val noise: NoiseReduction = NoiseReduction(),
     val eq: Equalizer = Equalizer(),
     val voice: VoiceFx = VoiceFx(),
+    val compressor: Compressor = Compressor(),
 ) {
-    val inRange: Boolean get() = fade.inRange && eq.inRange && voice.inRange
+    val inRange: Boolean get() = fade.inRange && eq.inRange && voice.inRange && compressor.inRange
 }
 
 fun AudioFx.withoutFadeIn() = copy(fade = fade.copy(inMs = 0))

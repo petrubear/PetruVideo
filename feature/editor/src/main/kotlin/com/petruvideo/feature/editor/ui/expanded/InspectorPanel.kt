@@ -33,6 +33,7 @@ import com.petruvideo.feature.editor.TransformPanelState
 import com.petruvideo.feature.editor.ui.TransformControls
 import com.petruvideo.feature.editor.FilterPanelState
 import com.petruvideo.feature.editor.ui.AdjustControls
+import com.petruvideo.feature.editor.ui.CompressorControls
 import com.petruvideo.feature.editor.ui.EqualizerControls
 import com.petruvideo.feature.editor.ui.FadeControls
 import com.petruvideo.feature.editor.ui.LooksControls
@@ -199,6 +200,12 @@ fun InspectorPanel(
                     color = PetruColors.OnSurfaceMuted,
                 )
                 EqualizerControls(fx, onEvent)
+                Text(
+                    stringResource(R.string.editor_compressor),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
+                CompressorControls(fx, onEvent)
                 Text(
                     stringResource(R.string.editor_voice_effects),
                     style = PetruType.Overline,

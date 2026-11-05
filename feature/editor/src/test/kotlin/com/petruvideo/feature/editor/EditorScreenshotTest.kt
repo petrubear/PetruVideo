@@ -523,6 +523,17 @@ class EditorScreenshotTest {
     fun voicePanel() = snapshotAudio(AudioToolKind.Voice, busyFx)
 
     @Test
+    fun compressorPanel() = snapshotAudio(
+        AudioToolKind.Compressor,
+        busyFx.copy(
+            compressor = com.petruvideo.core.model.CompressorPresets.settings(
+                com.petruvideo.core.model.CompressorPreset.Podcast,
+                enabled = true,
+            ),
+        ),
+    )
+
+    @Test
     fun fadeRampsAndBadgesOnClips() {
         paparazzi.snapshot {
             CompositionLocalProvider(LocalMediaLoaders provides loaders) {

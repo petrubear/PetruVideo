@@ -3,13 +3,15 @@ package com.petruvideo.core.media.dsp
 import com.petruvideo.core.model.AudioFx
 
 /**
- * The per-clip chain of noise reduction, equalizer, bass, pitch, robot, and echo, in that order. Stages that are
- * off are skipped. [setFx] can be called while processing; [heavyAllowed] false bypasses noise reduction, pitch,
- * and echo (the costly stages) when the preview is under pressure.
+ * The per-clip chain of noise reduction, equalizer, compressor, bass, pitch, robot, and echo, in that order. Stages
+ * that are off are skipped. [setFx] can be called while processing; [heavyAllowed] false bypasses noise
+ * reduction, pitch, and echo (the costly stages) when the preview is under pressure. The compressor is cheap and
+ * is never bypassed.
  */
 class VoiceFxChain(sampleRate: Int, private val channels: Int) {
     private val noise = NoiseReductionDsp(channels)
     private val eq = EqualizerDsp(sampleRate, channels)
+    private val compressor = CompressorDsp(sampleRate, channels)
     private val bass = BassDsp(sampleRate, channels)
     private val pitch = PitchShiftDsp(sampleRate, channels)
     private val robot = RobotDsp(sampleRate, channels)
@@ -25,6 +27,7 @@ class VoiceFxChain(sampleRate: Int, private val channels: Int) {
         this.heavyAllowed = heavyAllowed
         noise.setStrength(value.noise.strength)
         eq.setGains(value.eq.lowDb, value.eq.midDb, value.eq.highDb)
+        compressor.setSettings(value.compressor)
         bass.setAmount(if (value.voice.bass.enabled) value.voice.bass.amount else 0)
         pitch.setSemitones(if (value.voice.pitch.enabled && heavyAllowed) value.voice.pitch.semitones else 0)
         robot.setIntensity(if (value.voice.robot.enabled) value.voice.robot.intensity else 0)
@@ -36,12 +39,12 @@ class VoiceFxChain(sampleRate: Int, private val channels: Int) {
         get() {
             val now = fx
             val heavy = heavyAllowed
-            return (now.noise.enabled && heavy) || !now.eq.isFlat || now.voice.bass.enabled ||
+            return (now.noise.enabled && heavy) || !now.eq.isFlat || now.compressor.audible || now.voice.bass.enabled ||
                 (now.voice.pitch.enabled && heavy) || now.voice.robot.enabled || (now.voice.echo.enabled && heavy)
         }
 
     fun reset() {
-        noise.reset(); eq.reset(); bass.reset(); pitch.reset(); robot.reset(); echo.reset()
+        noise.reset(); eq.reset(); compressor.reset(); bass.reset(); pitch.reset(); robot.reset(); echo.reset()
         noiseWasOn = false
         echoWasOn = false
     }
@@ -54,6 +57,7 @@ class VoiceFxChain(sampleRate: Int, private val channels: Int) {
         noiseWasOn = noiseOn
         if (noiseOn) noise.process(buffer, frames)
         eq.process(buffer, frames)
+        compressor.process(buffer, frames)
         bass.process(buffer, frames)
         pitch.process(buffer, frames)
         robot.process(buffer, frames)

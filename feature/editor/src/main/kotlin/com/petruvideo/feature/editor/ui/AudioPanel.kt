@@ -37,6 +37,17 @@ import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.ECHO_DELAY_MAX_MS
 import com.petruvideo.core.model.ECHO_DELAY_MIN_MS
 import com.petruvideo.core.model.ECHO_REPEATS_MAX
+import com.petruvideo.core.model.COMP_ATTACK_MAX_MS
+import com.petruvideo.core.model.COMP_ATTACK_MIN_MS
+import com.petruvideo.core.model.COMP_LEVEL_MAX_DB
+import com.petruvideo.core.model.COMP_RATIO_MAX_TENTHS
+import com.petruvideo.core.model.COMP_RATIO_MIN_TENTHS
+import com.petruvideo.core.model.COMP_RELEASE_MAX_MS
+import com.petruvideo.core.model.COMP_RELEASE_MIN_MS
+import com.petruvideo.core.model.COMP_THRESHOLD_MIN_DB
+import com.petruvideo.core.model.Compressor
+import com.petruvideo.core.model.CompressorPreset
+import com.petruvideo.core.model.CompressorPresets
 import com.petruvideo.core.model.EQ_BAND_MAX_DB
 import com.petruvideo.core.model.EqPreset
 import com.petruvideo.core.model.EqPresets
@@ -52,6 +63,7 @@ import com.petruvideo.core.model.PITCH_MAX_SEMITONES
 import com.petruvideo.feature.editor.AudioPanelState
 import com.petruvideo.feature.editor.AudioToolKind
 import com.petruvideo.feature.editor.EditorEvent
+import java.util.Locale
 import kotlin.math.roundToInt
 import com.petruvideo.core.designsystem.enumLabel
 import androidx.compose.ui.res.stringResource
@@ -111,6 +123,7 @@ fun AudioPanelBody(panel: AudioPanelState, onEvent: (EditorEvent) -> Unit) {
         AudioToolKind.Fade -> FadeControls(panel.fx, panel.clipLengthMs, onEvent)
         AudioToolKind.Noise -> NoiseControls(panel.fx, onEvent)
         AudioToolKind.Eq -> EqualizerControls(panel.fx, onEvent)
+        AudioToolKind.Compressor -> CompressorControls(panel.fx, onEvent)
         AudioToolKind.Voice -> VoiceControls(panel.fx, onEvent)
         AudioToolKind.Ducking -> panel.ducking?.let { DuckingControls(it, panel.duckingIdle, onEvent) }
     }
@@ -151,6 +164,15 @@ private fun AudioToolList(panel: AudioPanelState, onEvent: (EditorEvent) -> Unit
             stringResource(R.string.editor_equalizer),
             if (fx.eq.isFlat) stringResource(R.string.editor_off) else enumLabel("eqpreset", fx.eq.preset),
             tool(AudioToolKind.Eq),
+        ),
+        ToolRow(
+            stringResource(R.string.editor_compressor),
+            if (fx.compressor.enabled) {
+                enumLabel("compressor", fx.compressor.preset)
+            } else {
+                stringResource(R.string.editor_off)
+            },
+            tool(AudioToolKind.Compressor),
         ),
         ToolRow(
             stringResource(R.string.editor_voice_effects),
@@ -309,6 +331,64 @@ fun EqualizerControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Mod
         SettingSlider(stringResource(R.string.editor_high), formatSigned(eq.highDb, "dB"), eq.highDb.toFloat(), range,
             { change(eq.copy(highDb = it.roundToInt())) }, finish)
         TextAction(stringResource(R.string.editor_reset)) { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Eq)) }
+    }
+}
+
+@Composable
+fun CompressorControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
+    var shown by remember(fx) { mutableStateOf(fx) }
+    var advanced by remember { mutableStateOf(false) }
+    val finish = { onEvent(EditorEvent.AudioFxCommit(shown)) }
+    val change = { next: Compressor ->
+        shown = shown.copy(compressor = next.copy(enabled = true).normalized())
+        onEvent(EditorEvent.AudioFxPreview(shown))
+    }
+    val c = shown.compressor
+    Column(modifier.fillMaxWidth()) {
+        FxSwitch(stringResource(R.string.editor_compressor), c.enabled) {
+            onEvent(EditorEvent.AudioFxCommit(fx.copy(compressor = fx.compressor.copy(enabled = it))))
+        }
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (c.preset == CompressorPreset.Custom) PetruChip(
+                enumLabel("compressor", CompressorPreset.Custom),
+                selected = true,
+                onClick = {},
+            )
+            CompressorPresets.all.forEach { preset ->
+                PetruChip(
+                    enumLabel("compressor", preset),
+                    selected = c.preset == preset,
+                    onClick = {
+                        val next = fx.copy(compressor = CompressorPresets.settings(preset, true))
+                        onEvent(EditorEvent.AudioFxCommit(next))
+                    },
+                )
+            }
+        }
+        SettingSlider(stringResource(R.string.editor_strength), "${c.strength}%", c.strength.toFloat(),
+            0f..FX_PERCENT_MAX.toFloat(), { change(c.withStrength(it.roundToInt())) }, finish)
+        SettingSlider(stringResource(R.string.editor_level), formatSigned(c.levelDb, "dB"), c.levelDb.toFloat(),
+            -COMP_LEVEL_MAX_DB.toFloat()..COMP_LEVEL_MAX_DB.toFloat(),
+            { change(c.copy(levelDb = it.roundToInt())) }, finish)
+        TextAction(
+            stringResource(if (advanced) R.string.editor_hide_advanced else R.string.editor_advanced),
+        ) { advanced = !advanced }
+        if (advanced) {
+            SettingSlider(stringResource(R.string.editor_threshold), "${c.thresholdDb} dB", c.thresholdDb.toFloat(),
+                COMP_THRESHOLD_MIN_DB.toFloat()..0f, { change(c.copy(thresholdDb = it.roundToInt())) }, finish)
+            SettingSlider(stringResource(R.string.editor_ratio), "%.1f:1".format(Locale.US, c.ratioTenths / 10f),
+                c.ratioTenths.toFloat(), COMP_RATIO_MIN_TENTHS.toFloat()..COMP_RATIO_MAX_TENTHS.toFloat(),
+                { change(c.copy(ratioTenths = it.roundToInt())) }, finish)
+            SettingSlider(stringResource(R.string.editor_attack), "${c.attackMs} ms", c.attackMs.toFloat(),
+                COMP_ATTACK_MIN_MS.toFloat()..COMP_ATTACK_MAX_MS.toFloat(),
+                { change(c.copy(attackMs = it.roundToInt())) }, finish)
+            SettingSlider(stringResource(R.string.editor_release), "${c.releaseMs} ms", c.releaseMs.toFloat(),
+                COMP_RELEASE_MIN_MS.toFloat()..COMP_RELEASE_MAX_MS.toFloat(),
+                { change(c.copy(releaseMs = it.roundToInt())) }, finish)
+        }
+        TextAction(stringResource(R.string.editor_reset)) {
+            onEvent(EditorEvent.AudioFxReset(AudioToolKind.Compressor))
+        }
     }
 }
 

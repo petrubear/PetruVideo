@@ -88,4 +88,9 @@
     <string name="themechoice_System">Seguir al sistema</string>
     <string name="themechoice_Light">Claro</string>
     <string name="themechoice_Dark">Oscuro</string>
+    <string name="compressor_Gentle">Suave</string>
+    <string name="compressor_Voice">Voz</string>
+    <string name="compressor_Podcast">Podcast</string>
+    <string name="compressor_Punchy">Contundente</string>
+    <string name="compressor_Custom">Personalizado</string>
 </resources>
