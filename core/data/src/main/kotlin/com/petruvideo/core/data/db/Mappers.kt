@@ -49,6 +49,7 @@ import com.petruvideo.core.model.TextBackground
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextFont
 import com.petruvideo.core.model.TextOutline
+import com.petruvideo.core.model.TextShadow
 import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.VoiceFx
@@ -194,7 +195,11 @@ fun TextClipEntity.toModel() = TextClip(
         align = TextAlign.entries.firstOrNull { it.name == align } ?: TextAlign.Center,
         background = TextBackground(bgEnabled, bgColor, bgOpacity),
         outline = TextOutline(olEnabled, olColor, olWidth),
-    ),
+        shadow = TextShadow(shEnabled, shColor, shOpacity, shSoftness, shDistance, shDirection),
+        rotationDegrees = rotation,
+        letterSpacingPercent = letterSpacing,
+        lineSpacingPercent = lineSpacing,
+    ).normalized(),
     animIn = TextAnimation(AnimKind.entries.firstOrNull { it.name == inKind } ?: AnimKind.None, inMs),
     animOut = TextAnimation(AnimKind.entries.firstOrNull { it.name == outKind } ?: AnimKind.None, outMs),
     caption = caption,
@@ -206,6 +211,9 @@ fun TextClip.toEntity(projectId: String) = TextClipEntity(
     style.background.enabled, style.background.colorArgb, style.background.opacityPercent,
     style.outline.enabled, style.outline.colorArgb, style.outline.widthPermille,
     animIn.kind.name, animIn.lengthMs, animOut.kind.name, animOut.lengthMs, caption,
+    style.rotationDegrees, style.shadow.enabled, style.shadow.colorArgb, style.shadow.opacityPercent,
+    style.shadow.softnessPercent, style.shadow.distancePercent, style.shadow.directionDegrees,
+    style.letterSpacingPercent, style.lineSpacingPercent,
 )
 
 fun FilterColumns.toModel() = ClipFilter(

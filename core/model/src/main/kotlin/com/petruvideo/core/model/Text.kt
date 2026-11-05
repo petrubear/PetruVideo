@@ -13,6 +13,14 @@ const val TEXT_OUTLINE_MAX = 40
 const val ANIM_MIN_MS = 200
 const val ANIM_MAX_MS = 1_500
 const val TEXT_PLACEHOLDER = "Your text"
+const val TEXT_ROTATION_MAX = 180
+const val TEXT_SNAP_DEGREES = 3
+const val TEXT_LETTER_SPACING_MIN = -10
+const val TEXT_LETTER_SPACING_MAX = 100
+const val TEXT_LINE_SPACING_MIN = 70
+const val TEXT_LINE_SPACING_MAX = 200
+const val TEXT_LINE_SPACING_DEFAULT = 100
+const val TEXT_SHADOW_DIRECTION_DEFAULT = 45
 const val ARGB_WHITE = 0xFFFFFFFF.toInt()
 const val ARGB_BLACK = 0xFF000000.toInt()
 
@@ -54,17 +62,53 @@ data class TextOutline(
     val widthPermille: Int = 12,
 )
 
+/** A soft shadow behind the text (feature 036); [directionDegrees] is 0 to the right and 90 straight down. */
+data class TextShadow(
+    val enabled: Boolean = false,
+    val colorArgb: Int = ARGB_BLACK,
+    val opacityPercent: Int = 60,
+    val softnessPercent: Int = 40,
+    val distancePercent: Int = 30,
+    val directionDegrees: Int = TEXT_SHADOW_DIRECTION_DEFAULT,
+)
+
+/**
+ * How a text looks. [rotationDegrees] turns the whole block, [letterSpacingPercent] is extra space between letters as
+ * a share of the text size, and [lineSpacingPercent] is the line height as a share of the normal one. The defaults
+ * leave the text exactly as it was before these settings existed.
+ */
 data class TextStyle(
     val font: TextFont = TextFont.Sans,
     val colorArgb: Int = ARGB_WHITE,
     val align: TextAlign = TextAlign.Center,
     val background: TextBackground = TextBackground(),
     val outline: TextOutline = TextOutline(),
+    val shadow: TextShadow = TextShadow(),
+    val rotationDegrees: Int = 0,
+    val letterSpacingPercent: Int = 0,
+    val lineSpacingPercent: Int = TEXT_LINE_SPACING_DEFAULT,
 ) {
     fun normalized() = copy(
         background = background.copy(opacityPercent = background.opacityPercent.coerceIn(0, 100)),
         outline = outline.copy(widthPermille = outline.widthPermille.coerceIn(0, TEXT_OUTLINE_MAX)),
+        shadow = shadow.copy(
+            opacityPercent = shadow.opacityPercent.coerceIn(0, 100),
+            softnessPercent = shadow.softnessPercent.coerceIn(0, 100),
+            distancePercent = shadow.distancePercent.coerceIn(0, 100),
+            directionDegrees = ((shadow.directionDegrees % 360) + 360) % 360,
+        ),
+        rotationDegrees = rotationDegrees.coerceIn(-TEXT_ROTATION_MAX, TEXT_ROTATION_MAX),
+        letterSpacingPercent = letterSpacingPercent.coerceIn(TEXT_LETTER_SPACING_MIN, TEXT_LETTER_SPACING_MAX),
+        lineSpacingPercent = lineSpacingPercent.coerceIn(TEXT_LINE_SPACING_MIN, TEXT_LINE_SPACING_MAX),
     )
+
+    val inRange: Boolean get() = normalized() == this
+}
+
+/** [degrees] snapped to 0, 90, -90 or 180 when it is within [TEXT_SNAP_DEGREES] of one, so a straight text is easy. */
+fun snapRotation(degrees: Int): Int {
+    val stop = listOf(-TEXT_ROTATION_MAX, -90, 0, 90, TEXT_ROTATION_MAX).minBy { kotlin.math.abs(it - degrees) }
+    return if (kotlin.math.abs(stop - degrees) <= TEXT_SNAP_DEGREES) stop else degrees
 }
 
 /** A title or caption over the video, with its place on the frame as shares of the frame so it scales on export. */

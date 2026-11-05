@@ -12,6 +12,14 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-05
+
+### Added
+- Text can now be rotated from -180 to 180 degrees (it snaps to straight angles), have a shadow with its own color, opacity, softness, distance and direction, and have its letter spacing and line spacing changed. The controls are in the Style tool of a text clip, work on auto captions too, are seen live in the preview and are rendered by export exactly as seen. They are available in English and Spanish.
+
+### Changed
+- Text with the new settings left at their defaults is drawn exactly as before, and existing projects open unchanged.
+
 ## [0.9.0] - 2026-11-05
 
 ### Added

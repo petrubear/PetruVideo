@@ -404,4 +404,12 @@
     <string name="editor_attack">Ataque</string>
     <string name="editor_release">Liberación</string>
     <string name="editor_flashing_lights_notice">Luces parpadeantes: este efecto puede resultar incómodo para personas sensibles al parpadeo.</string>
+    <string name="editor_rotation">Rotación</string>
+    <string name="editor_shadow">Sombra</string>
+    <string name="editor_shadow_color">Color de la sombra</string>
+    <string name="editor_softness">Suavidad</string>
+    <string name="editor_distance">Distancia</string>
+    <string name="editor_direction">Dirección</string>
+    <string name="editor_letter_spacing">Espaciado de letras</string>
+    <string name="editor_line_spacing">Interlineado</string>
 </resources>

@@ -37,14 +37,22 @@ import com.petruvideo.core.model.ANIM_MAX_MS
 import com.petruvideo.core.model.ANIM_MIN_MS
 import com.petruvideo.core.model.ANIM_OUT_KINDS
 import com.petruvideo.core.model.AnimKind
+import com.petruvideo.core.model.TEXT_LETTER_SPACING_MAX
+import com.petruvideo.core.model.TEXT_LETTER_SPACING_MIN
+import com.petruvideo.core.model.TEXT_LINE_SPACING_DEFAULT
+import com.petruvideo.core.model.TEXT_LINE_SPACING_MAX
+import com.petruvideo.core.model.TEXT_LINE_SPACING_MIN
 import com.petruvideo.core.model.TEXT_MAX_CHARS
 import com.petruvideo.core.model.TEXT_OUTLINE_MAX
+import com.petruvideo.core.model.TEXT_ROTATION_MAX
 import com.petruvideo.core.model.TEXT_SIZE_MAX
 import com.petruvideo.core.model.TEXT_SIZE_MIN
 import com.petruvideo.core.model.TextAlign
 import com.petruvideo.core.model.TextAnimation
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextFont
+import com.petruvideo.core.model.TextShadow
+import com.petruvideo.core.model.snapRotation
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.TextPanelState
 import com.petruvideo.feature.editor.TextToolKind
@@ -156,6 +164,9 @@ fun TextStyleControls(clip: TextClip, onEvent: (EditorEvent) -> Unit, modifier: 
         )
         BackgroundControls(shown, preview, commit)
         OutlineControls(shown, preview, commit)
+        RotationControls(shown, preview, commit)
+        ShadowControls(shown, preview, commit)
+        SpacingControls(shown, preview, commit)
         TextAction(stringResource(R.string.editor_reset_style)) { onEvent(EditorEvent.TextReset(TextToolKind.Style)) }
     }
 }
@@ -227,6 +238,72 @@ private fun OutlineControls(clip: TextClip, preview: (TextClip) -> Unit, commit:
 }
 
 private const val PERCENT_MAX = 100f
+private const val DEGREES_FULL_TURN = 359f
+
+@Composable
+private fun RotationControls(clip: TextClip, preview: (TextClip) -> Unit, commit: (TextClip) -> Unit) {
+    val style = clip.style
+    SettingSlider(
+        stringResource(R.string.editor_rotation), "${style.rotationDegrees}\u00B0",
+        style.rotationDegrees.toFloat(), -TEXT_ROTATION_MAX.toFloat()..TEXT_ROTATION_MAX.toFloat(),
+        { preview(clip.copy(style = style.copy(rotationDegrees = snapRotation(it.roundToInt())))) },
+        { commit(clip) },
+    )
+    if (style.rotationDegrees != 0) {
+        TextAction(stringResource(R.string.editor_reset)) { commit(clip.copy(style = style.copy(rotationDegrees = 0))) }
+    }
+}
+
+@Composable
+private fun ShadowControls(clip: TextClip, preview: (TextClip) -> Unit, commit: (TextClip) -> Unit) {
+    val shadow = clip.style.shadow
+    val change = { next: TextShadow -> clip.copy(style = clip.style.copy(shadow = next)) }
+    FxSwitch(stringResource(R.string.editor_shadow), shadow.enabled) { commit(change(shadow.copy(enabled = it))) }
+    if (!shadow.enabled) return
+    ColorPicker(
+        stringResource(R.string.editor_shadow_color), shadow.colorArgb,
+        { preview(change(shadow.copy(colorArgb = it))) },
+        { commit(change(shadow.copy(colorArgb = it))) },
+    )
+    SettingSlider(
+        stringResource(R.string.editor_opacity), "${shadow.opacityPercent}%", shadow.opacityPercent.toFloat(),
+        0f..PERCENT_MAX, { preview(change(shadow.copy(opacityPercent = it.roundToInt()))) }, { commit(clip) },
+    )
+    SettingSlider(
+        stringResource(R.string.editor_softness), "${shadow.softnessPercent}%", shadow.softnessPercent.toFloat(),
+        0f..PERCENT_MAX, { preview(change(shadow.copy(softnessPercent = it.roundToInt()))) }, { commit(clip) },
+    )
+    SettingSlider(
+        stringResource(R.string.editor_distance), "${shadow.distancePercent}%", shadow.distancePercent.toFloat(),
+        0f..PERCENT_MAX, { preview(change(shadow.copy(distancePercent = it.roundToInt()))) }, { commit(clip) },
+    )
+    SettingSlider(
+        stringResource(R.string.editor_direction), "${shadow.directionDegrees}\u00B0",
+        shadow.directionDegrees.toFloat(), 0f..DEGREES_FULL_TURN,
+        { preview(change(shadow.copy(directionDegrees = it.roundToInt()))) }, { commit(clip) },
+    )
+}
+
+@Composable
+private fun SpacingControls(clip: TextClip, preview: (TextClip) -> Unit, commit: (TextClip) -> Unit) {
+    val style = clip.style
+    SettingSlider(
+        stringResource(R.string.editor_letter_spacing), "${style.letterSpacingPercent}%",
+        style.letterSpacingPercent.toFloat(), TEXT_LETTER_SPACING_MIN.toFloat()..TEXT_LETTER_SPACING_MAX.toFloat(),
+        { preview(clip.copy(style = style.copy(letterSpacingPercent = it.roundToInt()))) }, { commit(clip) },
+    )
+    SettingSlider(
+        stringResource(R.string.editor_line_spacing), "${style.lineSpacingPercent}%",
+        style.lineSpacingPercent.toFloat(), TEXT_LINE_SPACING_MIN.toFloat()..TEXT_LINE_SPACING_MAX.toFloat(),
+        { preview(clip.copy(style = style.copy(lineSpacingPercent = it.roundToInt()))) }, { commit(clip) },
+    )
+    if (style.letterSpacingPercent != 0 || style.lineSpacingPercent != TEXT_LINE_SPACING_DEFAULT) {
+        TextAction(stringResource(R.string.editor_reset)) {
+            val reset = style.copy(letterSpacingPercent = 0, lineSpacingPercent = TEXT_LINE_SPACING_DEFAULT)
+            commit(clip.copy(style = reset))
+        }
+    }
+}
 
 @Composable
 fun TextAnimationControls(clip: TextClip, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {

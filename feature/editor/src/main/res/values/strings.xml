@@ -404,4 +404,12 @@
     <string name="editor_attack">Attack</string>
     <string name="editor_release">Release</string>
     <string name="editor_flashing_lights_notice">Flashing lights: this effect may be uncomfortable for people sensitive to flicker.</string>
+    <string name="editor_rotation">Rotation</string>
+    <string name="editor_shadow">Shadow</string>
+    <string name="editor_shadow_color">Shadow color</string>
+    <string name="editor_softness">Softness</string>
+    <string name="editor_distance">Distance</string>
+    <string name="editor_direction">Direction</string>
+    <string name="editor_letter_spacing">Letter spacing</string>
+    <string name="editor_line_spacing">Line spacing</string>
 </resources>

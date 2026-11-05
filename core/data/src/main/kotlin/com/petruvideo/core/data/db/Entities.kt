@@ -330,6 +330,15 @@ data class TextClipEntity(
     val outKind: String,
     val outMs: Int,
     @ColumnInfo(defaultValue = "0") val caption: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val rotation: Int = 0,
+    @ColumnInfo(defaultValue = "0") val shEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "-16777216") val shColor: Int = -16777216,
+    @ColumnInfo(defaultValue = "60") val shOpacity: Int = 60,
+    @ColumnInfo(defaultValue = "40") val shSoftness: Int = 40,
+    @ColumnInfo(defaultValue = "30") val shDistance: Int = 30,
+    @ColumnInfo(defaultValue = "45") val shDirection: Int = 45,
+    @ColumnInfo(defaultValue = "0") val letterSpacing: Int = 0,
+    @ColumnInfo(defaultValue = "100") val lineSpacing: Int = 100,
 )
 
 @Entity(tableName = "export_settings")

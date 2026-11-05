@@ -4,6 +4,7 @@ import com.petruvideo.core.model.TextAlign
 import com.petruvideo.core.model.TextBackground
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.TextOutline
+import com.petruvideo.core.model.TextShadow
 import com.petruvideo.core.model.TextStyle
 import io.kotest.matchers.shouldBe
 import org.junit.Test
@@ -79,5 +80,78 @@ class TextRendererTest {
         (box.centerY + 50 <= 720 * 0.95f + 0.5f) shouldBe true
         val tooBig = TextRenderer.place(clip, 1270, 100, 1280, 720)
         tooBig.centerX shouldBe 640f
+    }
+
+    private fun styled(style: TextStyle, text: String = "TITLE") =
+        TextRenderer.render(clip.copy(text = text, style = style), 1280, 720)
+
+    @Test
+    fun aRightAngleTurnSwapsTheFootprint() {
+        val upright = styled(TextStyle())
+        val turned = styled(TextStyle(rotationDegrees = 90))
+        turned.width shouldBe upright.height
+        turned.height shouldBe upright.width
+        opaquePixels(turned) shouldBe opaquePixels(upright)
+    }
+
+    @Test
+    fun aTiltedTextHasAFootprintThatHoldsTheWholeBlock() {
+        val upright = styled(TextStyle())
+        val tilted = styled(TextStyle(rotationDegrees = 15))
+        (tilted.height > upright.height) shouldBe true
+        (tilted.width >= upright.width) shouldBe true
+        check(opaquePixels(tilted) > opaquePixels(upright) * 8 / 10) { "tilted text lost pixels" }
+    }
+
+    @Test
+    fun aShadowAddsSoftPixelsAroundTheTextAndGrowsTheBitmap() {
+        val plain = styled(TextStyle())
+        val shadowed = styled(TextStyle(shadow = TextShadow(enabled = true, opacityPercent = 100)))
+        (shadowed.width > plain.width && shadowed.height > plain.height) shouldBe true
+        (opaquePixels(shadowed) > opaquePixels(plain) + 200) shouldBe true
+    }
+
+    @Test
+    fun aShadowThatIsOffLeavesTheTextAsItWas() {
+        val plain = styled(TextStyle())
+        val off = styled(TextStyle(shadow = TextShadow(enabled = false, distancePercent = 100)))
+        plain.sameAs(off) shouldBe true
+    }
+
+    @Test
+    fun theShadowFollowsTheBoxWhenThereIsOne() {
+        val boxed = styled(TextStyle(background = TextBackground(true, opacityPercent = 100)))
+        val withShadow = styled(
+            TextStyle(background = TextBackground(true, opacityPercent = 100), shadow = TextShadow(enabled = true)),
+        )
+        (withShadow.width > boxed.width) shouldBe true
+        // The box is opaque, so the letters are the same inside it; only the area around it gained a shadow.
+        (opaquePixels(withShadow) > opaquePixels(boxed) + 1_000) shouldBe true
+    }
+
+    @Test
+    fun letterSpacingWidensAndTightensTheText() {
+        val normal = styled(TextStyle())
+        (styled(TextStyle(letterSpacingPercent = 50)).width > normal.width) shouldBe true
+        (styled(TextStyle(letterSpacingPercent = -10)).width < normal.width) shouldBe true
+    }
+
+    @Test
+    fun lineSpacingChangesTheHeightOfTwoLines() {
+        val two = "First line\nSecond line"
+        val normal = styled(TextStyle(), two)
+        (styled(TextStyle(lineSpacingPercent = 200), two).height > normal.height) shouldBe true
+        (styled(TextStyle(lineSpacingPercent = 70), two).height < normal.height) shouldBe true
+        styled(TextStyle(lineSpacingPercent = 100), two).sameAs(normal) shouldBe true
+    }
+
+    @Test
+    fun tightLetterSpacingDoesNotSplitAWord() {
+        val normal = styled(TextStyle(), "Wave")
+        for (percent in listOf(-10, -8, -4, 10, 40)) {
+            val spaced = styled(TextStyle(letterSpacingPercent = percent), "Wave")
+            // One line: the height stays that of the unspaced single line.
+            spaced.height shouldBe normal.height
+        }
     }
 }
