@@ -8,6 +8,7 @@ import com.petruvideo.core.data.repo.ProjectSummary
 import com.petruvideo.core.data.repo.SettingsRepository
 import com.petruvideo.core.data.repo.StoredJob
 import com.petruvideo.core.model.AppSettings
+import com.petruvideo.core.model.ThemeChoice
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.petruvideo.core.data.session.ProjectSession
 import com.petruvideo.core.export.Blocker
@@ -126,6 +127,7 @@ class ExportViewModelTest {
             override val settings = MutableStateFlow(app)
             override fun setDefaultQuality(quality: Quality) = Unit
             override fun setLowerPreview(on: Boolean) = Unit
+            override fun setTheme(theme: ThemeChoice) = Unit
         }
         val vm = ExportViewModel(session, coordinator, encoders, exports, { env.started++ }, settingsRepo)
         env = Env(vm, runner, exports, 0)

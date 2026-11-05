@@ -12,6 +12,14 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-05
+
+### Added
+- A Theme choice in Settings: Follow system (the default, as before), Light or Dark. The choice applies at once without restarting, is remembered, and the app opens in it from the first frame. It is available in English and Spanish.
+
+### Changed
+- Continuous integration now runs on branch pushes and pull requests only, so pushing a version tag starts just the Release workflow.
+
 ## [0.6.0]
 
 ### Added

@@ -2,6 +2,7 @@ package com.petruvideo.core.data.repo
 
 import android.content.SharedPreferences
 import com.petruvideo.core.model.AppSettings
+import com.petruvideo.core.model.ThemeChoice
 import com.petruvideo.core.model.export.Quality
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,8 @@ interface SettingsRepository {
     fun setDefaultQuality(quality: Quality)
 
     fun setLowerPreview(on: Boolean)
+
+    fun setTheme(theme: ThemeChoice)
 }
 
 /** Keeps the settings in shared preferences; writes are applied in the background. */
@@ -25,6 +28,7 @@ class PrefsSettingsRepository(private val prefs: SharedPreferences) : SettingsRe
         defaultQuality = Quality.entries.firstOrNull { it.name == prefs.getString(KEY_QUALITY, null) }
             ?: Quality.Recommended,
         lowerPreview = prefs.getBoolean(KEY_LOWER_PREVIEW, false),
+        theme = ThemeChoice.entries.firstOrNull { it.name == prefs.getString(KEY_THEME, null) } ?: ThemeChoice.System,
     )
 
     override fun setDefaultQuality(quality: Quality) {
@@ -37,7 +41,13 @@ class PrefsSettingsRepository(private val prefs: SharedPreferences) : SettingsRe
         state.value = state.value.copy(lowerPreview = on)
     }
 
+    override fun setTheme(theme: ThemeChoice) {
+        prefs.edit().putString(KEY_THEME, theme.name).apply()
+        state.value = state.value.copy(theme = theme)
+    }
+
     private companion object {
+        const val KEY_THEME = "theme_choice"
         const val KEY_QUALITY = "default_quality"
         const val KEY_LOWER_PREVIEW = "lower_preview"
     }

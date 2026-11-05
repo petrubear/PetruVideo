@@ -3,6 +3,7 @@ package com.petruvideo.core.data.repo
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.petruvideo.core.model.AppSettings
+import com.petruvideo.core.model.ThemeChoice
 import com.petruvideo.core.model.export.Quality
 import io.kotest.matchers.shouldBe
 import org.junit.Before
@@ -25,6 +26,16 @@ class SettingsRepositoryTest {
         repo.setLowerPreview(true)
         repo.settings.value shouldBe AppSettings(Quality.Smaller, true)
         PrefsSettingsRepository(prefs).settings.value shouldBe AppSettings(Quality.Smaller, true)
+    }
+
+    @Test
+    fun theThemeDefaultsToSystemSurvivesANewInstanceAndIgnoresAnUnknownValue() {
+        val repo = PrefsSettingsRepository(prefs)
+        repo.settings.value.theme shouldBe ThemeChoice.System
+        repo.setTheme(ThemeChoice.Dark)
+        PrefsSettingsRepository(prefs).settings.value.theme shouldBe ThemeChoice.Dark
+        prefs.edit().putString("theme_choice", "Gone").commit()
+        PrefsSettingsRepository(prefs).settings.value.theme shouldBe ThemeChoice.System
     }
 
     @Test

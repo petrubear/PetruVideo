@@ -72,4 +72,6 @@
         <item quantity="other">%1$d clips</item>
     </plurals>
     <string name="projects_plus_new_project">+ Nuevo proyecto</string>
+    <string name="projects_theme">Tema</string>
+    <string name="projects_theme_hint">Elige el aspecto de la app. Seguir al sistema usa el modo claro u oscuro de tu teléfono.</string>
 </resources>

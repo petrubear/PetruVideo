@@ -5,6 +5,7 @@ import com.android.resources.NightMode
 import app.cash.paparazzi.Paparazzi
 import com.petruvideo.core.designsystem.PetruTheme
 import com.petruvideo.core.model.AppSettings
+import com.petruvideo.core.model.ThemeChoice
 import com.petruvideo.core.model.export.Quality
 import com.petruvideo.feature.projects.settings.SettingsScreen
 import org.junit.Rule
@@ -28,6 +29,13 @@ class SettingsScreenshotTest {
     @Test
     fun lightDefaults() = phone.snapshot {
         PetruTheme(darkTheme = false) { SettingsScreen(AppSettings(), "0.1.0", {}, {}, {}) }
+    }
+
+    @Test
+    fun lightChosenOnADarkPhone() = phone.snapshot {
+        PetruTheme(darkTheme = false) {
+            SettingsScreen(AppSettings(theme = ThemeChoice.Light), "0.1.0", {}, {}, {})
+        }
     }
 
     @Test

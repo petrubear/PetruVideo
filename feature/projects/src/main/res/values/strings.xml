@@ -72,4 +72,6 @@
     <string name="template_slow_fade_title">Slow Fade</string>
     <string name="projects_no_projects_match">No projects match</string>
     <string name="projects_plus_new_project">+ New project</string>
+    <string name="projects_theme">Theme</string>
+    <string name="projects_theme_hint">Choose the look of the app. Follow system uses your phone\'s light or dark setting.</string>
 </resources>

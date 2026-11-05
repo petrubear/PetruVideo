@@ -22,5 +22,8 @@ fun SettingsRoute(
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
     }
     BackHandler(onBack = onBack)
-    SettingsScreen(settings, version, viewModel::setDefaultQuality, viewModel::setLowerPreview, onBack, modifier)
+    SettingsScreen(
+        settings, version, viewModel::setDefaultQuality, viewModel::setLowerPreview, onBack, modifier,
+        onTheme = viewModel::setTheme,
+    )
 }

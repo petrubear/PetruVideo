@@ -86,4 +86,7 @@
     <string name="reverb_Cave">Cueva</string>
     <string name="reverb_Plate">Placa</string>
     <string name="reverb_Custom">Personalizado</string>
+    <string name="themechoice_System">Seguir al sistema</string>
+    <string name="themechoice_Light">Claro</string>
+    <string name="themechoice_Dark">Oscuro</string>
 </resources>

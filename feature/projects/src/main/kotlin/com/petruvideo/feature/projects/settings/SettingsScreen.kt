@@ -29,6 +29,7 @@ import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.components.SegmentedControl
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.core.model.AppSettings
+import com.petruvideo.core.model.ThemeChoice
 import com.petruvideo.core.model.export.Quality
 import androidx.compose.ui.res.stringResource
 import com.petruvideo.feature.projects.R
@@ -45,6 +46,7 @@ fun SettingsScreen(
     onLowerPreview: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onTheme: (ThemeChoice) -> Unit = {},
 ) {
     Column(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -57,11 +59,29 @@ fun SettingsScreen(
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
+                ThemeSection(settings.theme, onTheme)
                 QualitySection(settings.defaultQuality, onQuality)
                 PreviewSection(settings.lowerPreview, onLowerPreview)
                 AboutSection(version)
             }
         }
+    }
+}
+
+@Composable
+private fun ThemeSection(selected: ThemeChoice, onTheme: (ThemeChoice) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.projects_theme), style = PetruType.Label, color = PetruColors.OnBackground)
+        SegmentedControl(
+            options = ThemeChoice.entries.map { enumLabel("themechoice", it) },
+            selectedIndex = ThemeChoice.entries.indexOf(selected),
+            onSelect = { onTheme(ThemeChoice.entries[it]) },
+        )
+        Text(
+            stringResource(R.string.projects_theme_hint),
+            style = PetruType.Caption,
+            color = PetruColors.OnSurfaceMuted,
+        )
     }
 }
 

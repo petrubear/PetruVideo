@@ -86,4 +86,7 @@
     <string name="reverb_Cave">Cave</string>
     <string name="reverb_Plate">Plate</string>
     <string name="reverb_Custom">Custom</string>
+    <string name="themechoice_System">Follow system</string>
+    <string name="themechoice_Light">Light</string>
+    <string name="themechoice_Dark">Dark</string>
 </resources>
