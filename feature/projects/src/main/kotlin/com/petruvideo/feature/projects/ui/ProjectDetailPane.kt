@@ -52,7 +52,11 @@ fun ProjectDetailPane(
 ) {
     if (summary == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.projects_select_a_project), style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+            Text(
+                stringResource(R.string.projects_select_a_project),
+                style = PetruType.Body,
+                color = PetruColors.OnSurfaceMuted,
+            )
         }
         return
     }
@@ -84,7 +88,11 @@ fun ProjectDetailPane(
             ActionChip(stringResource(R.string.projects_delete), onDelete, color = PetruColors.Danger)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.projects_media_in_this_project), style = PetruType.Label, color = PetruColors.OnBackground)
+            Text(
+                stringResource(R.string.projects_media_in_this_project),
+                style = PetruType.Label,
+                color = PetruColors.OnBackground,
+            )
             Text("${media.size} items", style = PetruType.Mono, color = PetruColors.OnSurfaceMuted)
         }
         LazyVerticalGrid(
@@ -107,7 +115,10 @@ private fun ProjectFacts(summary: ProjectSummary, onOpen: () -> Unit, modifier: 
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             Stat(stringResource(R.string.projects_stat_clips), summary.clipCount.toString())
             Stat(stringResource(R.string.projects_stat_length), formatDuration(summary.durationMs))
-            Stat(stringResource(R.string.projects_stat_format), project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-")
+            Stat(
+                stringResource(R.string.projects_stat_format),
+                project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-",
+            )
         }
         PillButton(stringResource(R.string.projects_open_editor), onOpen, Modifier.fillMaxWidth())
     }
@@ -152,7 +163,11 @@ private fun MediaTile(item: MediaItem) {
         if (item.kind != MediaKind.Audio) GridThumbnail(item.uri, Modifier.fillMaxSize())
         item.durationMs?.let {
             Text(
-                if (item.kind == MediaKind.Audio) stringResource(R.string.projects_audio_duration, formatDuration(it)) else formatDuration(it),
+                if (item.kind == MediaKind.Audio) {
+                    stringResource(R.string.projects_audio_duration, formatDuration(it))
+                } else {
+                    formatDuration(it)
+                },
                 style = PetruType.MonoSmall,
                 color = PetruColors.OnBackground,
                 modifier = Modifier

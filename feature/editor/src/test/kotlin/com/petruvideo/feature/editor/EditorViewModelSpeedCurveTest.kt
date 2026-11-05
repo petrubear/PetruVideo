@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelSpeedCurveTest {
@@ -82,6 +83,6 @@ class EditorViewModelSpeedCurveTest {
         val wrong = SpeedCurve(listOf(SpeedPoint(0, 1_000), SpeedPoint(e.clip.sourceLengthMs - 500, 1_000)))
         e.vm.onEvent(EditorEvent.SpeedCurveCommit(wrong))
         e.clip.speedCurve shouldBe null
-        e.state.message shouldBe "That speed curve does not fit this clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_that_speed_curve_does_not)
     }
 }

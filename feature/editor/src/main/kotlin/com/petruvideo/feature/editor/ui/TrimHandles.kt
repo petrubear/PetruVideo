@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.feature.editor.TimelineGeometry
 import com.petruvideo.feature.editor.TrimTarget
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val HANDLE_WIDTH = 16.dp
 private val HANDLE_SHAPE = RoundedCornerShape(4.dp)
@@ -59,7 +61,7 @@ fun TrimHandles(
 
     Box(modifier) {
         Handle(
-            description = "Trim start",
+            description = stringResource(R.string.editor_trim_start),
             alignment = Alignment.CenterStart,
             offsetDp = shown(true, startDx),
             onDrag = { startDx += it; preview(true, currentTarget(true, delta(startDx))) },
@@ -67,7 +69,7 @@ fun TrimHandles(
             onCancel = { startDx = 0f },
         )
         Handle(
-            description = "Trim end",
+            description = stringResource(R.string.editor_trim_end),
             alignment = Alignment.CenterEnd,
             offsetDp = shown(false, endDx),
             onDrag = { endDx += it; preview(false, currentTarget(false, delta(endDx))) },

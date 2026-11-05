@@ -66,6 +66,10 @@ import com.petruvideo.feature.editor.OverlayPanelState
 import com.petruvideo.feature.editor.TimelineGeometry
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val ROW_HEIGHT = 36.dp
 private val ROW_GAP = 4.dp
@@ -86,12 +90,12 @@ fun OverlayPanel(panel: OverlayPanelState?, onEvent: (EditorEvent) -> Unit, modi
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Overlay",
+                    stringResource(R.string.editor_overlay),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Done", onClick = { onEvent(EditorEvent.OverlayDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.OverlayDismiss) })
             }
             Text(panel.name, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted, maxLines = 1)
             OverlayControls(panel.clip, onEvent, checker = panel.chromaChecker, picking = panel.chromaPicking)
@@ -110,7 +114,11 @@ fun OverlayControls(
 ) {
     var tab by remember { mutableIntStateOf(startTab) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SegmentedControl(listOf("Opacity", "Chroma key", "Mask"), tab, {
+        SegmentedControl(listOf(
+            stringResource(R.string.editor_opacity),
+            stringResource(R.string.editor_chroma_key),
+            stringResource(R.string.editor_mask),
+        ), tab, {
             tab = it
             if (it == 0) onEvent(EditorEvent.ChromaPicking(false))
         })
@@ -127,7 +135,10 @@ private fun OpacityControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
     var shown by remember(clip) { mutableStateOf(clip) }
     Column(Modifier.fillMaxWidth()) {
         SettingSlider(
-            "Opacity", "${shown.opacityPercent}%", shown.opacityPercent.toFloat(), 0f..PERCENT_MAX,
+            stringResource(R.string.editor_opacity),
+            "${shown.opacityPercent}%",
+            shown.opacityPercent.toFloat(),
+            0f..PERCENT_MAX,
             {
                 shown = shown.copy(opacityPercent = it.roundToInt())
                 onEvent(EditorEvent.OverlayPreview(shown))
@@ -135,7 +146,7 @@ private fun OpacityControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
             { onEvent(EditorEvent.OverlayCommit(shown)) },
         )
         Text(
-            "Drag the picture in the preview to move it and pinch to resize.",
+            stringResource(R.string.editor_drag_the_picture_in_the),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
@@ -149,21 +160,23 @@ private fun MaskControls(clip: OverlayClip, onEvent: (EditorEvent) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             MaskKind.entries.forEach { kind ->
-                PetruChip(kind.label, selected = shown.kind == kind, onClick = {
+                PetruChip(enumLabel("mask", kind), selected = shown.kind == kind, onClick = {
                     onEvent(EditorEvent.MaskCommit(shown.copy(kind = kind)))
                 })
             }
         }
         if (shown.active) {
-            SettingSlider("Size", "${shown.size}", shown.size.toFloat(), 0f..PERCENT_MAX, {
+            SettingSlider(
+                stringResource(R.string.editor_size), "${shown.size}", shown.size.toFloat(), 0f..PERCENT_MAX, {
                 shown = shown.copy(size = it.roundToInt())
                 onEvent(EditorEvent.MaskPreview(shown))
             }, { onEvent(EditorEvent.MaskCommit(shown)) })
-            SettingSlider("Feather", "${shown.feather}", shown.feather.toFloat(), 0f..PERCENT_MAX, {
+            SettingSlider(
+                stringResource(R.string.editor_feather), "${shown.feather}", shown.feather.toFloat(), 0f..PERCENT_MAX, {
                 shown = shown.copy(feather = it.roundToInt())
                 onEvent(EditorEvent.MaskPreview(shown))
             }, { onEvent(EditorEvent.MaskCommit(shown)) })
-            PetruChip("Invert", selected = shown.invert, onClick = {
+            PetruChip(stringResource(R.string.editor_invert), selected = shown.invert, onClick = {
                 onEvent(EditorEvent.MaskCommit(shown.copy(invert = !shown.invert)))
             })
         }
@@ -182,12 +195,20 @@ private fun ChromaControls(
     val commit = { next: ChromaKey -> onEvent(EditorEvent.ChromaCommit(next)) }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            PetruChip("Off", selected = !shown.enabled, onClick = { commit(shown.copy(enabled = false)) })
-            PetruChip("On", selected = shown.enabled, onClick = { commit(shown.copy(enabled = true)) })
-            PetruChip("Green", selected = shown.color == CHROMA_GREEN, onClick = {
+            PetruChip(
+                stringResource(R.string.editor_off),
+                selected = !shown.enabled,
+                onClick = { commit(shown.copy(enabled = false)) },
+            )
+            PetruChip(
+                stringResource(R.string.editor_on),
+                selected = shown.enabled,
+                onClick = { commit(shown.copy(enabled = true)) },
+            )
+            PetruChip(stringResource(R.string.editor_green), selected = shown.color == CHROMA_GREEN, onClick = {
                 commit(shown.copy(enabled = true, color = CHROMA_GREEN))
             })
-            PetruChip("Blue", selected = shown.color == CHROMA_BLUE, onClick = {
+            PetruChip(stringResource(R.string.editor_blue), selected = shown.color == CHROMA_BLUE, onClick = {
                 commit(shown.copy(enabled = true, color = CHROMA_BLUE))
             })
             Box(
@@ -196,19 +217,43 @@ private fun ChromaControls(
                     .clip(RoundedCornerShape(12.dp))
                     .background(androidx.compose.ui.graphics.Color(shown.color))
                     .border(1.dp, PetruColors.OnSurfaceMuted, RoundedCornerShape(12.dp))
-                    .semantics { contentDescription = "Key colour" },
+                    .described(R.string.editor_key_colour),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PetruChip(
-                if (picking) "Tap the preview" else "Pick colour", selected = picking,
+                if (picking) stringResource(R.string.editor_tap_the_preview) else stringResource(
+                    R.string.editor_pick_colour,
+                ), selected = picking,
                 onClick = { onEvent(EditorEvent.ChromaPicking(!picking)) },
             )
-            PetruChip("Checkerboard", selected = checker, onClick = { onEvent(EditorEvent.ChromaChecker(!checker)) })
+            PetruChip(
+                stringResource(R.string.editor_checkerboard),
+                selected = checker,
+                onClick = { onEvent(EditorEvent.ChromaChecker(!checker)) },
+            )
         }
-        ChromaSlider("Strength", shown.strength, { shown = shown.copy(strength = it) }, shown, onEvent)
-        ChromaSlider("Smoothness", shown.smoothness, { shown = shown.copy(smoothness = it) }, shown, onEvent)
-        ChromaSlider("Spill", shown.spill, { shown = shown.copy(spill = it) }, shown, onEvent)
+        ChromaSlider(
+            stringResource(R.string.editor_strength),
+            shown.strength,
+            { shown = shown.copy(strength = it) },
+            shown,
+            onEvent,
+        )
+        ChromaSlider(
+            stringResource(R.string.editor_smoothness),
+            shown.smoothness,
+            { shown = shown.copy(smoothness = it) },
+            shown,
+            onEvent,
+        )
+        ChromaSlider(
+            stringResource(R.string.editor_spill),
+            shown.spill,
+            { shown = shown.copy(spill = it) },
+            shown,
+            onEvent,
+        )
     }
 }
 
@@ -278,7 +323,7 @@ private fun OverlayClipBox(
     val widthDp = (geometry.timeToPx(clip.durationMs) - trimStartDx / density + trimEndDx / density)
         .coerceAtLeast(geometry.timeToPx(OVERLAY_MIN_MS))
     val edge = if (selected) PetruColors.Accent else PetruColors.SurfaceHighest
-    val description = "Overlay, $name, starts at ${clip.startMs / MS} seconds, lasts ${clip.durationMs / MS} seconds"
+    val description = stringResource(R.string.editor_overlay_description, name, clip.startMs / MS, clip.durationMs / MS)
     Box(
         Modifier
             .offset(x = startDp.dp, y = (ROW_HEIGHT + ROW_GAP) * row)
@@ -306,7 +351,7 @@ private fun OverlayClipBox(
             },
     ) {
         Text(
-            name.ifBlank { "Overlay" },
+            name.ifBlank { stringResource(R.string.editor_overlay) },
             style = PetruType.Caption,
             color = PetruColors.OnBackground,
             maxLines = 1,
@@ -315,12 +360,16 @@ private fun OverlayClipBox(
         )
         if (selected) {
             KeyframeDiamonds(clip.id, clip.startMs, clip.durationMs, clip.keyframes, geometry, keyframes)
-            OverlayHandle(Alignment.CenterStart, "Trim overlay start", { trimStartDx += it }) {
+            OverlayHandle(
+                Alignment.CenterStart,
+                stringResource(R.string.editor_trim_overlay_start),
+                { trimStartDx += it },
+            ) {
                 val start = (clip.startMs + geometry.pxToTime(trimStartDx / density)).coerceAtLeast(0)
                 trimStartDx = 0f
                 onTrim(clip.id, start.coerceAtMost(clip.endMs - OVERLAY_MIN_MS), clip.endMs)
             }
-            OverlayHandle(Alignment.CenterEnd, "Trim overlay end", { trimEndDx += it }) {
+            OverlayHandle(Alignment.CenterEnd, stringResource(R.string.editor_trim_overlay_end), { trimEndDx += it }) {
                 val end = clip.endMs + geometry.pxToTime(trimEndDx / density)
                 trimEndDx = 0f
                 onTrim(clip.id, clip.startMs, end.coerceAtLeast(clip.startMs + OVERLAY_MIN_MS))
@@ -416,7 +465,7 @@ internal fun OverlaySelectionBox(
                     onEvent(EditorEvent.OverlayCommit(current))
                 }
             }
-            .semantics { contentDescription = "Selected overlay, drag to move, pinch to resize" },
+            .described(R.string.editor_selected_overlay_drag_to_move),
     )
 }
 

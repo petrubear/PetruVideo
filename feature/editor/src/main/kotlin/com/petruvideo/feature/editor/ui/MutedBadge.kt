@@ -10,13 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.icons.PetruIcons
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** Small speaker-off marker on a muted audio clip. */
 @Composable
 fun MutedBadge(modifier: Modifier = Modifier) {
     Icon(
         PetruIcons.Mute,
-        contentDescription = "Muted",
+        contentDescription = stringResource(R.string.editor_muted),
         tint = PetruColors.OnBackground,
         modifier = modifier
             .padding(2.dp)

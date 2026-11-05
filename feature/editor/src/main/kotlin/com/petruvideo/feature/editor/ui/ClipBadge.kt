@@ -14,6 +14,8 @@ import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.model.AudioFx
 import com.petruvideo.core.model.SPEED_UNIT
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 /** "2x", "0.5x" for a speed in thousandths, without trailing zeros. */
 internal fun speedBadgeText(speedMilli: Int): String =
@@ -67,6 +69,6 @@ fun ClipBadge(
         modifier = modifier
             .background(PetruColors.Background.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
             .padding(horizontal = 4.dp, vertical = 1.dp)
-            .semantics { contentDescription = "Clip settings: ${all.joinToString(" ")}" },
+            .described(R.string.editor_clip_settings, all.joinToString(" ")),
     )
 }

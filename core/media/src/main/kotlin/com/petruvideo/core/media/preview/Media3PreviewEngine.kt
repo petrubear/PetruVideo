@@ -108,7 +108,7 @@ class Media3PreviewEngine @Inject constructor(
                 publish()
                 return
             }
-            publish(error = "Playback stopped: ${error.errorCodeName}")
+            publish(error = error.errorCodeName)
         }
     }
 

@@ -42,6 +42,9 @@ import com.petruvideo.feature.editor.EditorState
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val SNAP_DP = 8.dp
 private val MIN_HIT = 96.dp
@@ -88,7 +91,7 @@ private fun ChromaPickLayer(aspect: Float, onEvent: (EditorEvent) -> Unit) {
                 .width(frameWidth)
                 .height(frameHeight)
                 .border(2.dp, PetruColors.Accent)
-                .semantics { contentDescription = "Tap the colour to remove" }
+                .described(R.string.editor_tap_the_colour_to_remove)
                 .pointerInput(Unit) {
                     detectTapGestures { tap ->
                         onEvent(
@@ -186,7 +189,7 @@ private fun SelectionBox(clip: TextClip, frameWidth: Dp, frameHeight: Dp, onEven
                     onEvent(EditorEvent.TextCommit(current))
                 }
             }
-            .semantics { contentDescription = "Selected text, drag to move, pinch to resize" },
+            .described(R.string.editor_selected_text_drag_to_move),
     )
 }
 
@@ -263,7 +266,7 @@ private fun FramingGestureLayer(pose: Pose, aspect: Float, onEvent: (EditorEvent
                         if (current != pose) onEvent(EditorEvent.FramingCommit(current))
                     }
                 }
-                .semantics { contentDescription = "Video picture, drag to move, pinch to zoom" },
+                .described(R.string.editor_video_picture_drag_to_move),
         )
     }
 }

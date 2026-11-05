@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.ClipTool
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private fun iconFor(tool: ClipTool, muted: Boolean): ImageVector = when (tool) {
     ClipTool.Split -> PetruIcons.Split
@@ -75,9 +77,9 @@ fun ClipToolBar(
     ) {
         tools.forEach { tool ->
             val label = when {
-                tool == ClipTool.Mute && muted -> "Unmute"
-                tool == ClipTool.Reverse && reversed -> "Forwards"
-                else -> tool.label
+                tool == ClipTool.Mute && muted -> stringResource(R.string.editor_unmute)
+                tool == ClipTool.Reverse && reversed -> stringResource(R.string.editor_forwards)
+                else -> stringResource(tool.labelRes)
             }
             ToolButton(
                 label = label,

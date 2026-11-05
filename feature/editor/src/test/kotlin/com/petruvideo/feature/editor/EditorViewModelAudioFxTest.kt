@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelAudioFxTest {
@@ -83,7 +84,7 @@ class EditorViewModelAudioFxTest {
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Audio))
         e.vm.onEvent(EditorEvent.AudioFxCommit(AudioFx(fade = Fade(3_900, 0))))
         e.fxOf("c1").fade shouldBe Fade(2_000, 0)
-        e.state.message shouldBe "Fade limited to half the clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_fade_limited_to_half_the)
     }
 
     @Test
@@ -132,7 +133,7 @@ class EditorViewModelAudioFxTest {
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Audio))
         e.state.audioPanel shouldBe null
-        e.state.message shouldBe "This clip has no sound"
+        e.state.message shouldBe UiText.Res(R.string.editor_this_clip_has_no_sound)
     }
 
     @Test

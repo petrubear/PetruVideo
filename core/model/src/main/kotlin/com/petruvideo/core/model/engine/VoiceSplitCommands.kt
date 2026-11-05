@@ -14,22 +14,25 @@ const val VOICE_SPLIT_MAX_MS = 5 * 60 * 1_000L
 
 private fun newId() = UUID.randomUUID().toString()
 
+/** Why a voice split is not possible; the editor turns each into a text in the user's language. */
+enum class VoiceSplitBlock { SelectClip, NoSound, Reversed, SpeedCurve, TooLong }
+
 /** Why the voice of the video clip [clipId] cannot be split, or null when it can. */
 object VoiceSplitRules {
-    fun reasonNot(timeline: Timeline, clipId: String): String? {
+    fun reasonNot(timeline: Timeline, clipId: String): VoiceSplitBlock? {
         timeline.overlayLane.firstOrNull { it.id == clipId }?.let { overlay ->
             return when {
-                !overlay.attachedAudio -> "No sound in this clip"
-                overlay.durationMs > VOICE_SPLIT_MAX_MS -> "Works on clips up to 5 minutes"
+                !overlay.attachedAudio -> VoiceSplitBlock.NoSound
+                overlay.durationMs > VOICE_SPLIT_MAX_MS -> VoiceSplitBlock.TooLong
                 else -> null
             }
         }
-        val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return "Select a clip"
+        val clip = timeline.videoLane.firstOrNull { it.id == clipId } ?: return VoiceSplitBlock.SelectClip
         return when {
-            !clip.attachedAudio -> "No sound in this clip"
-            clip.reversed -> "Not available for reversed clips"
-            clip.speedCurve != null -> "Not available with a speed curve"
-            clip.sourceLengthMs > VOICE_SPLIT_MAX_MS -> "Works on clips up to 5 minutes"
+            !clip.attachedAudio -> VoiceSplitBlock.NoSound
+            clip.reversed -> VoiceSplitBlock.Reversed
+            clip.speedCurve != null -> VoiceSplitBlock.SpeedCurve
+            clip.sourceLengthMs > VOICE_SPLIT_MAX_MS -> VoiceSplitBlock.TooLong
             else -> null
         }
     }

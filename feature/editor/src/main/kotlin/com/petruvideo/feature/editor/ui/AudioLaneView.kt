@@ -42,6 +42,9 @@ import com.petruvideo.core.model.engine.AudioPlacement
 import com.petruvideo.core.media.waveform.WaveformPeaksGenerator
 import com.petruvideo.feature.editor.TimelineGeometry
 import com.petruvideo.feature.editor.TrimLimits
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val WAVE_ROW_HEIGHT = 32.dp
 private val LAYER_GAP = 4.dp
@@ -90,6 +93,8 @@ fun AudioClipsRow(
     onTrim: (clipId: String, start: Boolean, newSourceMs: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val textEditoraudio = stringResource(R.string.editor_audio)
+    val textEditordetachedaudio = stringResource(R.string.editor_detached_audio)
     var previewLength by remember { mutableStateOf<Pair<String, Long>?>(null) }
     // Clips that play together sit on rows of their own, like the overlay lane (feature 027).
     val rows = remember(clips) { AudioPlacement.rows(clips) }
@@ -109,14 +114,16 @@ fun AudioClipsRow(
                     .alpha(if (clip.muted) MUTED_ALPHA else 1f)
                     .then(selectionOutline(clip.id == selectedClipId))
                     .clickable { onSelect(clip.id) }
-                    .semantics {
-                        contentDescription = "${if (detached) "Detached audio" else "Audio"}, ${item.displayName}"
-                    },
+                    .described(
+                        R.string.editor_clip_description,
+                        if (detached) textEditordetachedaudio else textEditoraudio,
+                        item.displayName,
+                    ),
             ) {
                 Waveform(item, clip.sourceStartMs..clip.sourceEndMs, border, fill, Modifier.fillMaxSize())
                 if (detached) {
                     Text(
-                        "Detached",
+                        stringResource(R.string.editor_detached),
                         style = PetruType.MonoSmall,
                         color = PetruColors.OnBackground,
                         modifier = Modifier

@@ -5,13 +5,13 @@ const val REVERB_DECAY_MAX_MS = 10_000
 const val REVERB_PREDELAY_MAX_MS = 200
 const val REVERB_PERCENT_MAX = 100
 
-enum class ReverbPreset(val label: String) {
-    SmallRoom("Small room"),
-    MediumRoom("Medium room"),
-    Hall("Hall"),
-    Cave("Cave"),
-    Plate("Plate"),
-    Custom("Custom"),
+enum class ReverbPreset {
+    SmallRoom,
+    MediumRoom,
+    Hall,
+    Cave,
+    Plate,
+    Custom,
 }
 
 /** A clip's reverb: an on/off switch and five settings; [preset] says which preset they match (or Custom). */

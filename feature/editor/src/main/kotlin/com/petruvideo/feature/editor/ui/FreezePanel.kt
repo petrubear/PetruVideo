@@ -23,6 +23,8 @@ import com.petruvideo.core.model.FREEZE_MIN_MS
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.FreezePanelState
 import kotlin.math.roundToLong
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** The Freeze frame panel above the clip tool bar. */
 @Composable
@@ -35,12 +37,12 @@ fun FreezePanel(panel: FreezePanelState?, onEvent: (EditorEvent) -> Unit, modifi
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Freeze frame",
+                    stringResource(R.string.editor_freeze_frame),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Close", onClick = { onEvent(EditorEvent.FreezeDismiss) })
+                PillButton(stringResource(R.string.editor_close), onClick = { onEvent(EditorEvent.FreezeDismiss) })
             }
             FreezeControls(panel, onEvent)
         }
@@ -53,16 +55,19 @@ fun FreezeControls(panel: FreezePanelState, onEvent: (EditorEvent) -> Unit, modi
     var length by remember(panel) { mutableLongStateOf(panel.lengthMs) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         SettingSlider(
-            "Hold for", formatSeconds(length), length.toFloat(), FREEZE_MIN_MS.toFloat()..FREEZE_MAX_MS.toFloat(),
+            stringResource(R.string.editor_hold_for),
+            formatSeconds(length),
+            length.toFloat(),
+            FREEZE_MIN_MS.toFloat()..FREEZE_MAX_MS.toFloat(),
             { length = (it / STEP).roundToLong() * STEP },
             {},
         )
         Text(
-            "The picture at the playhead is held between the two parts of the clip.",
+            stringResource(R.string.editor_the_picture_at_the_playhead),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
-        PillButton("Insert", onClick = { onEvent(EditorEvent.FreezeInsert(length)) })
+        PillButton(stringResource(R.string.editor_insert), onClick = { onEvent(EditorEvent.FreezeInsert(length)) })
     }
 }
 

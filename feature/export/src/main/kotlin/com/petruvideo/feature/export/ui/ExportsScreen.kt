@@ -154,8 +154,16 @@ private fun ExportRowItem(row: ExportRow, onEvent: (ExportsEvent) -> Unit) {
         }
         Column(horizontalAlignment = Alignment.End) {
             if (!row.missing) {
-                IconAction(PetruIcons.Play, stringResource(R.string.export_play_named, record.projectName), { onEvent(ExportsEvent.Open(record.id)) })
-                IconAction(PetruIcons.Export, stringResource(R.string.export_share_named, record.projectName), { onEvent(ExportsEvent.Share(record.id)) })
+                IconAction(
+                    PetruIcons.Play,
+                    stringResource(R.string.export_play_named, record.projectName),
+                    { onEvent(ExportsEvent.Open(record.id)) },
+                )
+                IconAction(
+                    PetruIcons.Export,
+                    stringResource(R.string.export_share_named, record.projectName),
+                    { onEvent(ExportsEvent.Share(record.id)) },
+                )
             }
             IconAction(
                 PetruIcons.Delete, stringResource(R.string.export_remove_named, record.projectName),
@@ -209,7 +217,11 @@ private fun UndoBar(name: String, onEvent: (ExportsEvent) -> Unit, modifier: Mod
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(stringResource(R.string.export_removed_named, name), style = PetruType.Body, color = PetruColors.OnBackground)
+        Text(
+            stringResource(R.string.export_removed_named, name),
+            style = PetruType.Body,
+            color = PetruColors.OnBackground,
+        )
         Text(
             stringResource(R.string.export_undo),
             style = PetruType.Label,

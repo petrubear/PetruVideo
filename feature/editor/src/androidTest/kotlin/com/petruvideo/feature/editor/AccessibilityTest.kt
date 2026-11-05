@@ -27,6 +27,7 @@ import com.petruvideo.core.model.ReverbPreset
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import com.petruvideo.core.designsystem.UiText
 
 /** Runs the Android accessibility checks (touch target size, labels, contrast) over the editor, in both looks. */
 @OptIn(ExperimentalTestApi::class)
@@ -169,7 +170,7 @@ class AccessibilityTest(private val darkTheme: Boolean) {
 
     private val readyCaptions = CaptionsPanelState(
         com.petruvideo.core.media.captions.RecognitionAvailability.Available, listOf("en-US", "es-ES"),
-        "en-US", true, null, "Added 12 captions",
+        "en-US", true, null, UiText.Raw("Added 12 captions"),
     )
 
     @Test

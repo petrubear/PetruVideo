@@ -14,6 +14,9 @@ import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.Reverb
 import com.petruvideo.core.model.ReverbPreset
 import com.petruvideo.core.model.Timeline
+import androidx.annotation.StringRes
+import com.petruvideo.core.designsystem.UiText
+import com.petruvideo.core.model.TEXT_PLACEHOLDER
 
 /** The selected clip, if any. */
 sealed interface ClipSelection {
@@ -26,42 +29,42 @@ sealed interface ClipSelection {
 }
 
 /** Main tool bar tabs as designed. Only Edit is active in this feature; the rest show "coming soon". */
-enum class ToolbarTab(val label: String, val active: Boolean) {
-    Edit("Edit", true),
-    Audio("Audio", true),
-    Text("Text", true),
-    Overlay("Overlay", true),
-    Effects("Effects", true),
-    Filters("Filters", true),
+enum class ToolbarTab(@StringRes val labelRes: Int, val active: Boolean) {
+    Edit(R.string.editor_edit, true),
+    Audio(R.string.editor_audio, true),
+    Text(R.string.editor_text, true),
+    Overlay(R.string.editor_overlay, true),
+    Effects(R.string.editor_effects, true),
+    Filters(R.string.editor_filters, true),
 }
 
 /** Clip tool bar actions. */
-enum class ClipTool(val label: String, val active: Boolean) {
-    Split("Split", true),
-    Speed("Speed", true),
-    Volume("Volume", true),
-    Audio("Audio", true),
-    Detach("Detach", true),
-    SplitVoice("Split voice", true),
-    Duplicate("Duplicate", true),
-    Delete("Delete", true),
-    Mute("Mute", true),
-    SoundOn("Sound on", true),
-    Reverb("Reverb", true),
-    Replace("Replace", true),
-    TextEdit("Edit", true),
-    TextStyle("Style", true),
-    TextAnim("Animation", true),
-    FilterLooks("Looks", true),
-    FilterAdjust("Adjust", true),
-    EffectTransition("Transition", true),
-    EffectFx("Effect", true),
-    OverlayOpacity("Opacity", true),
-    Keyframes("Keyframes", true),
-    Transform("Transform", true),
-    Freeze("Freeze", true),
-    Reverse("Reverse", true),
-    Curve("Speed curve", true),
+enum class ClipTool(@StringRes val labelRes: Int, val active: Boolean) {
+    Split(R.string.editor_split, true),
+    Speed(R.string.editor_speed, true),
+    Volume(R.string.editor_volume, true),
+    Audio(R.string.editor_audio, true),
+    Detach(R.string.editor_detach, true),
+    SplitVoice(R.string.editor_split_voice, true),
+    Duplicate(R.string.editor_duplicate, true),
+    Delete(R.string.editor_delete, true),
+    Mute(R.string.editor_mute, true),
+    SoundOn(R.string.editor_sound_on, true),
+    Reverb(R.string.editor_reverb, true),
+    Replace(R.string.editor_replace, true),
+    TextEdit(R.string.editor_edit, true),
+    TextStyle(R.string.editor_style, true),
+    TextAnim(R.string.editor_animation, true),
+    FilterLooks(R.string.editor_looks, true),
+    FilterAdjust(R.string.editor_adjust, true),
+    EffectTransition(R.string.editor_transition, true),
+    EffectFx(R.string.editor_effect, true),
+    OverlayOpacity(R.string.editor_opacity, true),
+    Keyframes(R.string.editor_keyframes, true),
+    Transform(R.string.editor_transform, true),
+    Freeze(R.string.editor_freeze, true),
+    Reverse(R.string.editor_reverse, true),
+    Curve(R.string.editor_speed_curve, true),
 }
 
 /**
@@ -78,13 +81,13 @@ data class SheetState(
 )
 
 /** The tools in the Audio list; [List] is the list itself. */
-enum class AudioToolKind(val label: String) {
-    List("Audio"),
-    Fade("Fade"),
-    Noise("Noise reduction"),
-    Eq("Equalizer"),
-    Voice("Voice effects"),
-    Ducking("Ducking"),
+enum class AudioToolKind(@StringRes val labelRes: Int) {
+    List(R.string.editor_audio),
+    Fade(R.string.editor_fade),
+    Noise(R.string.editor_noise_reduction),
+    Eq(R.string.editor_equalizer),
+    Voice(R.string.editor_voice_effects),
+    Ducking(R.string.editor_ducking),
 }
 
 /** The open Audio list or one of its panels for one clip, with the values the rows and panels show. */
@@ -104,10 +107,10 @@ data class AudioPanelState(
 )
 
 /** The tools of a text clip; each opens its panel. */
-enum class TextToolKind(val label: String) {
-    Edit("Edit text"),
-    Style("Text style"),
-    Animation("Text animation"),
+enum class TextToolKind(@StringRes val labelRes: Int) {
+    Edit(R.string.editor_edit_text),
+    Style(R.string.editor_text_style),
+    Animation(R.string.editor_text_animation),
 }
 
 /** The open text panel with the committed values of the selected text clip. */
@@ -124,7 +127,7 @@ data class OverlayPanelState(
 )
 
 /** The two filter panels. */
-enum class FilterToolKind(val label: String) { Looks("Looks"), Adjust("Adjust") }
+enum class FilterToolKind(@StringRes val labelRes: Int) { Looks(R.string.editor_looks), Adjust(R.string.editor_adjust) }
 
 /** The open filter panel for the selected picture clip, with what the look tiles need to draw its frame. */
 data class FilterPanelState(
@@ -138,7 +141,9 @@ data class FilterPanelState(
 )
 
 /** The two Effects panels: the transition after the clip, and the clip's picture effect. */
-enum class EffectToolKind(val label: String) { Transition("Transition"), Effect("Effect") }
+enum class EffectToolKind(
+    @StringRes val labelRes: Int,
+) { Transition(R.string.editor_transition), Effect(R.string.editor_effect) }
 
 /**
  * The open Effects panel for the selected video-lane clip. [limitMs] is the longest transition its cut allows (0 when
@@ -189,7 +194,7 @@ data class CaptionsPanelState(
     val language: String,
     val replace: Boolean,
     val progress: Int?,
-    val note: String?,
+    val note: UiText?,
 )
 
 /** The open Freeze frame panel: the clip and how long the still will be held (default length in ms). */
@@ -237,7 +242,7 @@ data class EditorState(
     val missingMedia: Set<String> = emptySet(),
     val clipTools: List<ClipTool> = emptyList(),
     /** Tools of the selected clip shown dimmed, with the reason a tap explains. */
-    val disabledTools: Map<ClipTool, String> = emptyMap(),
+    val disabledTools: Map<ClipTool, UiText> = emptyMap(),
     /** The open Speed or Volume control, if any. */
     val sheet: SheetState? = null,
     /** The open Audio list or audio tool panel, if any. */
@@ -300,7 +305,7 @@ data class EditorState(
     /** Name of the inactive tool that was tapped, shown as "coming soon". */
     val comingSoon: String? = null,
     /** A short non-blocking message, e.g. an audio clip that snapped to the next free spot. */
-    val message: String? = null,
+    val message: UiText? = null,
 ) {
     val isEmpty: Boolean
         get() = timeline?.videoLane.isNullOrEmpty() && timeline?.audioLane.isNullOrEmpty() &&
@@ -360,7 +365,8 @@ sealed interface EditorEvent {
     data object AudioDismiss : EditorEvent
     data class SelectTab(val tab: ToolbarTab) : EditorEvent
     /** Adds a text clip at the playhead, selects it, and opens its edit panel. */
-    data object AddText : EditorEvent
+    /** Adds a text clip; [defaultText] is its first content, in the user's language. */
+    data class AddText(val defaultText: String = TEXT_PLACEHOLDER) : EditorEvent
     /** The Add overlay button: opens a file picker for a video or photo. */
     data object AddOverlay : EditorEvent
     data class AddOverlayMedia(val media: MediaItem) : EditorEvent

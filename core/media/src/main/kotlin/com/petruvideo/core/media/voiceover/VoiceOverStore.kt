@@ -10,15 +10,17 @@ import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.petruvideo.core.media.R
 
 /** A take that was started and not yet turned into a clip: which project, where on the timeline, and its file. */
 data class PendingTake(val projectId: String, val startMs: Long, val file: File)
 
 /** The recordings folder in the app's own storage, the journal of the open take, and cleanup. */
 @Singleton
-class VoiceOverStore(private val root: File) {
+class VoiceOverStore(private val root: File, private val nameOf: () -> String = { "Voice-over" }) {
     @Inject
-    constructor(@ApplicationContext context: Context) : this(File(context.filesDir, DIR))
+    constructor(@ApplicationContext context: Context) :
+        this(File(context.filesDir, DIR), { context.getString(R.string.media_voice_over_name) })
 
     private val dir get() = root.apply { mkdirs() }
     private val journal get() = File(dir, JOURNAL)
@@ -49,7 +51,7 @@ class VoiceOverStore(private val root: File) {
         id = UUID.randomUUID().toString(),
         kind = MediaKind.Audio,
         uri = Uri.fromFile(file).toString(),
-        displayName = "Voice-over",
+        displayName = nameOf(),
         durationMs = durationMs,
         width = null,
         height = null,

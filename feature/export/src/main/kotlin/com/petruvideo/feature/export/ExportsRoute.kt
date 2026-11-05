@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.petruvideo.feature.export.ui.ExportsScreen
@@ -30,6 +31,7 @@ fun ExportsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     LaunchedEffect(viewModel) { viewModel.refresh() }
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -43,7 +45,7 @@ fun ExportsRoute(
                         Intent(Intent.ACTION_SEND).setType("video/mp4")
                             .putExtra(Intent.EXTRA_STREAM, Uri.parse(effect.uri))
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
-                        context.getString(R.string.export_share_video),
+                        resources.getString(R.string.export_share_video),
                     ),
                 )
             }

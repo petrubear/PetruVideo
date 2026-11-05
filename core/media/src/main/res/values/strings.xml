@@ -1,0 +1,5 @@
+<resources>
+    <string name="media_voice_over_name">Voice-over</string>
+    <string name="media_voice_stem">Voice - %1$s</string>
+    <string name="media_backing_stem">Backing - %1$s</string>
+</resources>

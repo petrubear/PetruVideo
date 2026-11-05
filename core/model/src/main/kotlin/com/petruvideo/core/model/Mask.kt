@@ -3,11 +3,11 @@ package com.petruvideo.core.model
 const val MASK_SIZE_DEFAULT = 70
 const val MASK_FEATHER_DEFAULT = 20
 
-enum class MaskKind(val label: String) {
-    None("None"),
-    Circle("Circle"),
-    Rectangle("Rectangle"),
-    Linear("Linear"),
+enum class MaskKind {
+    None,
+    Circle,
+    Rectangle,
+    Linear,
 }
 
 /** Shows only part of an overlay clip: inside a shape (outside it with [invert]) with a soft edge (feature 024). */

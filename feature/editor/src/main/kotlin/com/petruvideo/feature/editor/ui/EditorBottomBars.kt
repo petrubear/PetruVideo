@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ToolbarTab
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /**
  * What sits at the bottom of the editor: with a clip selected its tool panel and clip tool bar; otherwise the bar of
@@ -11,6 +13,7 @@ import com.petruvideo.feature.editor.ToolbarTab
  */
 @Composable
 fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPanels: Boolean = true) {
+    val defaultText = stringResource(R.string.editor_default_text)
     val take = state.voiceOver
     if (take != null) {
         RecordingBar(take, onEvent)
@@ -34,8 +37,10 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
         }
         ReverseProgress(state.reverseProgress, onCancel = { onEvent(EditorEvent.ReverseCancel) })
         ReverseProgress(
-            state.voiceSplitProgress, onCancel = { onEvent(EditorEvent.VoiceSplitCancel) }, label = "Splitting voice",
-            note = "Voice and Backing are an approximate split of the original.",
+            state.voiceSplitProgress, onCancel = { onEvent(
+                EditorEvent.VoiceSplitCancel,
+            ) }, label = stringResource(R.string.editor_splitting_voice),
+            note = stringResource(R.string.editor_voice_and_backing_are_an),
         )
         ClipToolBar(
             state.clipTools,
@@ -59,7 +64,9 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
                 CaptionsPanel(state.captionsPanel, onEvent)
                 StickersPanel(state.stickersOpen, onEvent)
                 TextTabBar(
-                    back, onAdd = { onEvent(EditorEvent.AddText) }, onCaptions = { onEvent(EditorEvent.OpenCaptions) },
+                    back, onAdd = { onEvent(
+                        EditorEvent.AddText(defaultText),
+                    ) }, onCaptions = { onEvent(EditorEvent.OpenCaptions) },
                     onStickers = { onEvent(EditorEvent.OpenStickers) },
                 )
             }

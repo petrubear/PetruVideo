@@ -17,13 +17,13 @@ class SpeedStep(val startMs: Long, val endMs: Long, val speed: Double) {
 }
 
 /** The named shapes the user can pick; each is a list of (share of the clip, speed) pairs. */
-enum class SpeedPreset(val label: String, val shape: List<Pair<Double, Int>>) {
-    Montage("Montage", listOf(0.0 to 1_000, 0.2 to 4_000, 0.45 to 500, 0.75 to 4_000, 1.0 to 1_000)),
-    Hero("Hero time", listOf(0.0 to 1_000, 0.25 to 2_000, 0.4 to 300, 0.6 to 300, 0.75 to 2_000, 1.0 to 1_000)),
-    Bullet("Bullet time", listOf(0.0 to 1_000, 0.35 to 500, 0.5 to 100, 0.65 to 500, 1.0 to 1_000)),
-    Jump("Jump", listOf(0.0 to 1_000, 0.5 to 1_000, 0.55 to 300, 1.0 to 300)),
-    FlashIn("Flash in", listOf(0.0 to 200, 0.35 to 200, 0.5 to 1_000, 1.0 to 1_000)),
-    FlashOut("Flash out", listOf(0.0 to 1_000, 0.5 to 1_000, 0.65 to 200, 1.0 to 200)),
+enum class SpeedPreset(val shape: List<Pair<Double, Int>>) {
+    Montage(listOf(0.0 to 1_000, 0.2 to 4_000, 0.45 to 500, 0.75 to 4_000, 1.0 to 1_000)),
+    Hero(listOf(0.0 to 1_000, 0.25 to 2_000, 0.4 to 300, 0.6 to 300, 0.75 to 2_000, 1.0 to 1_000)),
+    Bullet(listOf(0.0 to 1_000, 0.35 to 500, 0.5 to 100, 0.65 to 500, 1.0 to 1_000)),
+    Jump(listOf(0.0 to 1_000, 0.5 to 1_000, 0.55 to 300, 1.0 to 300)),
+    FlashIn(listOf(0.0 to 200, 0.35 to 200, 0.5 to 1_000, 1.0 to 1_000)),
+    FlashOut(listOf(0.0 to 1_000, 0.5 to 1_000, 0.65 to 200, 1.0 to 200)),
 }
 
 /**

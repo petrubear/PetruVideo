@@ -155,6 +155,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.petruvideo.core.designsystem.UiText
 
 /**
  * Editor state holder. The open project lives in the process-scoped [ProjectSession] and playback in the
@@ -181,7 +182,7 @@ class EditorViewModel @Inject constructor(
         val selection: ClipSelection? = null,
         val fullscreen: Boolean = false,
         val comingSoon: String? = null,
-        val message: String? = null,
+        val message: UiText? = null,
         /** The open Speed or Volume sheet: which tool and which clip. */
         val sheet: OpenSheet? = null,
         /** Clip id of the open reverb panel. */
@@ -225,7 +226,7 @@ class EditorViewModel @Inject constructor(
         val language: String = Locale.getDefault().toLanguageTag(),
         val replace: Boolean = true,
         val progress: Int? = null,
-        val note: String? = null,
+        val note: UiText? = null,
     )
 
     private fun CaptionsLocal.toPanel() =
@@ -332,7 +333,7 @@ class EditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             engine.state.map { it.overlaySoundOff }.distinctUntilChanged().collect { off ->
-                if (off) say("Overlay sound plays in the export, not in this preview")
+                if (off) say(UiText.Res(R.string.editor_overlay_sound_plays_in_the))
             }
         }
     }
@@ -422,7 +423,7 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.AudioFxReset -> resetFx(event.kind)
             EditorEvent.AudioDismiss -> closeAudio()
             is EditorEvent.SelectTab -> selectTab(event.tab)
-            EditorEvent.AddText -> addText()
+            is EditorEvent.AddText -> addText(event.defaultText)
             EditorEvent.AddOverlay -> { pause(); effectChannel.trySend(EditorEffect.PickOverlayMedia) }
             is EditorEvent.AddOverlayMedia -> addOverlay(event.media)
             EditorEvent.OpenOverlayPanel -> openOverlay()
@@ -538,7 +539,7 @@ class EditorViewModel @Inject constructor(
 
     private fun openExport() {
         if (state.value.isEmpty) {
-            say("Add a clip to export")
+            say(UiText.Res(R.string.editor_add_a_clip_to_export))
             return
         }
         pause()
@@ -654,10 +655,10 @@ class EditorViewModel @Inject constructor(
     private fun onMicrophone(access: MicAccess) {
         when (access) {
             MicAccess.Granted -> startVoiceOver()
-            MicAccess.Denied -> say("A voice-over needs the microphone")
+            MicAccess.Denied -> say(UiText.Res(R.string.editor_a_voiceover_needs_the_microphone))
             MicAccess.Blocked -> {
                 local.update { it.copy(micBlocked = true) }
-                say("Microphone access is off. Tap Record again to open Settings")
+                say(UiText.Res(R.string.editor_microphone_access_is_off_tap))
             }
         }
     }
@@ -673,7 +674,11 @@ class EditorViewModel @Inject constructor(
         val max = VoiceOverLimit.maxDurationMs(start, timeline.audioLane, free)
         if (max < VOICE_OVER_MIN_MS) {
             val storage = VoiceOverLimit.stopReason(start, timeline.audioLane, free) == VoiceOverStop.Storage
-            say(if (storage) "Not enough storage to record" else "No room here before the next audio clip")
+            say(
+                if (storage) UiText.Res(R.string.editor_not_enough_storage_to_record) else UiText.Res(
+                    R.string.editor_no_room_here_before_the,
+                ),
+            )
             return
         }
         voiceOver.begin(
@@ -690,8 +695,8 @@ class EditorViewModel @Inject constructor(
         engine.pause()
         session.setPlayhead(engine.state.value.positionMs)
         when (result) {
-            VoiceOverResult.TooShort -> say("Too short")
-            VoiceOverResult.MicBusy -> say("The microphone is in use")
+            VoiceOverResult.TooShort -> say(UiText.Res(R.string.editor_too_short))
+            VoiceOverResult.MicBusy -> say(UiText.Res(R.string.editor_the_microphone_is_in_use))
             is VoiceOverResult.Take -> addTake(result)
         }
     }
@@ -701,14 +706,14 @@ class EditorViewModel @Inject constructor(
         val result = session.apply(AddVoiceOver(item, take.startMs))
         if (result !is CommandResult.Applied) {
             take.file.delete()
-            say("That recording could not be added")
+            say(UiText.Res(R.string.editor_that_recording_could_not_be))
             return
         }
         val clip = result.timeline.audioLane.firstOrNull { it.mediaItemId == item.id }
         if (clip != null) local.update { it.copy(selection = ClipSelection.Audio(clip.id)) }
         when (take.reason) {
-            VoiceOverStop.NextClip -> say("Stopped at the next clip")
-            VoiceOverStop.Storage -> say("Storage is almost full, recording stopped")
+            VoiceOverStop.NextClip -> say(UiText.Res(R.string.editor_stopped_at_the_next_clip))
+            VoiceOverStop.Storage -> say(UiText.Res(R.string.editor_storage_is_almost_full_recording))
             else -> Unit
         }
     }
@@ -729,7 +734,7 @@ class EditorViewModel @Inject constructor(
         }
         val item = voiceOver.files.mediaItemFor(pending.file, usable)
         if (session.apply(AddVoiceOver(item, pending.startMs)) is CommandResult.Applied) {
-            say("Recovered your voice-over")
+            say(UiText.Res(R.string.editor_recovered_your_voiceover))
         } else {
             pending.file.delete()
         }
@@ -805,14 +810,22 @@ class EditorViewModel @Inject constructor(
         }
     }
 
-    private fun captionNote(result: CaptionResult, applied: Boolean): String = when {
-        !applied -> "There was no speech to caption"
-        else -> listOfNotNull(
-            "Added ${result.lines.size} captions",
-            "${result.skippedPhrases} phrases could not be recognised".takeIf { result.skippedPhrases > 0 },
-            "${result.skippedClips} clips were skipped (reversed or curved)".takeIf { result.skippedClips > 0 },
-            "Only the first $CAPTION_MAX were made".takeIf { result.truncated },
-        ).joinToString(". ")
+    private fun captionNote(result: CaptionResult, applied: Boolean): UiText = when {
+        !applied -> UiText.Res(R.string.editor_there_was_no_speech_to)
+        else -> UiText.Joined(
+            listOfNotNull(
+                UiText.Plural(R.plurals.editor_captions_added, result.lines.size, listOf(result.lines.size)),
+                UiText.Plural(
+                    R.plurals.editor_phrases_not_recognised,
+                    result.skippedPhrases,
+                    listOf(result.skippedPhrases),
+                )
+                    .takeIf { result.skippedPhrases > 0 },
+                UiText.Plural(R.plurals.editor_clips_skipped, result.skippedClips, listOf(result.skippedClips))
+                    .takeIf { result.skippedClips > 0 },
+                UiText.Res(R.string.editor_only_the_first_were_made, CAPTION_MAX).takeIf { result.truncated },
+            ),
+        )
     }
 
     private fun toggleReverse(id: String) {
@@ -821,15 +834,17 @@ class EditorViewModel @Inject constructor(
         if (clip.reversed) return run(SetReversed(id, false))
         val media = timeline.media[clip.mediaItemId] ?: return
         when {
-            media.kind != MediaKind.Video -> say("Photos cannot be reversed")
-            clip.sourceLengthMs > REVERSE_MAX_MS -> say("Too long to reverse: trim or split the clip first")
-            !reverse.hasRoom(clip.sourceStartMs, clip.sourceEndMs) -> say("Not enough storage to reverse this clip")
-            reverseJob?.isActive == true -> say("Another clip is being reversed")
+            media.kind != MediaKind.Video -> say(UiText.Res(R.string.editor_photos_cannot_be_reversed))
+            clip.sourceLengthMs > REVERSE_MAX_MS -> say(UiText.Res(R.string.editor_too_long_to_reverse_trim))
+            !reverse.hasRoom(clip.sourceStartMs, clip.sourceEndMs) -> say(
+                UiText.Res(R.string.editor_not_enough_storage_to_reverse),
+            )
+            reverseJob?.isActive == true -> say(UiText.Res(R.string.editor_another_clip_is_being_reversed))
             else -> reverseJob = viewModelScope.launch {
                 if (reverse.prepare(id, media, clip.sourceStartMs, clip.sourceEndMs)) {
                     run(SetReversed(id, true))
                 } else {
-                    say("This clip could not be reversed")
+                    say(UiText.Res(R.string.editor_this_clip_could_not_be))
                 }
             }
         }
@@ -856,9 +871,9 @@ class EditorViewModel @Inject constructor(
         val result = session.apply(command)
         local.update { it.copy(curveDraft = null) }
         if (result is CommandResult.Rejected && result.reason == RejectReason.BelowMinimumLength) {
-            say("A clip cannot be shorter than a tenth of a second")
+            say(UiText.Res(R.string.editor_a_clip_cannot_be_shorter))
         } else if (result is CommandResult.Rejected && command is SetSpeedCurve) {
-            say("That speed curve does not fit this clip")
+            say(UiText.Res(R.string.editor_that_speed_curve_does_not))
         }
     }
 
@@ -882,12 +897,14 @@ class EditorViewModel @Inject constructor(
         val media = timeline.media[clip.mediaItemId] ?: return
         val at = engine.state.value.positionMs
         val start = timeline.videoStartOf(id) ?: return
-        if (at < start || at > start + clip.lengthMs) return say("Move the playhead onto this clip to freeze a frame")
+        if (at < start || at > start + clip.lengthMs) return say(
+            UiText.Res(R.string.editor_move_the_playhead_onto_this),
+        )
         pause()
         viewModelScope.launch {
             val still = freezeStills.make(media, clip.sourceTimeAt(at - start))
             if (still == null) {
-                say("That frame could not be read")
+                say(UiText.Res(R.string.editor_that_frame_could_not_be))
             } else {
                 run(FreezeFrame(id, at, lengthMs, still))
                 local.update { it.copy(freezeOpen = false) }
@@ -951,7 +968,7 @@ class EditorViewModel @Inject constructor(
         val id = (local.value.selection as? ClipSelection.Video)?.clipId ?: return
         val result = session.apply(SetPoseAt(id, engine.state.value.positionMs, pose))
         if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
-            say("A clip can have 50 keyframes at most")
+            say(UiText.Res(R.string.editor_a_clip_can_have_50))
         }
         // A drag that did not become an edit must not leave its live values behind.
         session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.let { engine.setClipFramingLive(it) }
@@ -963,7 +980,7 @@ class EditorViewModel @Inject constructor(
         val at = engine.state.value.positionMs
         val result = session.apply(AddKeyframe(id, at))
         if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
-            say("A clip can have 50 keyframes at most")
+            say(UiText.Res(R.string.editor_a_clip_can_have_50))
             return
         }
         val rel = (at - subject.startMs).coerceIn(0, subject.durationMs)
@@ -1002,7 +1019,7 @@ class EditorViewModel @Inject constructor(
         val at = engine.state.value.positionMs
         val result = session.apply(CopyKeyframe(id, rel, at))
         if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
-            say("A clip can have 50 keyframes at most")
+            say(UiText.Res(R.string.editor_a_clip_can_have_50))
         } else if (result is CommandResult.Applied) {
             local.update { it.copy(keyframeRel = (at - subject.startMs).coerceIn(0, subject.durationMs)) }
         }
@@ -1048,7 +1065,7 @@ class EditorViewModel @Inject constructor(
         val id = selectedPictureId() ?: return
         val result = session.apply(SetClipEffect(id, effect.kind, effect.strength))
         if (result is CommandResult.Rejected && result.reason == RejectReason.LimitReached) {
-            say("Up to $EFFECT_MAX effects per clip")
+            say(UiText.Res(R.string.editor_effect_limit, EFFECT_MAX))
         }
         session.timeline.value?.videoLane?.firstOrNull { it.id == id }?.effects
             ?.forEach { engine.setClipEffectLive(id, it) }
@@ -1057,8 +1074,8 @@ class EditorViewModel @Inject constructor(
     private fun addMusic(media: MediaItem) {
         val at = engine.state.value.positionMs
         val result = session.apply(AddAudioClips(listOf(media), at))
-        if (result !is CommandResult.Applied) say("That file can't be used as audio")
-        else if (Notice.Snapped in result.notices) say("Music moved to the next free spot")
+        if (result !is CommandResult.Applied) say(UiText.Res(R.string.editor_that_file_cant_be_used))
+        else if (Notice.Snapped in result.notices) say(UiText.Res(R.string.editor_music_moved_to_the_next))
     }
 
     private fun closeFilter() {
@@ -1096,7 +1113,7 @@ class EditorViewModel @Inject constructor(
         val at = engine.state.value.positionMs
         val before = session.timeline.value?.overlayLane?.map { it.id }.orEmpty().toSet()
         if (session.apply(AddOverlay(media, at)) !is CommandResult.Applied) {
-            say("This file cannot be used as an overlay")
+            say(UiText.Res(R.string.editor_this_file_cannot_be_used))
             return
         }
         val added = session.timeline.value?.overlayLane?.firstOrNull { it.id !in before } ?: return
@@ -1132,7 +1149,7 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.ChromaPick -> pickChroma(event.xPermille, event.yPermille)
             is EditorEvent.MaskPreview -> previewMask(event.mask)
             is EditorEvent.MaskCommit -> selectedOverlayId()?.let { run(SetOverlayMask(it, event.mask)) }
-            EditorEvent.VoiceSplitCancel -> cancelVoiceSplit("Split cancelled")
+            EditorEvent.VoiceSplitCancel -> cancelVoiceSplit(UiText.Res(R.string.editor_split_cancelled))
             else -> Unit
         }
     }
@@ -1147,8 +1164,8 @@ class EditorViewModel @Inject constructor(
 
     /** Separates the voice of the clip in the background; editing the clip meanwhile cancels it (feature 027). */
     private fun startVoiceSplit(timeline: Timeline, clipId: String) {
-        VoiceSplitRules.reasonNot(timeline, clipId)?.let { return say(it) }
-        if (local.value.voiceSplit != null) return say("A voice split is already running")
+        VoiceSplitRules.reasonNot(timeline, clipId)?.let { return say(it.text()) }
+        if (local.value.voiceSplit != null) return say(UiText.Res(R.string.editor_a_voice_split_is_already))
         val snapshot = VoiceSplitRun.of(timeline, clipId) ?: return
         val media = timeline.media[snapshot.mediaItemId] ?: return
         local.update { it.copy(voiceSplit = VoiceSplitRun(clipId, snapshot, 0)) }
@@ -1160,15 +1177,15 @@ class EditorViewModel @Inject constructor(
                 // The run ends before the edit, so the edit is not mistaken for a change of the clip.
                 local.update { it.copy(voiceSplit = null) }
                 if (stems == null) {
-                    say("Could not split the voice")
+                    say(UiText.Res(R.string.editor_could_not_split_the_voice))
                 } else {
                     val result = session.apply(SplitVoice(clipId, stems.voice, stems.backing))
                     if (result is CommandResult.Rejected) {
                         say(
                             if (result.reason == RejectReason.LimitReached) {
-                                "Up to 3 audio layers play together"
+                                UiText.Res(R.string.editor_up_to_3_audio_layers)
                             } else {
-                                "Could not split the voice"
+                                UiText.Res(R.string.editor_could_not_split_the_voice)
                             },
                         )
                     }
@@ -1179,7 +1196,7 @@ class EditorViewModel @Inject constructor(
         }
     }
 
-    private fun cancelVoiceSplit(message: String) {
+    private fun cancelVoiceSplit(message: UiText) {
         if (local.value.voiceSplit == null) return
         voiceSplitJob?.cancel()
         local.update { it.copy(voiceSplit = null) }
@@ -1215,7 +1232,9 @@ class EditorViewModel @Inject constructor(
         local.update { it.copy(chromaPicking = false) }
         viewModelScope.launch {
             val source = clip.sourceStartMs + (at - clip.startMs).coerceIn(0, clip.durationMs)
-            val color = chromaSampler.sample(media, source, u, v) ?: return@launch say("Tap on the overlay's picture")
+            val color = chromaSampler.sample(media, source, u, v) ?: return@launch say(
+                UiText.Res(R.string.editor_tap_on_the_overlays_picture),
+            )
             run(SetChromaKey(clip.id, clip.chroma.copy(enabled = true, color = color)))
         }
     }
@@ -1281,11 +1300,11 @@ class EditorViewModel @Inject constructor(
         local.update { it.copy(tab = tab) }
     }
 
-    private fun addText() {
+    private fun addText(defaultText: String) {
         flushText()
         val id = UUID.randomUUID().toString()
         val at = engine.state.value.positionMs
-        if (session.apply(AddText(at, { id })) !is CommandResult.Applied) return
+        if (session.apply(AddText(at, { id }, defaultText)) !is CommandResult.Applied) return
         closeSheet()
         closeReverb()
         closeAudio()
@@ -1407,7 +1426,7 @@ class EditorViewModel @Inject constructor(
             val result = session.apply(command)
             if (result is CommandResult.Applied) {
                 applied = true
-                if (Notice.FadeLimited in result.notices) say("Fade limited to half the clip")
+                if (Notice.FadeLimited in result.notices) say(UiText.Res(R.string.editor_fade_limited_to_half_the))
             }
         }
         if (!applied) restoreLiveFx(id)
@@ -1449,21 +1468,24 @@ class EditorViewModel @Inject constructor(
         engine.setClipVolumeLive(clipId, committed)
     }
 
-    private fun speedLimitMessage(timeline: Timeline, clipId: String): String {
+    private fun speedLimitMessage(timeline: Timeline, clipId: String): UiText {
         val milli = timeline.videoLane.firstOrNull { it.id == clipId }?.speedMilli
             ?: timeline.audioLane.firstOrNull { it.id == clipId }?.speedMilli
-            ?: return "Speed limited"
+            ?: return UiText.Res(R.string.editor_speed_limited)
         val audio = timeline.audioLane.any { it.id == clipId }
-        val reason = if (audio && milli < SPEED_UNIT) " to avoid overlapping the next audio clip" else ""
-        return "Limited to ${formatSpeed(milli)}$reason"
+        return if (audio && milli < SPEED_UNIT) {
+            UiText.Res(R.string.editor_limited_to_avoid_overlap, formatSpeed(milli))
+        } else {
+            UiText.Res(R.string.editor_limited_to, formatSpeed(milli))
+        }
     }
 
     /** Applies [command] and tells the user when audio snapped or a replacement shortened a clip. */
     private fun run(command: Command) {
         val result = session.apply(command) as? CommandResult.Applied ?: return
         when {
-            Notice.Snapped in result.notices -> say("Audio moved to the next free spot")
-            Notice.LengthChanged in result.notices -> say("Clip shortened to fit the new file")
+            Notice.Snapped in result.notices -> say(UiText.Res(R.string.editor_audio_moved_to_the_next))
+            Notice.LengthChanged in result.notices -> say(UiText.Res(R.string.editor_clip_shortened_to_fit_the))
         }
     }
 
@@ -1531,9 +1553,9 @@ class EditorViewModel @Inject constructor(
         val result = session.apply(DetachAudio(id))
         when {
             result is CommandResult.Rejected && result.reason == RejectReason.LimitReached ->
-                say("Up to 3 audio layers play together")
+                say(UiText.Res(R.string.editor_up_to_3_audio_layers))
             result is CommandResult.Applied && Notice.Snapped in result.notices ->
-                say("Audio moved to the next free spot")
+                say(UiText.Res(R.string.editor_audio_moved_to_the_next))
         }
     }
 
@@ -1545,7 +1567,7 @@ class EditorViewModel @Inject constructor(
             audio != null -> run(SetMuted(id, !audio.muted))
             overlay?.attachedAudio == true -> run(SetMuted(id, !overlay.muted))
             video?.attachedAudio == true -> run(SetVideoMuted(id, !video.muted))
-            else -> say("This clip has no sound")
+            else -> say(UiText.Res(R.string.editor_this_clip_has_no_sound))
         }
     }
 
@@ -1575,7 +1597,7 @@ class EditorViewModel @Inject constructor(
         if (result is CommandResult.Applied) {
             checkedMedia.remove(mediaItemId)
             if (Notice.LengthChanged in result.notices) {
-                local.update { it.copy(message = "Clip shortened to fit the new file") }
+                local.update { it.copy(message = UiText.Res(R.string.editor_clip_shortened_to_fit_the)) }
             }
         }
     }
@@ -1597,33 +1619,37 @@ class EditorViewModel @Inject constructor(
         session.setAvailability(availability.check(timeline.media.values.toList()))
         val missing = session.timeline.value?.media?.values?.firstOrNull { it.availability == Availability.Missing }
         say(
-            if (missing != null) "${missing.displayName} is missing from your phone. Relink it to keep editing."
-            else engine.state.value.error ?: "Playback stopped",
+            if (missing != null) {
+                UiText.Res(R.string.editor_media_missing_relink, missing.displayName)
+            } else {
+                engine.state.value.error?.let { UiText.Res(R.string.editor_playback_stopped_code, it) }
+                    ?: UiText.Res(R.string.editor_playback_stopped)
+            },
         )
     }
 
     private fun onPressureNotice(notice: PressureNotice) {
         when (notice) {
             PressureNotice.QualityReduced -> say(qualityReducedMessage())
-            PressureNotice.PlaybackPaused -> { pause(); say("Playback paused to cool down") }
-            PressureNotice.QualityRestored -> say("Preview quality restored")
+            PressureNotice.PlaybackPaused -> { pause(); say(UiText.Res(R.string.editor_playback_paused_to_cool_down)) }
+            PressureNotice.QualityRestored -> say(UiText.Res(R.string.editor_preview_quality_restored))
         }
     }
 
-    private fun qualityReducedMessage(): String {
+    private fun qualityReducedMessage(): UiText {
         val timeline = session.timeline.value
         val fxList = timeline?.videoLane?.filter { it.attachedAudio }?.map { it.fx to it.reverb }.orEmpty() +
             timeline?.audioLane?.map { it.fx to it.reverb }.orEmpty()
         val reverbOn = fxList.any { it.second.enabled }
         val heavyOn = fxList.any { (fx, _) -> fx.noise.enabled || fx.voice.pitch.enabled || fx.voice.echo.enabled }
         return when {
-            heavyOn -> "Preview quality lowered and some effects paused to keep playing"
-            reverbOn -> "Preview quality lowered and reverb paused to keep playing"
-            else -> "Preview quality lowered to keep playing"
+            heavyOn -> UiText.Res(R.string.editor_preview_quality_lowered_and_some)
+            reverbOn -> UiText.Res(R.string.editor_preview_quality_lowered_and_reverb)
+            else -> UiText.Res(R.string.editor_preview_quality_lowered_to_keep)
         }
     }
 
-    private fun say(message: String) = local.update { it.copy(message = message) }
+    private fun say(message: UiText) = local.update { it.copy(message = message) }
 
     private fun toState(core: Core, local: Local): EditorState {
         val timeline = core.timeline
@@ -1687,7 +1713,7 @@ class EditorViewModel @Inject constructor(
 
 
     private companion object {
-        const val CHANGED_MESSAGE = "Split cancelled because the clip changed"
+        val CHANGED_MESSAGE = UiText.Res(R.string.editor_split_cancelled_because_the_clip)
 
         val VOICE_OVER_EVENTS = setOf<EditorEvent>(
             EditorEvent.StopVoiceOver, EditorEvent.CancelVoiceOver, EditorEvent.VoiceOverInterrupted,

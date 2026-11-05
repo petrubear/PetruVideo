@@ -12,10 +12,12 @@ import com.petruvideo.core.model.TextStyle
 import com.petruvideo.core.model.transitionLimitMs
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.core.model.VOLUME_DEFAULT_PERCENT
+import com.petruvideo.core.model.engine.VoiceSplitBlock
 import com.petruvideo.core.model.engine.VoiceSplitRules
 import com.petruvideo.core.model.engine.Delete
 import com.petruvideo.core.model.engine.Duplicate
 import com.petruvideo.core.model.engine.Split
+import com.petruvideo.core.designsystem.UiText
 
 /** Pure builders of the editor's panel state from the timeline; split out of the view model. */
 
@@ -220,36 +222,50 @@ internal fun reverbPanelFor(timeline: Timeline?, selection: ClipSelection?, open
     return ReverbPanelState(open, timeline.media[mediaId]?.displayName.orEmpty(), reverb)
 }
 
-internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): Map<ClipTool, String> {
+internal fun VoiceSplitBlock.text(): UiText = UiText.Res(
+    when (this) {
+        VoiceSplitBlock.SelectClip -> R.string.editor_select_a_clip
+        VoiceSplitBlock.NoSound -> R.string.editor_no_sound_in_this_clip
+        VoiceSplitBlock.Reversed -> R.string.editor_not_available_for_reversed_clips
+        VoiceSplitBlock.SpeedCurve -> R.string.editor_not_available_with_a_speed_curve
+        VoiceSplitBlock.TooLong -> R.string.editor_works_on_clips_up_to_5_minutes
+    },
+)
+
+internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): Map<ClipTool, UiText> {
     if (timeline == null || selection == null) return emptyMap()
     if (selection is ClipSelection.Overlay) return disabledOverlayTools(timeline, selection.clipId)
     val clip = timeline.videoLane.firstOrNull { it.id == selection.clipId && selection is ClipSelection.Video }
         ?: return emptyMap()
-    val noSound = "This clip has no sound"
+    val noSound = UiText.Res(R.string.editor_this_clip_has_no_sound)
     val index = timeline.videoLane.indexOf(clip)
     val noTransition = when {
-        index == timeline.videoLane.lastIndex -> "No clip follows this one"
-        transitionLimit(timeline, index) == 0L -> "These clips are too short for a transition"
+        index == timeline.videoLane.lastIndex -> UiText.Res(R.string.editor_no_clip_follows_this_one)
+        transitionLimit(timeline, index) == 0L -> UiText.Res(R.string.editor_these_clips_are_too_short)
         else -> null
     }?.let { mapOf(ClipTool.EffectTransition to it) }.orEmpty()
     val tooLong = if (clip.sourceLengthMs > REVERSE_MAX_MS && !clip.reversed) {
-        mapOf(ClipTool.Reverse to "Too long to reverse: trim or split the clip first")
+        mapOf(ClipTool.Reverse to UiText.Res(R.string.editor_too_long_to_reverse_trim))
     } else {
         emptyMap()
     }
-    val curved = if (clip.speedCurve != null) mapOf(ClipTool.Speed to "This clip uses a speed curve") else emptyMap()
-    val noSplit = VoiceSplitRules.reasonNot(timeline, clip.id)?.takeIf { clip.attachedAudio }
+    val curved = if (clip.speedCurve != null) {
+        mapOf(ClipTool.Speed to UiText.Res(R.string.editor_this_clip_uses_a_speed))
+    } else {
+        emptyMap()
+    }
+    val noSplit = VoiceSplitRules.reasonNot(timeline, clip.id)?.takeIf { clip.attachedAudio }?.text()
         ?.let { mapOf(ClipTool.SplitVoice to it) }.orEmpty()
     return noTransition + tooLong + curved + noSplit + when {
         timeline.media[clip.mediaItemId]?.kind == MediaKind.Photo -> mapOf(
-            ClipTool.Speed to "Photos have no speed",
-            ClipTool.Freeze to "A photo is already a still",
-            ClipTool.Reverse to "Photos cannot be reversed",
-            ClipTool.Curve to "Photos have no speed",
-            ClipTool.Volume to "Photos have no sound",
-            ClipTool.Mute to "Photos have no sound",
-            ClipTool.Reverb to "Photos have no sound",
-            ClipTool.Audio to "Photos have no sound",
+            ClipTool.Speed to UiText.Res(R.string.editor_photos_have_no_speed),
+            ClipTool.Freeze to UiText.Res(R.string.editor_a_photo_is_already_a),
+            ClipTool.Reverse to UiText.Res(R.string.editor_photos_cannot_be_reversed),
+            ClipTool.Curve to UiText.Res(R.string.editor_photos_have_no_speed),
+            ClipTool.Volume to UiText.Res(R.string.editor_photos_have_no_sound),
+            ClipTool.Mute to UiText.Res(R.string.editor_photos_have_no_sound),
+            ClipTool.Reverb to UiText.Res(R.string.editor_photos_have_no_sound),
+            ClipTool.Audio to UiText.Res(R.string.editor_photos_have_no_sound),
         )
         !clip.attachedAudio ->
             mapOf(
@@ -263,16 +279,16 @@ internal fun disabledToolsFor(timeline: Timeline?, selection: ClipSelection?): M
 }
 
 /** An overlay with no sound of its own has no sound tools; a photo has none either. */
-private fun disabledOverlayTools(timeline: Timeline, clipId: String): Map<ClipTool, String> {
+private fun disabledOverlayTools(timeline: Timeline, clipId: String): Map<ClipTool, UiText> {
     val clip = timeline.overlayLane.firstOrNull { it.id == clipId } ?: return emptyMap()
     if (!clip.attachedAudio) {
-        val note = "This clip has no sound"
+        val note = UiText.Res(R.string.editor_this_clip_has_no_sound)
         return mapOf(
             ClipTool.Volume to note, ClipTool.Mute to note, ClipTool.Reverb to note, ClipTool.Audio to note,
             ClipTool.Detach to note, ClipTool.SplitVoice to note,
         )
     }
-    return VoiceSplitRules.reasonNot(timeline, clip.id)?.let { mapOf(ClipTool.SplitVoice to it) }.orEmpty()
+    return VoiceSplitRules.reasonNot(timeline, clip.id)?.let { mapOf(ClipTool.SplitVoice to it.text()) }.orEmpty()
 }
 
 internal fun sheetFor(timeline: Timeline?, selection: ClipSelection?, open: OpenSheet?): SheetState? {

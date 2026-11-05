@@ -68,7 +68,11 @@ fun SettingsScreen(
 @Composable
 private fun QualitySection(selected: Quality, onQuality: (Quality) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.projects_default_export_quality), style = PetruType.Label, color = PetruColors.OnBackground)
+        Text(
+            stringResource(R.string.projects_default_export_quality),
+            style = PetruType.Label,
+            color = PetruColors.OnBackground,
+        )
         SegmentedControl(
             options = Quality.entries.map { enumLabel("quality", it) },
             selectedIndex = Quality.entries.indexOf(selected),
@@ -93,7 +97,11 @@ private fun PreviewSection(on: Boolean, onChange: (Boolean) -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.projects_lower_preview_quality), style = PetruType.Label, color = PetruColors.OnBackground)
+            Text(
+                stringResource(R.string.projects_lower_preview_quality),
+                style = PetruType.Label,
+                color = PetruColors.OnBackground,
+            )
             Switch(
                 checked = on,
                 onCheckedChange = onChange,

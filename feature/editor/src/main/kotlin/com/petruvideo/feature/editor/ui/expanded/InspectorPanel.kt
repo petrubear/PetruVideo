@@ -47,6 +47,9 @@ import com.petruvideo.feature.editor.ui.TextAnimationControls
 import com.petruvideo.feature.editor.ui.TextEditControls
 import com.petruvideo.feature.editor.ui.TextStyleControls
 import com.petruvideo.feature.editor.ui.VoiceControls
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.UiText
 
 /** What the inspector shows about the selected clip. */
 data class InspectorClip(val name: String, val label: String, val lengthMs: Long, val startMs: Long)
@@ -59,7 +62,7 @@ data class InspectorClip(val name: String, val label: String, val lengthMs: Long
 fun InspectorPanel(
     clip: InspectorClip?,
     settings: List<SheetState>,
-    unavailable: Map<ClipTool, String>,
+    unavailable: Map<ClipTool, UiText>,
     reverb: Reverb?,
     muted: Boolean,
     fx: AudioFx?,
@@ -81,7 +84,7 @@ fun InspectorPanel(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Inspector", style = PetruType.Label, color = PetruColors.OnBackground)
+            Text(stringResource(R.string.editor_inspector), style = PetruType.Label, color = PetruColors.OnBackground)
             if (clip != null) {
                 Text(
                     "${clip.label} · ${"%.1f".format(clip.lengthMs / MS_PER_SECOND)}s",
@@ -91,64 +94,124 @@ fun InspectorPanel(
             }
         }
         if (clip == null) {
-            Text("Select a clip to see its details.", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+            Text(
+                stringResource(R.string.editor_select_a_clip_to_see),
+                style = PetruType.Body,
+                color = PetruColors.OnSurfaceMuted,
+            )
         } else {
             Text(clip.name, style = PetruType.Body, color = PetruColors.OnBackground)
             Text(
-                "Starts at ${formatDuration(clip.startMs)}",
+                stringResource(R.string.editor_starts_at, formatDuration(clip.startMs)),
                 style = PetruType.Mono,
                 color = PetruColors.OnSurfaceMuted,
             )
             settings.forEach { sheet ->
-                Text(sheet.tool.label, style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(sheet.tool.labelRes),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 SpeedVolumeControls(sheet, onEvent)
             }
             if (ClipTool.Mute !in unavailable) {
-                Text("Sound", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_sound),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 PetruChip(
-                    if (muted) "Unmute" else "Mute",
+                    if (muted) stringResource(R.string.editor_unmute) else stringResource(R.string.editor_mute),
                     selected = muted,
                     onClick = { onEvent(EditorEvent.UseTool(ClipTool.Mute)) },
                 )
             }
             if (reverb != null) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Reverb", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                    Text(
+                        stringResource(R.string.editor_reverb),
+                        style = PetruType.Overline,
+                        color = PetruColors.OnSurfaceMuted,
+                    )
                     ReverbSwitch(reverb, onEvent)
                 }
                 ReverbControls(reverb, onEvent, showAll = true)
             }
             if (overlay != null) {
-                Text("Overlay", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_overlay),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 OverlayControls(overlay, onEvent, checker = chromaChecker, picking = chromaPicking)
             }
             VideoToolSections(freeze, transform, keyframes, curve, onEvent)
             if (filter != null) {
-                Text("Filters", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_filters),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 LooksControls(filter, onEvent)
-                Text("Adjust", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_adjust),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 AdjustControls(filter.filter, onEvent)
             }
             if (text != null) {
-                Text("Text", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_text),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 TextEditControls(text, onEvent)
-                Text("Style", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_style),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 TextStyleControls(text, onEvent)
-                Text("Animation", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_animation),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 TextAnimationControls(text, onEvent)
             }
             if (fx != null) {
-                Text("Fade", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_fade),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 FadeControls(fx, clipLengthMs, onEvent)
-                Text("Noise reduction", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_noise_reduction),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 NoiseControls(fx, onEvent)
-                Text("Equalizer", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_equalizer),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 EqualizerControls(fx, onEvent)
-                Text("Voice effects", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    stringResource(R.string.editor_voice_effects),
+                    style = PetruType.Overline,
+                    color = PetruColors.OnSurfaceMuted,
+                )
                 VoiceControls(fx, onEvent)
             }
             unavailable.forEach { (tool, reason) ->
-                Text("${tool.label}: $reason", style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
+                Text(
+                    "${stringResource(tool.labelRes)}: $reason",
+                    style = PetruType.Caption,
+                    color = PetruColors.OnSurfaceMuted,
+                )
             }
         }
     }
@@ -174,19 +237,27 @@ private fun VideoToolSections(
     onEvent: (EditorEvent) -> Unit,
 ) {
     if (curve != null) {
-        Text("Speed curve", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(
+            stringResource(R.string.editor_speed_curve),
+            style = PetruType.Overline,
+            color = PetruColors.OnSurfaceMuted,
+        )
         SpeedCurveControls(curve, onEvent)
     }
     if (freeze != null) {
-        Text("Freeze frame", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(
+            stringResource(R.string.editor_freeze_frame),
+            style = PetruType.Overline,
+            color = PetruColors.OnSurfaceMuted,
+        )
         FreezeControls(freeze, onEvent)
     }
     if (transform != null) {
-        Text("Transform", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_transform), style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         TransformControls(transform, onEvent)
     }
     if (keyframes != null) {
-        Text("Keyframes", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_keyframes), style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         KeyframeControls(keyframes, onEvent)
     }
 }

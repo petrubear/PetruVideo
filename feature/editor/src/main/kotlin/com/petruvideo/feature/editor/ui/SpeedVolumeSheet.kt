@@ -42,6 +42,8 @@ import com.petruvideo.feature.editor.formatSpeed
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val QUICK_SPEEDS = listOf(250, 500, 1000, 2000, 4000)
 private const val VOLUME_STEP = 5
@@ -87,7 +89,7 @@ fun SpeedVolumeSheet(sheet: SheetState?, onEvent: (EditorEvent) -> Unit, modifie
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(sheet.tool.label, style = PetruType.Title, color = PetruColors.OnBackground)
+                    Text(stringResource(sheet.tool.labelRes), style = PetruType.Title, color = PetruColors.OnBackground)
                     Text(
                         if (speed) "${sheet.clipName} · $length" else sheet.clipName,
                         style = PetruType.Caption,
@@ -96,7 +98,7 @@ fun SpeedVolumeSheet(sheet: SheetState?, onEvent: (EditorEvent) -> Unit, modifie
                     )
                 }
                 Readout(speed, shown, Modifier.padding(horizontal = 12.dp))
-                PillButton("Done", onClick = { onEvent(EditorEvent.SheetDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.SheetDismiss) })
             }
             SpeedVolumeControls(sheet, onEvent, showReadout = false, onShown = { shown = it })
         }
@@ -112,7 +114,7 @@ private fun Readout(speed: Boolean, shown: Int, modifier: Modifier = Modifier) {
             style = PetruType.Display,
             color = if (boost) PetruColors.Boost else PetruColors.Accent,
         )
-        if (boost) Text("Boost", style = PetruType.Overline, color = PetruColors.Boost)
+        if (boost) Text(stringResource(R.string.editor_boost), style = PetruType.Overline, color = PetruColors.Boost)
     }
 }
 
@@ -136,7 +138,10 @@ fun SpeedVolumeControls(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 if (speed) {
                     Text(
-                        "Length ${formatDuration(timelineLengthMs(sheet.sourceLengthMs, shown))}",
+                        stringResource(
+                            R.string.editor_length_value,
+                            formatDuration(timelineLengthMs(sheet.sourceLengthMs, shown)),
+                        ),
                         style = PetruType.Mono,
                         color = PetruColors.OnSurfaceMuted,
                         modifier = Modifier.weight(1f),
@@ -167,13 +172,18 @@ fun SpeedVolumeControls(
                     )
                 }
             }
-            PetruChip("Reset", selected = false, onClick = { onEvent(EditorEvent.SheetReset(tool)) })
+            PetruChip(
+                stringResource(R.string.editor_reset),
+                selected = false,
+                onClick = { onEvent(EditorEvent.SheetReset(tool)) },
+            )
         }
     }
 }
 
 @Composable
 private fun SpeedSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) -> Unit) {
+    val textEditorspeed = stringResource(R.string.editor_speed)
     var dragging by remember { mutableStateOf(false) }
     Slider(
         value = speedToPosition(value),
@@ -187,7 +197,7 @@ private fun SpeedSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) ->
         },
         colors = sliderColors(PetruColors.Accent),
         modifier = Modifier.fillMaxWidth().semantics {
-            contentDescription = "Speed"
+            contentDescription = textEditorspeed
             stateDescription = formatSpeed(value)
         },
     )
@@ -195,6 +205,7 @@ private fun SpeedSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) ->
 
 @Composable
 private fun VolumeSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) -> Unit) {
+    val textEditorvolume = stringResource(R.string.editor_volume)
     var dragging by remember { mutableStateOf(false) }
     Slider(
         value = value.toFloat(),
@@ -210,7 +221,7 @@ private fun VolumeSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) -
         steps = VOLUME_MAX_PERCENT / VOLUME_STEP - 1,
         colors = sliderColors(if (value > VOLUME_DEFAULT_PERCENT) PetruColors.Boost else PetruColors.Accent),
         modifier = Modifier.fillMaxWidth().semantics {
-            contentDescription = "Volume"
+            contentDescription = textEditorvolume
             stateDescription = "$value percent"
         },
     )

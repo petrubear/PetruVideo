@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelReverseTest {
@@ -99,7 +100,7 @@ class EditorViewModelReverseTest {
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Reverse))
         e.preparer.gate.complete(false)
         e.clip.reversed shouldBe false
-        e.state.message shouldBe "This clip could not be reversed"
+        e.state.message shouldBe UiText.Res(R.string.editor_this_clip_could_not_be)
     }
 
     @Test
@@ -107,6 +108,6 @@ class EditorViewModelReverseTest {
         val e = env(FakePreparer(room = false))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Reverse))
         e.preparer.asked shouldBe emptyList()
-        e.state.message shouldBe "Not enough storage to reverse this clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_not_enough_storage_to_reverse)
     }
 }

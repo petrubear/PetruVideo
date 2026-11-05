@@ -48,6 +48,8 @@ import com.petruvideo.feature.editor.ui.PreviewSurface
 import com.petruvideo.feature.editor.ui.TimelineView
 import com.petruvideo.feature.editor.ui.keyframeLaneState
 import com.petruvideo.feature.editor.ui.TransportRow
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private const val LANE_LABEL_TOP_DP = 30
 private const val LANE_LABEL_GAP_DP = 44
@@ -66,6 +68,7 @@ fun ExpandedEditorLayout(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val defaultText = stringResource(R.string.editor_default_text)
     val timeline = state.timeline
     val separated = hinge != null && HingeAvoidance.isVertical(hinge)
     val inspectorShown = separated || LocalConfiguration.current.screenWidthDp >= ArrangementResolver.INSPECTOR_MIN_DP
@@ -174,7 +177,7 @@ fun ExpandedEditorLayout(
             StickersPanel(state.stickersOpen, onEvent)
             TextTabBar(
                 onBack = { onEvent(EditorEvent.SelectTab(ToolbarTab.Edit)) },
-                onAdd = { onEvent(EditorEvent.AddText) },
+                onAdd = { onEvent(EditorEvent.AddText(defaultText)) },
                 onCaptions = { onEvent(EditorEvent.OpenCaptions) },
                 onStickers = { onEvent(EditorEvent.OpenStickers) },
             )
@@ -275,7 +278,11 @@ private fun inspectorSettings(state: EditorState): List<SheetState> {
     }
 }
 
+@Composable
 private fun selectedClip(state: EditorState): InspectorClip? {
+    val textEditortext = stringResource(R.string.editor_text)
+    val textEditoraudio = stringResource(R.string.editor_audio)
+    val textEditoroverlay = stringResource(R.string.editor_overlay)
     val timeline = state.timeline ?: return null
     return when (val selection = state.selection) {
         null -> null
@@ -283,20 +290,32 @@ private fun selectedClip(state: EditorState): InspectorClip? {
             val clip = it.value
             inspectorClip(
                 name = clip.mediaItemId,
-                label = "Clip ${it.index + 1}",
+                label = stringResource(R.string.editor_clip_number, it.index + 1),
                 lengthMs = clip.lengthMs,
                 startMs = timeline.videoStartOf(clip.id) ?: 0L,
                 media = timeline.media[clip.mediaItemId],
             )
         }
         is ClipSelection.Audio -> timeline.audioLane.firstOrNull { it.id == selection.clipId }?.let {
-            inspectorClip(it.mediaItemId, "Audio", it.lengthMs, it.timelineStartMs, timeline.media[it.mediaItemId])
+            inspectorClip(
+                it.mediaItemId,
+                textEditoraudio,
+                it.lengthMs,
+                it.timelineStartMs,
+                timeline.media[it.mediaItemId],
+            )
         }
         is ClipSelection.Overlay -> timeline.overlayLane.firstOrNull { it.id == selection.clipId }?.let {
-            inspectorClip(it.mediaItemId, "Overlay", it.durationMs, it.startMs, timeline.media[it.mediaItemId])
+            inspectorClip(it.mediaItemId, textEditoroverlay, it.durationMs, it.startMs, timeline.media[it.mediaItemId])
         }
         is ClipSelection.Text -> timeline.textLane.firstOrNull { it.id == selection.clipId }?.let {
-            inspectorClip(it.text.lineSequence().firstOrNull().orEmpty(), "Text", it.durationMs, it.startMs, null)
+            inspectorClip(
+                it.text.lineSequence().firstOrNull().orEmpty(),
+                textEditortext,
+                it.durationMs,
+                it.startMs,
+                null,
+            )
         }
     }
 }

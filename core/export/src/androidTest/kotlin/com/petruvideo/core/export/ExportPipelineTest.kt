@@ -985,7 +985,7 @@ class ExportPipelineTest {
         val template = com.petruvideo.core.model.template.TemplateCatalog.all.first { it.id == "memories" }
         var n = 0
         val fill = com.petruvideo.core.model.template.TemplateFiller.fill(
-            template, listOf(a, photo, b), "p", { "t${n++}" },
+            template, listOf(a, photo, b), "p", newId = { "t${n++}" },
         )!!
         val timeline = fill.timeline.copy(format = ProjectFormat(320, 180, 30))
         val clipsMs = timeline.videoLane.sumOf { it.lengthMs } - 2 * 800
@@ -1254,7 +1254,9 @@ class ExportPipelineTest {
             val r = retriever(uri!!)
             val actual = r.int(MediaMetadataRetriever.METADATA_KEY_DURATION)
             r.release()
-            check(kotlin.math.abs(actual - expected) < 150) { "${preset.label}: exported $actual ms, the editor shows $expected ms" }
+            check(
+                kotlin.math.abs(actual - expected) < 150,
+            ) { "${preset.name}: exported $actual ms, the editor shows $expected ms" }
         }
     }
 

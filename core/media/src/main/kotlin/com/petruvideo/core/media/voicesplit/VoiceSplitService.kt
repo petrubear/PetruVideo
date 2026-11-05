@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import com.petruvideo.core.media.R
 
 /** The two audio files of a split as media items: the voice and everything else. */
 class SplitStems(val voice: MediaItem, val backing: MediaItem)
@@ -56,8 +57,8 @@ class VoiceSplitService @Inject constructor(
         val voice = probe.probe(Uri.fromFile(files.voice), files.voice.name).getOrNull() ?: return null
         val backing = probe.probe(Uri.fromFile(files.backing), files.backing.name).getOrNull() ?: return null
         return SplitStems(
-            voice.copy(displayName = "Voice - ${media.displayName}"),
-            backing.copy(displayName = "Backing - ${media.displayName}"),
+            voice.copy(displayName = context.getString(R.string.media_voice_stem, media.displayName)),
+            backing.copy(displayName = context.getString(R.string.media_backing_stem, media.displayName)),
         )
     }
 

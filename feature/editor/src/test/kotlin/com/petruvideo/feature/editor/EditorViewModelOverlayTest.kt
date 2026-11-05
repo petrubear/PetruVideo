@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelOverlayTest {
@@ -105,7 +106,7 @@ class EditorViewModelOverlayTest {
         val e = env()
         e.vm.onEvent(EditorEvent.AddOverlayMedia(clip.copy(kind = MediaKind.Audio)))
         e.overlays shouldBe emptyList()
-        e.state.message shouldBe "This file cannot be used as an overlay"
+        e.state.message shouldBe UiText.Res(R.string.editor_this_file_cannot_be_used)
     }
 
     private val sounding = clip.copy(id = "ovs", hasAudio = true)
@@ -172,6 +173,6 @@ class EditorViewModelOverlayTest {
         val e = env()
         e.addSounding()
         e.engine.dropOverlaySound()
-        e.state.message shouldBe "Overlay sound plays in the export, not in this preview"
+        e.state.message shouldBe UiText.Res(R.string.editor_overlay_sound_plays_in_the)
     }
 }

@@ -7,12 +7,12 @@ const val TRANSITION_DEFAULT_MS = 1_000L
 const val EFFECT_STRENGTH_DEFAULT = 50
 const val EFFECT_MAX = 3
 
-enum class TransitionKind(val label: String) {
-    Dissolve("Dissolve"),
-    FadeBlack("Fade through black"),
-    Slide("Slide"),
-    Cover("Cover"),
-    Zoom("Zoom"),
+enum class TransitionKind {
+    Dissolve,
+    FadeBlack,
+    Slide,
+    Cover,
+    Zoom,
 }
 
 /** A blend between a clip and the next one; the next clip starts [lengthMs] earlier. */
@@ -21,16 +21,16 @@ data class Transition(val kind: TransitionKind, val lengthMs: Long = TRANSITION_
         get() = lengthMs in TRANSITION_MIN_MS..TRANSITION_MAX_MS && lengthMs % TRANSITION_STEP_MS == 0L
 }
 
-enum class EffectKind(val label: String) {
-    Blur("Blur"),
-    Pixelate("Pixelate"),
-    Mirror("Mirror"),
-    Shake("Shake"),
-    Glitch("Glitch"),
-    RgbSplit("RGB split"),
-    Glow("Glow"),
-    Vhs("VHS"),
-    Grain("Grain"),
+enum class EffectKind {
+    Blur,
+    Pixelate,
+    Mirror,
+    Shake,
+    Glitch,
+    RgbSplit,
+    Glow,
+    Vhs,
+    Grain,
 }
 
 data class ClipEffect(val kind: EffectKind, val strength: Int = EFFECT_STRENGTH_DEFAULT) {

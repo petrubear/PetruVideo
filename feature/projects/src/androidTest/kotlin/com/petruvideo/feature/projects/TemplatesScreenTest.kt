@@ -19,6 +19,8 @@ import com.petruvideo.feature.projects.templates.TemplatesState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
+import com.petruvideo.feature.projects.R
 
 class TemplatesScreenTest {
     @get:Rule
@@ -40,7 +42,12 @@ class TemplatesScreenTest {
         setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, 2f)) {
-                PetruTheme { TemplatesScreen(TemplatesState(message = "Only the first 4 files were used"), {}, {}, {}) }
+                PetruTheme { TemplatesScreen(
+                    TemplatesState(message = UiText.Res(R.string.projects_only_first_files_used, 4)),
+                    {},
+                    {},
+                    {},
+                ) }
             }
         }
         onRoot().tryPerformAccessibilityChecks()

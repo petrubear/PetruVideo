@@ -3,13 +3,13 @@ package com.petruvideo.core.model
 const val STICKER_SIZE = 180
 const val STICKER_MS = 3_000L
 
-enum class StickerCategory(val label: String) {
-    Faces("Faces"),
-    Hearts("Hearts"),
-    Celebrate("Celebrate"),
-    Nature("Nature"),
-    Symbols("Symbols"),
-    Shapes("Shapes"),
+enum class StickerCategory {
+    Faces,
+    Hearts,
+    Celebrate,
+    Nature,
+    Symbols,
+    Shapes,
 }
 
 /** A symbol of the gallery: an emoji (own colours) or a shape glyph (drawn in [color]). */

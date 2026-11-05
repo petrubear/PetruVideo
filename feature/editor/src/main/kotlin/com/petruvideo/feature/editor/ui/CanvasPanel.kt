@@ -19,6 +19,9 @@ import com.petruvideo.core.model.ARGB_WHITE
 import com.petruvideo.core.model.BlurStrength
 import com.petruvideo.core.model.CanvasBackground
 import com.petruvideo.feature.editor.EditorEvent
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** The Background panel of the Effects tab: what fills the frame behind clips that do not cover it. */
 @Composable
@@ -31,12 +34,12 @@ fun CanvasPanel(canvas: CanvasBackground?, onEvent: (EditorEvent) -> Unit, modif
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Background",
+                    stringResource(R.string.editor_background),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Close", onClick = { onEvent(EditorEvent.CanvasDismiss) })
+                PillButton(stringResource(R.string.editor_close), onClick = { onEvent(EditorEvent.CanvasDismiss) })
             }
             CanvasControls(canvas, onEvent)
         }
@@ -49,29 +52,37 @@ fun CanvasControls(canvas: CanvasBackground, onEvent: (EditorEvent) -> Unit, mod
     val set = { next: CanvasBackground -> onEvent(EditorEvent.CanvasSet(next)) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "Fills the frame behind a clip that does not cover it.",
+            stringResource(R.string.editor_fills_the_frame_behind_a),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PetruChip("Black", selected = canvas == CanvasBackground.Black, onClick = { set(CanvasBackground.Black) })
             PetruChip(
-                "Colour", selected = canvas is CanvasBackground.Colour,
+                stringResource(R.string.editor_black),
+                selected = canvas == CanvasBackground.Black,
+                onClick = { set(CanvasBackground.Black) },
+            )
+            PetruChip(
+                stringResource(R.string.editor_colour), selected = canvas is CanvasBackground.Colour,
                 onClick = { if (canvas !is CanvasBackground.Colour) set(CanvasBackground.Colour(ARGB_WHITE)) },
             )
             PetruChip(
-                "Blur", selected = canvas is CanvasBackground.Blur,
+                stringResource(R.string.editor_blur), selected = canvas is CanvasBackground.Blur,
                 onClick = { if (canvas !is CanvasBackground.Blur) set(CanvasBackground.Blur(BlurStrength.Medium)) },
             )
         }
         when (canvas) {
             is CanvasBackground.Colour -> ColorPicker(
-                label = "Background", colorArgb = canvas.argb,
+                label = stringResource(R.string.editor_background), colorArgb = canvas.argb,
                 onPreview = {}, onCommit = { set(CanvasBackground.Colour(it)) },
             )
             is CanvasBackground.Blur -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BlurStrength.entries.forEach {
-                    PetruChip(it.label, selected = it == canvas.strength, onClick = { set(CanvasBackground.Blur(it)) })
+                    PetruChip(
+                        enumLabel("blur", it),
+                        selected = it == canvas.strength,
+                        onClick = { set(CanvasBackground.Blur(it)) },
+                    )
                 }
             }
             CanvasBackground.Black -> Unit

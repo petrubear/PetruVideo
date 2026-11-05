@@ -42,6 +42,8 @@ import com.petruvideo.feature.editor.ui.SpeedVolumeSheet
 import com.petruvideo.feature.editor.ui.TimelineView
 import com.petruvideo.feature.editor.ui.keyframeLaneState
 import com.petruvideo.feature.editor.ui.clock
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** The area above the hinge: the top bar and the preview, which gets the whole upper half. */
 @Composable
@@ -79,29 +81,35 @@ fun TabletopControlsHalf(
             )
             IconAction(
                 PetruIcons.Undo,
-                "Undo",
+                stringResource(R.string.editor_undo),
                 { if (state.canUndo) onEvent(EditorEvent.Undo) },
                 dimmed = !state.canUndo,
             )
-            IconAction(PetruIcons.Previous, "Previous clip", { onEvent(EditorEvent.StepClip(-1)) })
+            IconAction(
+                PetruIcons.Previous,
+                stringResource(R.string.editor_previous_clip),
+                { onEvent(EditorEvent.StepClip(-1)) },
+            )
             IconAction(
                 icon = if (state.playback.isPlaying) PetruIcons.Pause else PetruIcons.Play,
-                contentDescription = if (state.playback.isPlaying) "Pause" else "Play",
+                contentDescription = stringResource(
+                    if (state.playback.isPlaying) R.string.editor_pause else R.string.editor_play,
+                ),
                 onClick = { onEvent(if (state.playback.isPlaying) EditorEvent.Pause else EditorEvent.Play) },
                 modifier = Modifier.background(PetruColors.OnBackground, CircleShape),
                 tint = PetruColors.Background,
                 dimmed = state.isEmpty,
             )
-            IconAction(PetruIcons.Next, "Next clip", { onEvent(EditorEvent.StepClip(1)) })
+            IconAction(PetruIcons.Next, stringResource(R.string.editor_next_clip), { onEvent(EditorEvent.StepClip(1)) })
             IconAction(
                 PetruIcons.Redo,
-                "Redo",
+                stringResource(R.string.editor_redo),
                 { if (state.canRedo) onEvent(EditorEvent.Redo) },
                 dimmed = !state.canRedo,
             )
             IconAction(
                 PetruIcons.Split,
-                "Split at playhead",
+                stringResource(R.string.editor_split_at_playhead),
                 { onEvent(EditorEvent.UseTool(ClipTool.Split)) },
                 modifier = Modifier.background(PetruColors.Accent, CircleShape),
                 tint = PetruColors.Background,

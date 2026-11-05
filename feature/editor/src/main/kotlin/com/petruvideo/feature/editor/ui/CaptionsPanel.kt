@@ -26,6 +26,8 @@ import com.petruvideo.core.media.captions.RecognitionAvailability
 import com.petruvideo.feature.editor.CaptionsPanelState
 import com.petruvideo.feature.editor.EditorEvent
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** The Auto captions panel of the Text tab. */
 @Composable
@@ -38,12 +40,12 @@ fun CaptionsPanel(panel: CaptionsPanelState?, onEvent: (EditorEvent) -> Unit, mo
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Auto captions",
+                    stringResource(R.string.editor_auto_captions),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Close", onClick = { onEvent(EditorEvent.CaptionsDismiss) })
+                PillButton(stringResource(R.string.editor_close), onClick = { onEvent(EditorEvent.CaptionsDismiss) })
             }
             CaptionsBody(panel, onEvent)
         }
@@ -57,11 +59,11 @@ private fun CaptionsBody(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Un
     val progress = panel.progress
     when {
         progress != null -> Running(progress, onEvent)
-        panel.availability == null -> Muted("Checking speech recognition on this phone...")
+        panel.availability == null -> Muted(stringResource(R.string.editor_checking_speech_recognition_on_this))
         panel.availability == RecognitionAvailability.Available -> Ready(panel, onEvent)
         else -> Unavailable(panel, onEvent)
     }
-    panel.note?.let { Muted(it) }
+    panel.note?.let { Muted(it.asString()) }
 }
 
 @Composable
@@ -71,10 +73,10 @@ private fun Muted(text: String) {
 
 @Composable
 private fun Running(percent: Int, onEvent: (EditorEvent) -> Unit) {
-    val description = "Making captions, $percent percent"
+    val description = stringResource(R.string.editor_making_captions_description, percent)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            "Making captions $percent%",
+            stringResource(R.string.editor_making_captions_percent, percent),
             style = PetruType.Body,
             color = PetruColors.OnBackground,
             modifier = Modifier.weight(1f).semantics {
@@ -82,7 +84,7 @@ private fun Running(percent: Int, onEvent: (EditorEvent) -> Unit) {
                 liveRegion = LiveRegionMode.Polite
             },
         )
-        PillButton("Cancel", onClick = { onEvent(EditorEvent.CaptionsCancel) })
+        PillButton(stringResource(R.string.editor_cancel), onClick = { onEvent(EditorEvent.CaptionsCancel) })
     }
     LinearProgressIndicator(
         progress = { percent / PERCENT },
@@ -94,7 +96,7 @@ private fun Running(percent: Int, onEvent: (EditorEvent) -> Unit) {
 
 @Composable
 private fun Ready(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Unit) {
-    Muted("Recognised on this phone only. Nothing is sent over the network.")
+    Muted(stringResource(R.string.editor_recognised_on_this_phone_only))
     if (panel.languages.size > 1) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             panel.languages.forEach { tag ->
@@ -105,17 +107,20 @@ private fun Ready(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Unit) {
             }
         }
     } else {
-        Muted("Language: ${languageName(panel.language)}")
+        Muted(stringResource(R.string.editor_language_named, languageName(panel.language)))
     }
-    FxSwitch("Replace earlier auto captions", panel.replace) { onEvent(EditorEvent.CaptionsReplace(it)) }
-    PillButton("Start", onClick = { onEvent(EditorEvent.CaptionsStart) })
+    FxSwitch(
+        stringResource(R.string.editor_replace_earlier_auto_captions),
+        panel.replace,
+    ) { onEvent(EditorEvent.CaptionsReplace(it)) }
+    PillButton(stringResource(R.string.editor_start), onClick = { onEvent(EditorEvent.CaptionsStart) })
 }
 
 @Composable
 private fun Unavailable(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Unit) {
     val reason = when (val availability = panel.availability) {
-        RecognitionAvailability.NeedsNewerAndroid -> "Auto captions need Android 13 or newer."
-        RecognitionAvailability.NotOnThisPhone -> "This phone has no speech recognition that works without the network."
+        RecognitionAvailability.NeedsNewerAndroid -> stringResource(R.string.editor_auto_captions_need_android_13)
+        RecognitionAvailability.NotOnThisPhone -> stringResource(R.string.editor_this_phone_has_no_speech)
         is RecognitionAvailability.LanguageMissing ->
             "${languageName(availability.wanted)} is not installed for speech recognition on this phone."
         else -> ""
@@ -130,7 +135,10 @@ private fun Unavailable(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Uni
         }
     }
     if (panel.availability is RecognitionAvailability.LanguageMissing) {
-        PillButton("Open speech settings", onClick = { onEvent(EditorEvent.CaptionsOpenSettings) })
+        PillButton(
+            stringResource(R.string.editor_open_speech_settings),
+            onClick = { onEvent(EditorEvent.CaptionsOpenSettings) },
+        )
     }
 }
 

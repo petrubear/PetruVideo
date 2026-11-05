@@ -124,13 +124,13 @@ enum class CropHandle(
 }
 
 /** The shapes the crop box can keep; Free has none. */
-enum class CropShape(val label: String, val aspect: Float?) {
-    Free("Free", null),
-    Square("1:1", 1f),
-    Portrait("4:5", 4f / 5f),
-    Story("9:16", 9f / 16f),
-    Wide("16:9", 16f / 9f),
-    Classic("4:3", 4f / 3f),
+enum class CropShape(val aspect: Float?) {
+    Free(null),
+    Square(1f),
+    Portrait(4f / 5f),
+    Story(9f / 16f),
+    Wide(16f / 9f),
+    Classic(4f / 3f),
 }
 
 /**

@@ -86,7 +86,11 @@ fun ExportSettingsPanel(state: ExportUiState, settings: ExportSettings, onEvent:
         hint?.let { Text(it, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted) }
         Row(stringResource(R.string.export_format), "MP4 · H.264", PetruColors.OnBackground)
         Row(stringResource(R.string.export_bitrate), formatBitrate(state.videoBitrate), PetruColors.OnBackground)
-        Row(stringResource(R.string.export_estimated_size), "~ ${formatBytes(state.estimatedBytes)}", PetruColors.Accent)
+        Row(
+            stringResource(R.string.export_estimated_size),
+            "~ ${formatBytes(state.estimatedBytes)}",
+            PetruColors.Accent,
+        )
     }
 }
 

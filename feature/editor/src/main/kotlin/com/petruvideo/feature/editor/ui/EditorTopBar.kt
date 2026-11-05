@@ -25,6 +25,8 @@ import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.EditorHeader
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** Back button, project name with format and save status, and the Export button. */
 @Composable
@@ -39,7 +41,7 @@ fun EditorTopBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        IconAction(PetruIcons.Back, "Back", onBack)
+        IconAction(PetruIcons.Back, stringResource(R.string.editor_back), onBack)
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
             Text(
                 header?.name.orEmpty(),
@@ -75,7 +77,7 @@ private fun ExportButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            "Export",
+            stringResource(R.string.editor_export),
             style = PetruType.BodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold),
             color = PetruColors.OnAccent,
             modifier = Modifier

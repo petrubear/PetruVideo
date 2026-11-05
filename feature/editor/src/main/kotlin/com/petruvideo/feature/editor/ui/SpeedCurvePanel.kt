@@ -54,6 +54,9 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val GRAPH_HEIGHT = 110.dp
 private val POINT_TARGET = 48.dp
@@ -71,12 +74,12 @@ fun SpeedCurvePanel(panel: SpeedCurvePanelState?, onEvent: (EditorEvent) -> Unit
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Speed curve",
+                    stringResource(R.string.editor_speed_curve),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Done", onClick = { onEvent(EditorEvent.SpeedCurveDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.SpeedCurveDismiss) })
             }
             SpeedCurveControls(panel, onEvent)
         }
@@ -91,19 +94,29 @@ fun SpeedCurveControls(panel: SpeedCurvePanelState, onEvent: (EditorEvent) -> Un
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SpeedPreset.entries.forEach { preset ->
-                PetruChip(preset.label, selected = false, onClick = { onEvent(EditorEvent.SpeedCurvePreset(preset)) })
+                PetruChip(
+                    enumLabel("speedpreset", preset),
+                    selected = false,
+                    onClick = { onEvent(EditorEvent.SpeedCurvePreset(preset)) },
+                )
             }
         }
         SpeedGraph(panel.curve, index, onSelect = { selected = it }, onEvent = onEvent)
         Readout(panel)
         PointButtons(panel.curve, index, onEvent)
-        if (panel.hasCurve) TextAction("Reset to constant speed") { onEvent(EditorEvent.SpeedCurveReset) }
+        if (panel.hasCurve) TextAction(
+            stringResource(R.string.editor_reset_to_constant_speed),
+        ) { onEvent(EditorEvent.SpeedCurveReset) }
     }
 }
 
 @Composable
 private fun Readout(panel: SpeedCurvePanelState) {
-    val text = "Clip length ${formatSeconds(panel.lengthMs)} (constant speed ${formatSeconds(panel.constantLengthMs)})"
+    val text = stringResource(
+        R.string.editor_clip_length_readout,
+        formatSeconds(panel.lengthMs),
+        formatSeconds(panel.constantLengthMs),
+    )
     Text(
         text,
         style = PetruType.Caption,
@@ -119,12 +132,20 @@ private fun PointButtons(curve: SpeedCurve, index: Int, onEvent: (EditorEvent) -
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         val slower = (point.speedMilli / NUDGE_SPEED).roundToInt()
         val faster = (point.speedMilli * NUDGE_SPEED).roundToInt()
-        TextAction("Slower") { change(curve.withPointMoved(index, point.positionMs, slower)) }
-        TextAction("Faster") { change(curve.withPointMoved(index, point.positionMs, faster)) }
+        TextAction(
+            stringResource(R.string.editor_slower),
+        ) { change(curve.withPointMoved(index, point.positionMs, slower)) }
+        TextAction(
+            stringResource(R.string.editor_faster),
+        ) { change(curve.withPointMoved(index, point.positionMs, faster)) }
         val step = (curve.sourceLengthMs * NUDGE_SHARE).roundToLong()
-        TextAction("Earlier") { change(curve.withPointMoved(index, point.positionMs - step, point.speedMilli)) }
-        TextAction("Later") { change(curve.withPointMoved(index, point.positionMs + step, point.speedMilli)) }
-        TextAction("Delete point") { change(curve.withPointRemoved(index)) }
+        TextAction(
+            stringResource(R.string.editor_earlier),
+        ) { change(curve.withPointMoved(index, point.positionMs - step, point.speedMilli)) }
+        TextAction(
+            stringResource(R.string.editor_later),
+        ) { change(curve.withPointMoved(index, point.positionMs + step, point.speedMilli)) }
+        TextAction(stringResource(R.string.editor_delete_point)) { change(curve.withPointRemoved(index)) }
     }
 }
 
@@ -146,6 +167,7 @@ private fun SpeedGraph(
     onSelect: (Int) -> Unit,
     onEvent: (EditorEvent) -> Unit,
 ) {
+    val textEditordeletepoint = stringResource(R.string.editor_delete_point)
     BoxWithConstraints(
         Modifier.fillMaxWidth().height(GRAPH_HEIGHT + POINT_TARGET).padding(horizontal = POINT_TARGET / 2),
     ) {
@@ -163,6 +185,14 @@ private fun SpeedGraph(
             shown.points.forEachIndexed { i, point ->
                 val x = width * (point.positionMs.toFloat() / length)
                 val y = GRAPH_HEIGHT * (1f - speedToFraction(point.speedMilli))
+                val pointText =
+                    if (i == selected) R.string.editor_point_description_selected else R.string.editor_point_description
+                val pointDescription = stringResource(
+                    pointText,
+                    i + 1,
+                    formatSeconds(point.positionMs),
+                    "%.1f".format(point.speedMilli / SPEED_LABEL_DIVISOR),
+                )
                 Box(
                     Modifier
                         .offset(x - POINT_TARGET / 2, y - POINT_TARGET / 2)
@@ -185,11 +215,9 @@ private fun SpeedGraph(
                             )
                         }
                         .semantics {
-                            contentDescription = "Point ${i + 1}, at ${formatSeconds(point.positionMs)}, " +
-                                "${"%.1f".format(point.speedMilli / SPEED_LABEL_DIVISOR)} times speed" +
-                                if (i == selected) ", selected" else ""
+                            contentDescription = pointDescription
                             customActions = listOf(
-                                CustomAccessibilityAction("Delete point") {
+                                CustomAccessibilityAction(textEditordeletepoint) {
                                     curve.withPointRemoved(i)?.let { onEvent(EditorEvent.SpeedCurveCommit(it)) } != null
                                 },
                             )

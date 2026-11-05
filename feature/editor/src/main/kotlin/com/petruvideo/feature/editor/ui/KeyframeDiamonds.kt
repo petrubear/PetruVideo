@@ -31,6 +31,8 @@ import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.TimelineGeometry
 import kotlin.math.abs
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val TARGET = 48.dp
 private val DIAMOND = 14.dp
@@ -83,7 +85,10 @@ private fun BoxScope.Diamond(
     var dx by remember(timeMs) { mutableFloatStateOf(0f) }
     val isSelected = state.selectedMs == timeMs
     val x = geometry.timeToPx(timeMs) + dx / density
-    val description = "Keyframe at ${"%.1f".format(timeMs / MS)} seconds" + if (isSelected) ", selected" else ""
+    val description = stringResource(
+        if (isSelected) R.string.editor_keyframe_at_selected else R.string.editor_keyframe_at,
+        "%.1f".format(timeMs / MS),
+    )
     Box(
         Modifier
             .align(alignment)

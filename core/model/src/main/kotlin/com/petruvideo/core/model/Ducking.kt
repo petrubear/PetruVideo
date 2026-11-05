@@ -7,10 +7,10 @@ const val DUCK_STEP_MS = 20
 const val DUCK_PEAKS_PER_SECOND = 20
 
 /** How quickly a ducked clip goes down ([attackMs]) and comes back ([releaseMs]); both are time constants. */
-enum class DuckSmoothness(val label: String, val attackMs: Int, val releaseMs: Int) {
-    Quick("Quick", 60, 250),
-    Medium("Medium", 150, 600),
-    Slow("Slow", 300, 1200),
+enum class DuckSmoothness(val attackMs: Int, val releaseMs: Int) {
+    Quick(60, 250),
+    Medium(150, 600),
+    Slow(300, 1200),
 }
 
 /**

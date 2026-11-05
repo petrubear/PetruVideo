@@ -41,7 +41,7 @@ class EditorViewModelTextTest {
     private val Env.texts get() = session.timeline.value!!.textLane
 
     private fun Env.add(): TextClip {
-        vm.onEvent(EditorEvent.AddText)
+        vm.onEvent(EditorEvent.AddText())
         return texts.single()
     }
 

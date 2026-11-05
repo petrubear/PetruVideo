@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelKeyframesTest {
@@ -116,13 +117,13 @@ class EditorViewModelKeyframesTest {
         )
         e.vm.onEvent(EditorEvent.SeekTo(950))
         e.vm.onEvent(EditorEvent.KeyframeAdd)
-        e.state.message shouldBe "A clip can have 50 keyframes at most"
+        e.state.message shouldBe UiText.Res(R.string.editor_a_clip_can_have_50)
     }
 
     @Test
     fun `text clips have keyframes too and the tool bar lists the tool`() = runTest {
         val e = env()
-        e.vm.onEvent(EditorEvent.AddText)
+        e.vm.onEvent(EditorEvent.AddText())
         e.state.clipTools.contains(ClipTool.Keyframes) shouldBe true
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Keyframes))
         e.vm.onEvent(EditorEvent.KeyframeAdd)

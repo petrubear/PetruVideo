@@ -48,7 +48,7 @@ class ExportService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_CANCEL) coordinator.cancel()
         ensureChannel()
-        startForegroundCompat(progressNotification(0, "Preparing export"))
+        startForegroundCompat(progressNotification(0, getString(R.string.export_service_preparing)))
         if (!observing) {
             observing = true
             scope.launch {
@@ -92,11 +92,14 @@ class ExportService : Service() {
 
     private fun ensureChannel() {
         val manager = getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(CHANNEL) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Export", NotificationManager.IMPORTANCE_LOW),
-            )
-        }
+        // Creating the channel again only updates its name, so the name follows the phone's language.
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL,
+                getString(R.string.export_service_channel),
+                NotificationManager.IMPORTANCE_LOW,
+            ),
+        )
     }
 
     private fun openApp(): PendingIntent {
@@ -111,21 +114,21 @@ class ExportService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
-            .setContentTitle("Exporting $name")
+            .setContentTitle(getString(R.string.export_service_exporting, name))
             .setContentText("$progress%")
             .setProgress(PROGRESS_MAX, progress, false)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(openApp())
-            .addAction(0, "Cancel", cancel)
+            .addAction(0, getString(R.string.export_service_cancel), cancel)
             .build()
     }
 
     private fun resultNotification(state: ExportState, name: String): Notification {
         val text = when (state) {
-            is ExportState.Finished -> "Export saved"
-            ExportState.Cancelled -> "Export cancelled"
-            else -> "Export did not finish"
+            is ExportState.Finished -> getString(R.string.export_service_saved)
+            ExportState.Cancelled -> getString(R.string.export_service_cancelled)
+            else -> getString(R.string.export_service_not_finished)
         }
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_upload_done)

@@ -1,0 +1,9 @@
+<resources>
+    <string name="export_service_preparing">Preparando exportación</string>
+    <string name="export_service_channel">Exportación</string>
+    <string name="export_service_exporting">Exportando %1$s</string>
+    <string name="export_service_cancel">Cancelar</string>
+    <string name="export_service_saved">Exportación guardada</string>
+    <string name="export_service_cancelled">Exportación cancelada</string>
+    <string name="export_service_not_finished">La exportación no terminó</string>
+</resources>

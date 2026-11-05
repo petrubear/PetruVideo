@@ -13,6 +13,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.Player
 import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.icons.PetruIcons
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /**
  * Full-screen preview. It draws the same player, so playback continues from the same position and nothing is
@@ -25,7 +27,7 @@ fun FullscreenPreview(player: Player?, onClose: () -> Unit) {
             PreviewSurface(player, Modifier.fillMaxSize())
             IconAction(
                 PetruIcons.Close,
-                "Close full screen",
+                stringResource(R.string.editor_close_full_screen),
                 onClose,
                 Modifier.align(Alignment.TopStart).statusBarsPadding(),
                 tint = Color.White,

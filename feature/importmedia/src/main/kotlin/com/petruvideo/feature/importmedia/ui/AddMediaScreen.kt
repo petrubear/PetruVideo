@@ -83,7 +83,12 @@ fun AddMediaScreen(
 @Composable
 private fun Header(onClose: () -> Unit) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-        IconAction(PetruIcons.Close, stringResource(R.string.import_close), onClose, Modifier.align(Alignment.CenterStart))
+        IconAction(
+            PetruIcons.Close,
+            stringResource(R.string.import_close),
+            onClose,
+            Modifier.align(Alignment.CenterStart),
+        )
         Text(stringResource(R.string.import_add_media), style = PetruType.Title, color = PetruColors.OnBackground)
     }
 }

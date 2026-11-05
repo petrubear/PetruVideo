@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelCaptionsTest {
@@ -72,7 +73,12 @@ class EditorViewModelCaptionsTest {
         e.fake.gate.complete(CaptionResult(lines, 1, 0, false))
         e.state.captionsPanel!!.progress shouldBe null
         e.texts.map { it.text to it.caption } shouldBe listOf("Hello" to true, "World" to true)
-        e.state.captionsPanel!!.note shouldBe "Added 2 captions. 1 phrases could not be recognised"
+        e.state.captionsPanel!!.note shouldBe UiText.Joined(
+            listOf(
+                UiText.Plural(R.plurals.editor_captions_added, 2, listOf(2)),
+                UiText.Plural(R.plurals.editor_phrases_not_recognised, 1, listOf(1)),
+            ),
+        )
         e.vm.onEvent(EditorEvent.Undo)
         e.texts shouldBe emptyList()
     }
@@ -92,7 +98,7 @@ class EditorViewModelCaptionsTest {
         e.vm.onEvent(EditorEvent.CaptionsStart)
         e.fake.gate.complete(CaptionResult(emptyList(), 0, 0, false))
         e.texts shouldBe emptyList()
-        e.state.captionsPanel!!.note shouldBe "There was no speech to caption"
+        e.state.captionsPanel!!.note shouldBe UiText.Res(R.string.editor_there_was_no_speech_to)
     }
 
     @Test

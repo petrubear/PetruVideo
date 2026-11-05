@@ -50,6 +50,10 @@ import com.petruvideo.feature.editor.TextPanelState
 import com.petruvideo.feature.editor.TextToolKind
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val MAX_BODY = 300.dp
 private val MAX_BODY_TABLETOP = 120.dp
@@ -66,12 +70,12 @@ fun TextPanel(panel: TextPanelState?, onEvent: (EditorEvent) -> Unit, modifier: 
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    panel.kind.label,
+                    stringResource(panel.kind.labelRes),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Done", onClick = { onEvent(EditorEvent.TextDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.TextDismiss) })
             }
             val tabletop = LocalArrangement.current is WindowArrangement.Tabletop
             val maxBody = if (tabletop) MAX_BODY_TABLETOP else MAX_BODY
@@ -110,7 +114,7 @@ fun TextEditControls(clip: TextClip, onEvent: (EditorEvent) -> Unit, modifier: M
                 text = it.take(TEXT_MAX_CHARS)
                 onEvent(EditorEvent.TextPreview(clip.copy(text = text)))
             },
-            modifier = Modifier.fillMaxWidth().focusRequester(focus).semantics { contentDescription = "Text" },
+            modifier = Modifier.fillMaxWidth().focusRequester(focus).described(R.string.editor_text),
             minLines = 2,
             maxLines = 5,
             colors = TextFieldDefaults.colors(
@@ -140,19 +144,19 @@ fun TextStyleControls(clip: TextClip, onEvent: (EditorEvent) -> Unit, modifier: 
     Column(modifier.fillMaxWidth()) {
         FontAndAlign(shown, commit)
         SettingSlider(
-            "Size", "${shown.sizePermille / PERCENT_DIV}%", shown.sizePermille.toFloat(),
+            stringResource(R.string.editor_size), "${shown.sizePermille / PERCENT_DIV}%", shown.sizePermille.toFloat(),
             TEXT_SIZE_MIN.toFloat()..TEXT_SIZE_MAX.toFloat(),
             { preview(shown.copy(sizePermille = it.roundToInt())) }, { commit(shown) },
         )
-        Text("Color", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_color), style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         ColorPicker(
-            "Text color", style.colorArgb,
+            stringResource(R.string.editor_text_color), style.colorArgb,
             { preview(shown.copy(style = style.copy(colorArgb = it))) },
             { commit(shown.copy(style = style.copy(colorArgb = it))) },
         )
         BackgroundControls(shown, preview, commit)
         OutlineControls(shown, preview, commit)
-        TextAction("Reset style") { onEvent(EditorEvent.TextReset(TextToolKind.Style)) }
+        TextAction(stringResource(R.string.editor_reset_style)) { onEvent(EditorEvent.TextReset(TextToolKind.Style)) }
     }
 }
 
@@ -164,7 +168,7 @@ private fun FontAndAlign(clip: TextClip, commit: (TextClip) -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextFont.entries.forEach { font ->
             PetruChip(
-                font.label,
+                enumLabel("textfont", font),
                 selected = style.font == font,
                 onClick = { commit(clip.copy(style = style.copy(font = font))) },
             )
@@ -173,7 +177,7 @@ private fun FontAndAlign(clip: TextClip, commit: (TextClip) -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextAlign.entries.forEach { align ->
             PetruChip(
-                align.label,
+                enumLabel("textalign", align),
                 selected = style.align == align,
                 onClick = { commit(clip.copy(style = style.copy(align = align))) },
             )
@@ -184,17 +188,17 @@ private fun FontAndAlign(clip: TextClip, commit: (TextClip) -> Unit) {
 @Composable
 private fun BackgroundControls(clip: TextClip, preview: (TextClip) -> Unit, commit: (TextClip) -> Unit) {
     val bg = clip.style.background
-    FxSwitch("Background", bg.enabled) {
+    FxSwitch(stringResource(R.string.editor_background), bg.enabled) {
         commit(clip.copy(style = clip.style.copy(background = bg.copy(enabled = it))))
     }
     if (!bg.enabled) return
     ColorPicker(
-        "Background color", bg.colorArgb,
+        stringResource(R.string.editor_background_color), bg.colorArgb,
         { preview(clip.copy(style = clip.style.copy(background = bg.copy(colorArgb = it)))) },
         { commit(clip.copy(style = clip.style.copy(background = bg.copy(colorArgb = it)))) },
     )
     SettingSlider(
-        "Opacity", "${bg.opacityPercent}%", bg.opacityPercent.toFloat(), 0f..PERCENT_MAX,
+        stringResource(R.string.editor_opacity), "${bg.opacityPercent}%", bg.opacityPercent.toFloat(), 0f..PERCENT_MAX,
         { preview(clip.copy(style = clip.style.copy(background = bg.copy(opacityPercent = it.roundToInt())))) },
         { commit(clip) },
     )
@@ -203,17 +207,19 @@ private fun BackgroundControls(clip: TextClip, preview: (TextClip) -> Unit, comm
 @Composable
 private fun OutlineControls(clip: TextClip, preview: (TextClip) -> Unit, commit: (TextClip) -> Unit) {
     val outline = clip.style.outline
-    FxSwitch("Outline", outline.enabled) {
+    FxSwitch(stringResource(R.string.editor_outline), outline.enabled) {
         commit(clip.copy(style = clip.style.copy(outline = outline.copy(enabled = it))))
     }
     if (!outline.enabled) return
     ColorPicker(
-        "Outline color", outline.colorArgb,
+        stringResource(R.string.editor_outline_color), outline.colorArgb,
         { preview(clip.copy(style = clip.style.copy(outline = outline.copy(colorArgb = it)))) },
         { commit(clip.copy(style = clip.style.copy(outline = outline.copy(colorArgb = it)))) },
     )
     SettingSlider(
-        "Outline width", "${outline.widthPermille / PERCENT_DIV}%", outline.widthPermille.toFloat(),
+        stringResource(R.string.editor_outline_width),
+        "${outline.widthPermille / PERCENT_DIV}%",
+        outline.widthPermille.toFloat(),
         0f..TEXT_OUTLINE_MAX.toFloat(),
         { preview(clip.copy(style = clip.style.copy(outline = outline.copy(widthPermille = it.roundToInt())))) },
         { commit(clip) },
@@ -234,17 +240,23 @@ fun TextAnimationControls(clip: TextClip, onEvent: (EditorEvent) -> Unit, modifi
         onEvent(EditorEvent.TextCommit(next))
     }
     Column(modifier.fillMaxWidth()) {
-        Text("In", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_in), style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         AnimationRow(
             ANIM_IN_KINDS, shown.animIn,
-            { commit(shown.copy(animIn = it)) }, { preview(shown.copy(animIn = it)) }, { commit(shown) }, "In",
+            { commit(
+                shown.copy(animIn = it),
+            ) }, { preview(shown.copy(animIn = it)) }, { commit(shown) }, stringResource(R.string.editor_in),
         )
-        Text("Out", style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_out), style = PetruType.Overline, color = PetruColors.OnSurfaceMuted)
         AnimationRow(
             ANIM_OUT_KINDS, shown.animOut,
-            { commit(shown.copy(animOut = it)) }, { preview(shown.copy(animOut = it)) }, { commit(shown) }, "Out",
+            { commit(
+                shown.copy(animOut = it),
+            ) }, { preview(shown.copy(animOut = it)) }, { commit(shown) }, stringResource(R.string.editor_out),
         )
-        TextAction("Reset animation") { onEvent(EditorEvent.TextReset(TextToolKind.Animation)) }
+        TextAction(
+            stringResource(R.string.editor_reset_animation),
+        ) { onEvent(EditorEvent.TextReset(TextToolKind.Animation)) }
     }
 }
 
@@ -259,7 +271,11 @@ private fun AnimationRow(
 ) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         kinds.forEach { kind ->
-            PetruChip(kind.label, selected = value.kind == kind, onClick = { onKind(value.copy(kind = kind)) })
+            PetruChip(
+                enumLabel("animkind", kind),
+                selected = value.kind == kind,
+                onClick = { onKind(value.copy(kind = kind)) },
+            )
         }
     }
     if (value.kind != AnimKind.None) {

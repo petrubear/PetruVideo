@@ -20,6 +20,8 @@ import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.PlaybackState
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** Time readout, undo, play or pause, redo, and the full-screen button. */
 @Composable
@@ -48,18 +50,20 @@ fun TransportRow(
             modifier = Modifier.weight(1f).padding(start = 8.dp, end = 4.dp),
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconAction(PetruIcons.Undo, "Undo", onUndo, dimmed = !canUndo)
+            IconAction(PetruIcons.Undo, stringResource(R.string.editor_undo), onUndo, dimmed = !canUndo)
             IconAction(
                 icon = if (playback.isPlaying) PetruIcons.Pause else PetruIcons.Play,
-                contentDescription = if (playback.isPlaying) "Pause" else "Play",
+                contentDescription = if (playback.isPlaying) stringResource(R.string.editor_pause) else stringResource(
+                    R.string.editor_play,
+                ),
                 onClick = onPlayPause,
                 modifier = Modifier.background(PetruColors.OnBackground, CircleShape),
                 tint = PetruColors.Background,
                 dimmed = !enabled,
             )
-            IconAction(PetruIcons.Redo, "Redo", onRedo, dimmed = !canRedo)
+            IconAction(PetruIcons.Redo, stringResource(R.string.editor_redo), onRedo, dimmed = !canRedo)
         }
-        IconAction(PetruIcons.Fullscreen, "Fullscreen preview", onFullscreen)
+        IconAction(PetruIcons.Fullscreen, stringResource(R.string.editor_fullscreen_preview), onFullscreen)
     }
 }
 

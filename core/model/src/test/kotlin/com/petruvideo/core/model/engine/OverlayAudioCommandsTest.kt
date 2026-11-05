@@ -152,6 +152,6 @@ class OverlayAudioCommandsTest {
     @Test
     fun `the voice split rules cover overlays`() {
         VoiceSplitRules.reasonNot(sounding, "o") shouldBe null
-        VoiceSplitRules.reasonNot(timeline, "silent") shouldBe "No sound in this clip"
+        VoiceSplitRules.reasonNot(timeline, "silent") shouldBe VoiceSplitBlock.NoSound
     }
 }

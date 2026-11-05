@@ -53,6 +53,9 @@ import com.petruvideo.feature.editor.AudioPanelState
 import com.petruvideo.feature.editor.AudioToolKind
 import com.petruvideo.feature.editor.EditorEvent
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val MAX_PANEL_BODY = 300.dp
 private val MAX_PANEL_BODY_TABLETOP = 120.dp
@@ -73,18 +76,18 @@ fun AudioPanel(panel: AudioPanelState?, onEvent: (EditorEvent) -> Unit, modifier
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(panel.kind.label, style = PetruType.Title, color = PetruColors.OnBackground)
+                    Text(stringResource(panel.kind.labelRes), style = PetruType.Title, color = PetruColors.OnBackground)
                     Text(panel.clipName, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted, maxLines = 1)
                 }
                 if (panel.kind != AudioToolKind.List) {
                     PetruChip(
-                        "Tools",
+                        stringResource(R.string.editor_tools),
                         selected = false,
                         onClick = { onEvent(EditorEvent.OpenAudioTool(AudioToolKind.List)) },
                     )
                 }
                 PillButton(
-                    "Done",
+                    stringResource(R.string.editor_done),
                     onClick = { onEvent(EditorEvent.AudioDismiss) },
                     modifier = Modifier.padding(start = 8.dp),
                 )
@@ -119,29 +122,53 @@ private class ToolRow(val name: String, val hint: String, val open: () -> Unit)
 private fun AudioToolList(panel: AudioPanelState, onEvent: (EditorEvent) -> Unit) {
     val fx = panel.fx
     val voiceNames = listOfNotNull(
-        "Echo".takeIf { fx.voice.echo.enabled },
-        "Robot".takeIf { fx.voice.robot.enabled },
-        "Pitch".takeIf { fx.voice.pitch.enabled },
-        "Bass".takeIf { fx.voice.bass.enabled },
+        stringResource(R.string.editor_echo).takeIf { fx.voice.echo.enabled },
+        stringResource(R.string.editor_robot).takeIf { fx.voice.robot.enabled },
+        stringResource(R.string.editor_pitch).takeIf { fx.voice.pitch.enabled },
+        stringResource(R.string.editor_bass).takeIf { fx.voice.bass.enabled },
     )
     val fadeHint = if (fx.fade.isNeutral) {
-        "Off"
+        stringResource(R.string.editor_off)
     } else {
-        "In ${formatSeconds(fx.fade.inMs)}, out ${formatSeconds(fx.fade.outMs)}"
+        stringResource(R.string.editor_fade_hint, formatSeconds(fx.fade.inMs), formatSeconds(fx.fade.outMs))
     }
     val tool = { kind: AudioToolKind -> { onEvent(EditorEvent.OpenAudioTool(kind)) } }
     val use = { clipTool: ClipTool -> { onEvent(EditorEvent.UseTool(clipTool)) } }
     val rows = listOf(
-        ToolRow("Volume", "${panel.volumePercent}%", use(ClipTool.Volume)),
-        ToolRow("Mute", if (panel.muted) "Muted" else "Off", use(ClipTool.Mute)),
-        ToolRow("Fade", fadeHint, tool(AudioToolKind.Fade)),
-        ToolRow("Noise reduction", if (fx.noise.enabled) fx.noise.strength.label else "Off", tool(AudioToolKind.Noise)),
-        ToolRow("Equalizer", if (fx.eq.isFlat) "Off" else fx.eq.preset.label, tool(AudioToolKind.Eq)),
-        ToolRow("Voice effects", voiceNames.joinToString(", ").ifEmpty { "Off" }, tool(AudioToolKind.Voice)),
-        ToolRow("Reverb", if (panel.reverb.enabled) panel.reverb.preset.label else "Off", use(ClipTool.Reverb)),
+        ToolRow(stringResource(R.string.editor_volume), "${panel.volumePercent}%", use(ClipTool.Volume)),
+        ToolRow(
+            stringResource(R.string.editor_mute),
+            if (panel.muted) stringResource(R.string.editor_muted) else stringResource(R.string.editor_off),
+            use(ClipTool.Mute),
+        ),
+        ToolRow(stringResource(R.string.editor_fade), fadeHint, tool(AudioToolKind.Fade)),
+        ToolRow(
+            stringResource(R.string.editor_noise_reduction),
+            if (fx.noise.enabled) enumLabel("noise", fx.noise.strength) else stringResource(R.string.editor_off),
+            tool(AudioToolKind.Noise),
+        ),
+        ToolRow(
+            stringResource(R.string.editor_equalizer),
+            if (fx.eq.isFlat) stringResource(R.string.editor_off) else enumLabel("eqpreset", fx.eq.preset),
+            tool(AudioToolKind.Eq),
+        ),
+        ToolRow(
+            stringResource(R.string.editor_voice_effects),
+            voiceNames.joinToString(", ").ifEmpty { stringResource(R.string.editor_off) },
+            tool(AudioToolKind.Voice),
+        ),
+        ToolRow(
+            stringResource(R.string.editor_reverb),
+            if (panel.reverb.enabled) enumLabel("reverb", panel.reverb.preset) else stringResource(R.string.editor_off),
+            use(ClipTool.Reverb),
+        ),
     ) + listOfNotNull(
         panel.ducking?.let {
-            ToolRow("Ducking", if (it.enabled) "${it.amountPercent}%" else "Off", tool(AudioToolKind.Ducking))
+            ToolRow(
+                stringResource(R.string.editor_ducking),
+                if (it.enabled) "${it.amountPercent}%" else stringResource(R.string.editor_off),
+                tool(AudioToolKind.Ducking),
+            )
         },
     )
     Column {
@@ -174,25 +201,35 @@ fun FadeControls(fx: AudioFx, clipLengthMs: Long, onEvent: (EditorEvent) -> Unit
     }
     Column(modifier.fillMaxWidth()) {
         if (maxMs < MIN_FADE_RANGE_MS) {
-            Text("This clip is too short for a fade", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+            Text(
+                stringResource(R.string.editor_this_clip_is_too_short),
+                style = PetruType.Body,
+                color = PetruColors.OnSurfaceMuted,
+            )
             return
         }
         val range = 0f..maxMs.toFloat()
         val fade = shown.fade
         SettingSlider(
-            "Fade in", formatSeconds(fade.inMs), fade.inMs.toFloat().coerceAtMost(range.endInclusive), range,
+            stringResource(R.string.editor_fade_in), formatSeconds(fade.inMs), fade.inMs.toFloat().coerceAtMost(
+                range.endInclusive,
+            ), range,
             { change(fade.copy(inMs = it.roundToInt().toLong())) }, finish,
         )
         SettingSlider(
-            "Fade out", formatSeconds(fade.outMs), fade.outMs.toFloat().coerceAtMost(range.endInclusive), range,
+            stringResource(R.string.editor_fade_out), formatSeconds(fade.outMs), fade.outMs.toFloat().coerceAtMost(
+                range.endInclusive,
+            ), range,
             { change(fade.copy(outMs = it.roundToInt().toLong())) }, finish,
         )
-        TextAction("Reset") { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Fade)) }
+        TextAction(stringResource(R.string.editor_reset)) { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Fade)) }
     }
 }
 
 @Composable
 internal fun FxSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val textEditoroff = stringResource(R.string.editor_off)
+    val textEditoron = stringResource(R.string.editor_on)
     Row(
         Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -210,7 +247,7 @@ internal fun FxSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Un
             ),
             modifier = Modifier.semantics {
                 contentDescription = label
-                stateDescription = if (checked) "On" else "Off"
+                stateDescription = if (checked) textEditoron else textEditoroff
             },
         )
     }
@@ -221,18 +258,18 @@ fun NoiseControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Modifie
     val noise = fx.noise
     val commit = { next: NoiseReduction -> onEvent(EditorEvent.AudioFxCommit(fx.copy(noise = next))) }
     Column(modifier.fillMaxWidth()) {
-        FxSwitch("Noise reduction", noise.enabled) { commit(noise.copy(enabled = it)) }
+        FxSwitch(stringResource(R.string.editor_noise_reduction), noise.enabled) { commit(noise.copy(enabled = it)) }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             NoiseStrength.entries.forEach { strength ->
                 PetruChip(
-                    strength.label,
+                    enumLabel("noise", strength),
                     selected = noise.strength == strength,
                     onClick = { commit(noise.copy(enabled = true, strength = strength)) },
                 )
             }
         }
         Text(
-            "Best for steady noise in voice",
+            stringResource(R.string.editor_best_for_steady_noise_in),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
             modifier = Modifier.padding(top = 8.dp),
@@ -252,22 +289,26 @@ fun EqualizerControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Mod
     val eq = shown.eq
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (eq.preset == EqPreset.Custom) PetruChip(EqPreset.Custom.label, selected = true, onClick = {})
+            if (eq.preset == EqPreset.Custom) PetruChip(
+                enumLabel("eqpreset", EqPreset.Custom),
+                selected = true,
+                onClick = {},
+            )
             EqPresets.all.forEach { preset ->
                 PetruChip(
-                    preset.label,
+                    enumLabel("eqpreset", preset),
                     selected = eq.preset == preset,
                     onClick = { onEvent(EditorEvent.AudioFxCommit(fx.copy(eq = EqPresets.settings(preset)))) },
                 )
             }
         }
-        SettingSlider("Low", formatSigned(eq.lowDb, "dB"), eq.lowDb.toFloat(), range,
+        SettingSlider(stringResource(R.string.editor_low), formatSigned(eq.lowDb, "dB"), eq.lowDb.toFloat(), range,
             { change(eq.copy(lowDb = it.roundToInt())) }, finish)
-        SettingSlider("Mid", formatSigned(eq.midDb, "dB"), eq.midDb.toFloat(), range,
+        SettingSlider(stringResource(R.string.editor_mid), formatSigned(eq.midDb, "dB"), eq.midDb.toFloat(), range,
             { change(eq.copy(midDb = it.roundToInt())) }, finish)
-        SettingSlider("High", formatSigned(eq.highDb, "dB"), eq.highDb.toFloat(), range,
+        SettingSlider(stringResource(R.string.editor_high), formatSigned(eq.highDb, "dB"), eq.highDb.toFloat(), range,
             { change(eq.copy(highDb = it.roundToInt())) }, finish)
-        TextAction("Reset") { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Eq)) }
+        TextAction(stringResource(R.string.editor_reset)) { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Eq)) }
     }
 }
 
@@ -284,35 +325,53 @@ fun VoiceControls(fx: AudioFx, onEvent: (EditorEvent) -> Unit, modifier: Modifie
     val voice = shown.voice
     val percent = 0f..FX_PERCENT_MAX.toFloat()
     Column(modifier.fillMaxWidth()) {
-        FxSwitch("Echo", voice.echo.enabled) { commit(saved.copy(echo = saved.echo.copy(enabled = it))) }
+        FxSwitch(
+            stringResource(R.string.editor_echo),
+            voice.echo.enabled,
+        ) { commit(saved.copy(echo = saved.echo.copy(enabled = it))) }
         if (voice.echo.enabled) {
             val echo = voice.echo
-            SettingSlider("Delay", "${echo.delayMs} ms", echo.delayMs.toFloat(),
+            SettingSlider(stringResource(R.string.editor_delay), "${echo.delayMs} ms", echo.delayMs.toFloat(),
                 ECHO_DELAY_MIN_MS.toFloat()..ECHO_DELAY_MAX_MS.toFloat(),
                 { change(voice.copy(echo = echo.copy(delayMs = it.roundToInt()))) }, finish)
-            SettingSlider("Repeats", "${echo.repeats}", echo.repeats.toFloat(), 1f..ECHO_REPEATS_MAX.toFloat(),
+            SettingSlider(
+                stringResource(R.string.editor_repeats),
+                "${echo.repeats}",
+                echo.repeats.toFloat(),
+                1f..ECHO_REPEATS_MAX.toFloat(),
                 { change(voice.copy(echo = echo.copy(repeats = it.roundToInt()))) }, finish)
         }
-        FxSwitch("Robot", voice.robot.enabled) { commit(saved.copy(robot = saved.robot.copy(enabled = it))) }
+        FxSwitch(
+            stringResource(R.string.editor_robot),
+            voice.robot.enabled,
+        ) { commit(saved.copy(robot = saved.robot.copy(enabled = it))) }
         if (voice.robot.enabled) {
             val robot = voice.robot
-            SettingSlider("Intensity", "${robot.intensity}%", robot.intensity.toFloat(), percent,
+            SettingSlider(
+                stringResource(R.string.editor_intensity), "${robot.intensity}%", robot.intensity.toFloat(), percent,
                 { change(voice.copy(robot = robot.copy(intensity = it.roundToInt()))) }, finish)
         }
-        FxSwitch("Pitch", voice.pitch.enabled) { commit(saved.copy(pitch = saved.pitch.copy(enabled = it))) }
+        FxSwitch(
+            stringResource(R.string.editor_pitch),
+            voice.pitch.enabled,
+        ) { commit(saved.copy(pitch = saved.pitch.copy(enabled = it))) }
         if (voice.pitch.enabled) {
             val pitch = voice.pitch
-            SettingSlider("Shift", formatSigned(pitch.semitones, "st"), pitch.semitones.toFloat(),
+            SettingSlider(
+                stringResource(R.string.editor_shift), formatSigned(pitch.semitones, "st"), pitch.semitones.toFloat(),
                 -PITCH_MAX_SEMITONES.toFloat()..PITCH_MAX_SEMITONES.toFloat(),
                 { change(voice.copy(pitch = pitch.copy(semitones = it.roundToInt()))) }, finish)
         }
-        FxSwitch("Bass", voice.bass.enabled) { commit(saved.copy(bass = saved.bass.copy(enabled = it))) }
+        FxSwitch(
+            stringResource(R.string.editor_bass),
+            voice.bass.enabled,
+        ) { commit(saved.copy(bass = saved.bass.copy(enabled = it))) }
         if (voice.bass.enabled) {
             val bass = voice.bass
-            SettingSlider("Amount", "${bass.amount}%", bass.amount.toFloat(), percent,
+            SettingSlider(stringResource(R.string.editor_amount), "${bass.amount}%", bass.amount.toFloat(), percent,
                 { change(voice.copy(bass = bass.copy(amount = it.roundToInt()))) }, finish)
         }
-        TextAction("Reset") { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Voice)) }
+        TextAction(stringResource(R.string.editor_reset)) { onEvent(EditorEvent.AudioFxReset(AudioToolKind.Voice)) }
     }
 }
 
@@ -326,19 +385,22 @@ fun DuckingControls(
 ) {
     var shown by remember(ducking) { mutableStateOf(ducking) }
     Column(modifier.fillMaxWidth()) {
-        FxSwitch("Lower this clip while other sound plays", shown.enabled) {
+        FxSwitch(stringResource(R.string.editor_lower_this_clip_while_other), shown.enabled) {
             shown = shown.copy(enabled = it)
             onEvent(EditorEvent.DuckingChange(shown))
         }
         if (shown.enabled) {
             SettingSlider(
-                "Amount", "${shown.amountPercent}%", shown.amountPercent.toFloat(), 0f..DUCK_RANGE_MAX,
+                stringResource(R.string.editor_amount),
+                "${shown.amountPercent}%",
+                shown.amountPercent.toFloat(),
+                0f..DUCK_RANGE_MAX,
                 { shown = shown.copy(amountPercent = it.roundToInt()) },
                 { onEvent(EditorEvent.DuckingChange(shown)) },
             )
             val options = com.petruvideo.core.model.DuckSmoothness.entries
             com.petruvideo.core.designsystem.components.SegmentedControl(
-                options = options.map { it.label },
+                options = options.map { enumLabel("ducksmooth", it) },
                 selectedIndex = options.indexOf(shown.smoothness),
                 onSelect = {
                     shown = shown.copy(smoothness = options[it])
@@ -347,7 +409,7 @@ fun DuckingControls(
             )
             if (idle) {
                 Text(
-                    "Nothing is playing over this clip, so nothing is lowered.",
+                    stringResource(R.string.editor_nothing_is_playing_over_this),
                     style = PetruType.Caption,
                     color = PetruColors.OnSurfaceMuted,
                 )

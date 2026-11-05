@@ -3,14 +3,14 @@ package com.petruvideo.core.model
 const val FILTER_ADJUST_MAX = 100
 const val FILTER_INTENSITY_DEFAULT = 100
 
-enum class FilterLook(val label: String) {
-    None("None"),
-    Vivid("Vivid"),
-    Warm("Warm"),
-    Cool("Cool"),
-    BlackAndWhite("Black and white"),
-    Vintage("Vintage"),
-    Faded("Faded"),
+enum class FilterLook {
+    None,
+    Vivid,
+    Warm,
+    Cool,
+    BlackAndWhite,
+    Vintage,
+    Faded,
 }
 
 /** A clip's look (with its strength) and five manual adjustments; the defaults leave the picture unchanged. */

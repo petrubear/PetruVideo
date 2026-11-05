@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelVoiceOverTest {
@@ -114,7 +115,7 @@ class EditorViewModelVoiceOverTest {
         runCurrent()
         e.state.voiceOver shouldBe null
         e.audio.single { it.timelineStartMs == 3_000L }.lengthMs shouldBe 2_000
-        e.state.message shouldBe "Stopped at the next clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_stopped_at_the_next_clip)
     }
 
     @Test
@@ -123,7 +124,7 @@ class EditorViewModelVoiceOverTest {
         e.vm.onEvent(EditorEvent.SeekTo(6_000))
         e.vm.onEvent(EditorEvent.MicrophoneResult(MicAccess.Granted))
         e.state.voiceOver shouldBe null
-        e.state.message shouldBe "No room here before the next audio clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_no_room_here_before_the)
     }
 
     @Test
@@ -132,7 +133,7 @@ class EditorViewModelVoiceOverTest {
         record(e, 8_000)
         e.recorder.stopMs = 300
         e.vm.onEvent(EditorEvent.StopVoiceOver)
-        e.state.message shouldBe "Too short"
+        e.state.message shouldBe UiText.Res(R.string.editor_too_short)
         e.audio.size shouldBe 1
         e.recorder.files.single().exists() shouldBe false
 
@@ -140,20 +141,20 @@ class EditorViewModelVoiceOverTest {
         e.vm.onEvent(EditorEvent.DismissMessage)
         record(e, 8_000)
         e.state.voiceOver shouldBe null
-        e.state.message shouldBe "The microphone is in use"
+        e.state.message shouldBe UiText.Res(R.string.editor_the_microphone_is_in_use)
     }
 
     @Test
     fun `editing is locked during a take except Stop`() = runTest {
         val e = env()
         record(e, 8_000)
-        e.vm.onEvent(EditorEvent.AddText)
+        e.vm.onEvent(EditorEvent.AddText())
         e.vm.onEvent(EditorEvent.SeekTo(1_000))
         e.session.timeline.value!!.textLane shouldBe emptyList()
         e.engine.calls.contains("seek 1000") shouldBe false
         e.recorder.stopMs = 2_000
         e.vm.onEvent(EditorEvent.StopVoiceOver)
-        e.vm.onEvent(EditorEvent.AddText)
+        e.vm.onEvent(EditorEvent.AddText())
         e.session.timeline.value!!.textLane.size shouldBe 1
     }
 
@@ -175,9 +176,9 @@ class EditorViewModelVoiceOverTest {
     fun `permission answers explain a refusal and a blocked microphone opens the settings next time`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.MicrophoneResult(MicAccess.Denied))
-        e.state.message shouldBe "A voice-over needs the microphone"
+        e.state.message shouldBe UiText.Res(R.string.editor_a_voiceover_needs_the_microphone)
         e.vm.onEvent(EditorEvent.MicrophoneResult(MicAccess.Blocked))
-        e.state.message shouldBe "Microphone access is off. Tap Record again to open Settings"
+        e.state.message shouldBe UiText.Res(R.string.editor_microphone_access_is_off_tap)
         e.vm.effects.test {
             e.vm.onEvent(EditorEvent.RecordVoiceOver)
             awaitItem() shouldBe EditorEffect.OpenAppSettings
@@ -206,7 +207,7 @@ class EditorViewModelVoiceOverTest {
         vm.open("p")
         val clip = session.timeline.value!!.audioLane.single { it.timelineStartMs == 8_000L }
         clip.lengthMs shouldBe 2_000
-        vm.state.value.message shouldBe "Recovered your voice-over"
+        vm.state.value.message shouldBe UiText.Res(R.string.editor_recovered_your_voiceover)
         controller.files.pendingTake() shouldBe null
     }
 

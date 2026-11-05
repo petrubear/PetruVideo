@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.Spacing
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** Stand-in for a clip whose source file is missing; playback skips it and shows black for its length. */
 @Composable
@@ -36,7 +38,7 @@ fun MissingClipPlaceholder(name: String, modifier: Modifier = Modifier) {
             .semantics { contentDescription = "$name is missing" },
         contentAlignment = Alignment.Center,
     ) {
-        Text("Missing", style = PetruType.Tiny, color = PetruColors.Danger)
+        Text(stringResource(R.string.editor_missing), style = PetruType.Tiny, color = PetruColors.Danger)
     }
 }
 
@@ -62,8 +64,8 @@ fun MissingMediaBar(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(vertical = 6.dp),
         )
-        BarAction("Relink", PetruColors.Accent, onRelink)
-        BarAction("Remove", PetruColors.Danger, onRemove)
+        BarAction(stringResource(R.string.editor_relink), PetruColors.Accent, onRelink)
+        BarAction(stringResource(R.string.editor_remove), PetruColors.Danger, onRemove)
     }
 }
 

@@ -53,7 +53,11 @@ fun TemplatesScreen(
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconAction(PetruIcons.Back, stringResource(R.string.projects_back), onBack)
-                Text(stringResource(R.string.projects_templates), style = PetruType.Title, color = PetruColors.OnBackground)
+                Text(
+                    stringResource(R.string.projects_templates),
+                    style = PetruType.Title,
+                    color = PetruColors.OnBackground,
+                )
             }
             LazyVerticalGrid(
                 GridCells.Adaptive(CARD_MIN_WIDTH),
@@ -87,7 +91,11 @@ private fun TemplateCard(template: Template, enabled: Boolean, onUse: (String) -
     ) {
         SlotSample(template)
         Text(keyedText("template_${template.id}_name"), style = PetruType.Title, color = PetruColors.OnBackground)
-        Text(keyedText("template_${template.id}_summary"), style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
+        Text(
+            keyedText("template_${template.id}_summary"),
+            style = PetruType.Caption,
+            color = PetruColors.OnSurfaceMuted,
+        )
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "${template.slotCount} clips · $seconds",

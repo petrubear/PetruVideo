@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.components.PetruChip
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** Twelve swatches: white, black, grays, and the main hues. */
 internal val COLOR_SWATCHES = listOf(
@@ -34,8 +36,19 @@ internal val COLOR_SWATCHES = listOf(
     0xFF43A047, 0xFF00ACC1, 0xFF1E88E5, 0xFF5E35B1, 0xFFD81B60, 0xFF6D4C41,
 ).map { it.toInt() }
 
-private val SWATCH_NAMES = listOf(
-    "White", "Black", "Gray", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink", "Brown",
+private val SWATCH_NAME_IDS = listOf(
+    R.string.editor_white,
+    R.string.editor_black,
+    R.string.editor_gray,
+    R.string.editor_red,
+    R.string.editor_orange,
+    R.string.editor_yellow,
+    R.string.editor_green,
+    R.string.editor_cyan,
+    R.string.editor_blue,
+    R.string.editor_purple,
+    R.string.editor_pink,
+    R.string.editor_brown,
 )
 
 private const val HUE_MAX = 360f
@@ -53,9 +66,13 @@ fun ColorPicker(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
             COLOR_SWATCHES.forEachIndexed { index, swatch ->
-                Swatch("$label ${SWATCH_NAMES[index]}", swatch, swatch == colorArgb) { onCommit(swatch) }
+                Swatch(
+                    "$label ${stringResource(SWATCH_NAME_IDS[index])}",
+                    swatch,
+                    swatch == colorArgb,
+                ) { onCommit(swatch) }
             }
-            PetruChip("Custom", selected = custom, onClick = { custom = !custom })
+            PetruChip(stringResource(R.string.editor_custom), selected = custom, onClick = { custom = !custom })
         }
         if (custom) CustomColor(label, colorArgb, onPreview, onCommit)
     }

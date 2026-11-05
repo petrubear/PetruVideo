@@ -32,8 +32,14 @@ fun ProjectOptionsMenu(
         tint = PetruColors.OnSurfaceMuted,
     )
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(text = { Text(stringResource(R.string.projects_rename)) }, onClick = { expanded = false; onRename() })
-        DropdownMenuItem(text = { Text(stringResource(R.string.projects_duplicate)) }, onClick = { expanded = false; onDuplicate() })
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.projects_rename)) },
+            onClick = { expanded = false; onRename() },
+        )
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.projects_duplicate)) },
+            onClick = { expanded = false; onDuplicate() },
+        )
         DropdownMenuItem(
             text = { Text(stringResource(R.string.projects_delete), color = PetruColors.Danger) },
             onClick = { expanded = false; onDelete() },

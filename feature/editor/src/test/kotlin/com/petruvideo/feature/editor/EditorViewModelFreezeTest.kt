@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelFreezeTest {
@@ -67,7 +68,7 @@ class EditorViewModelFreezeTest {
         e.vm.onEvent(EditorEvent.SeekTo(1_500))
         e.vm.onEvent(EditorEvent.FreezeInsert(2_000))
         e.lane.size shouldBe 3
-        e.state.message shouldBe "That frame could not be read"
+        e.state.message shouldBe UiText.Res(R.string.editor_that_frame_could_not_be)
     }
 
     @Test
@@ -76,6 +77,6 @@ class EditorViewModelFreezeTest {
         e.vm.onEvent(EditorEvent.SeekTo(9_000))
         e.vm.onEvent(EditorEvent.FreezeInsert(2_000))
         e.lane.size shouldBe 3
-        e.state.message shouldBe "Move the playhead onto this clip to freeze a frame"
+        e.state.message shouldBe UiText.Res(R.string.editor_move_the_playhead_onto_this)
     }
 }

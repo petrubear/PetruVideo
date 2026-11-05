@@ -28,6 +28,9 @@ import com.petruvideo.core.media.thumbs.GridThumbnail
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.formatDuration
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 /**
  * The project's media in a two-column grid with an Import button. Tapping an item adds it at the playhead;
@@ -45,7 +48,12 @@ fun MediaPanel(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Media", style = PetruType.Label, color = PetruColors.OnBackground, modifier = Modifier.weight(1f))
+            Text(
+                stringResource(R.string.editor_media),
+                style = PetruType.Label,
+                color = PetruColors.OnBackground,
+                modifier = Modifier.weight(1f),
+            )
             PillButton("+ Import", onImport)
         }
         LazyVerticalGrid(
@@ -57,7 +65,7 @@ fun MediaPanel(
             items(media, key = { it.id }) { item -> MediaTile(item, onAdd) }
         }
         Text(
-            "Drag a clip onto any timeline track, or tap it to add at the playhead.",
+            stringResource(R.string.editor_drag_a_clip_onto_any),
             style = PetruType.Body,
             color = PetruColors.OnSurfaceMuted,
         )
@@ -72,7 +80,7 @@ private fun MediaTile(item: MediaItem, onAdd: (MediaItem) -> Unit) {
             .clip(PetruShapes.Chip)
             .background(PetruColors.SurfaceHighest)
             .mediaDragSource(item.id) { onAdd(item) }
-            .semantics { contentDescription = "Add ${item.displayName}" },
+            .described(R.string.editor_add_named, item.displayName),
     ) {
         if (item.kind != MediaKind.Audio) GridThumbnail(item.uri, Modifier.fillMaxSize())
         item.durationMs?.let {

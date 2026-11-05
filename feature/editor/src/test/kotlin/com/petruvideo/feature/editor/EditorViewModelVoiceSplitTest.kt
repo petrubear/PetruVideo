@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelVoiceSplitTest {
@@ -80,7 +81,7 @@ class EditorViewModelVoiceSplitTest {
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.SplitVoice))
         e.vm.onEvent(EditorEvent.VoiceSplitCancel)
         e.state.voiceSplitProgress shouldBe null
-        e.state.message shouldBe "Split cancelled"
+        e.state.message shouldBe UiText.Res(R.string.editor_split_cancelled)
         e.audio shouldBe emptyList()
     }
 
@@ -91,7 +92,7 @@ class EditorViewModelVoiceSplitTest {
         e.vm.onEvent(EditorEvent.SeekTo(2_000))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Split))
         e.state.voiceSplitProgress shouldBe null
-        e.state.message shouldBe "Split cancelled because the clip changed"
+        e.state.message shouldBe UiText.Res(R.string.editor_split_cancelled_because_the_clip)
         e.audio shouldBe emptyList()
     }
 
@@ -100,7 +101,7 @@ class EditorViewModelVoiceSplitTest {
         val e = env()
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.SplitVoice))
         e.result.complete(null)
-        e.state.message shouldBe "Could not split the voice"
+        e.state.message shouldBe UiText.Res(R.string.editor_could_not_split_the_voice)
         e.audio shouldBe emptyList()
         e.session.timeline.value!!.videoLane.first { it.id == "c1" }.attachedAudio shouldBe true
     }
@@ -110,7 +111,7 @@ class EditorViewModelVoiceSplitTest {
         val e = env()
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.SplitVoice))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.SplitVoice))
-        e.state.message shouldBe "A voice split is already running"
+        e.state.message shouldBe UiText.Res(R.string.editor_a_voice_split_is_already)
         e.progress.size shouldBe 1
     }
 

@@ -25,7 +25,10 @@ fun RenameDialog(
         title = { Text(stringResource(R.string.projects_rename_project)) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it.take(MAX_NAME) }, singleLine = true) },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) { Text(stringResource(R.string.projects_rename)) }
+            TextButton(
+                onClick = { onConfirm(name) },
+                enabled = name.isNotBlank(),
+            ) { Text(stringResource(R.string.projects_rename)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.projects_cancel)) } },
     )
@@ -38,7 +41,9 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.projects_delete_this_project)) },
         text = { Text(stringResource(R.string.projects_the_project_and_its_edits)) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.projects_delete), color = PetruColors.Danger) } },
+        confirmButton = { TextButton(
+            onClick = onConfirm,
+        ) { Text(stringResource(R.string.projects_delete), color = PetruColors.Danger) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.projects_cancel)) } },
     )
 }

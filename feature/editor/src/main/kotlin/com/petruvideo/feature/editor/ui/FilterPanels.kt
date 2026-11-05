@@ -53,6 +53,9 @@ import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.FilterPanelState
 import com.petruvideo.feature.editor.FilterToolKind
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val MAX_BODY = 300.dp
 private val MAX_BODY_TABLETOP = 120.dp
@@ -83,12 +86,12 @@ fun FilterPanel(panel: FilterPanelState?, onEvent: (EditorEvent) -> Unit, modifi
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    panel.kind.label,
+                    stringResource(panel.kind.labelRes),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Done", onClick = { onEvent(EditorEvent.FilterDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.FilterDismiss) })
             }
             val tabletop = LocalArrangement.current is WindowArrangement.Tabletop
             val maxBody = if (tabletop) MAX_BODY_TABLETOP else MAX_BODY
@@ -115,7 +118,10 @@ fun LooksControls(panel: FilterPanelState, onEvent: (EditorEvent) -> Unit, modif
         }
         if (shown.look != FilterLook.None) {
             SettingSlider(
-                "Intensity", "${shown.intensity}%", shown.intensity.toFloat(), 0f..PERCENT_MAX,
+                stringResource(R.string.editor_intensity),
+                "${shown.intensity}%",
+                shown.intensity.toFloat(),
+                0f..PERCENT_MAX,
                 {
                     shown = shown.copy(intensity = it.roundToInt())
                     onEvent(EditorEvent.FilterPreview(shown))
@@ -125,9 +131,11 @@ fun LooksControls(panel: FilterPanelState, onEvent: (EditorEvent) -> Unit, modif
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Box(Modifier.alpha(if (panel.canApplyAll) 1f else DISABLED_ALPHA)) {
-                TextAction("Apply to all") { if (panel.canApplyAll) onEvent(EditorEvent.FilterApplyAll) }
+                TextAction(
+                    stringResource(R.string.editor_apply_to_all),
+                ) { if (panel.canApplyAll) onEvent(EditorEvent.FilterApplyAll) }
             }
-            TextAction("Remove filter") { onEvent(EditorEvent.FilterRemove) }
+            TextAction(stringResource(R.string.editor_remove_filter)) { onEvent(EditorEvent.FilterRemove) }
         }
     }
 }
@@ -141,12 +149,13 @@ private fun LookTile(look: FilterLook, media: MediaItem?, frameTimeMs: Long, sel
         value = media?.let { loaders.thumbnail(it, frameTimeMs, TILE_PX) }
     }
     val edge = if (selected) PetruColors.Accent else PetruColors.SurfaceHighest
+    val lookDescription = stringResource(R.string.editor_look_named, enumLabel("filter", look))
     Column(
         Modifier
             .clickable(role = Role.Button, onClick = onClick)
             .padding(2.dp)
             .semantics {
-                contentDescription = "Look ${look.label}"
+                contentDescription = lookDescription
                 this.selected = selected
             },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -166,7 +175,11 @@ private fun LookTile(look: FilterLook, media: MediaItem?, frameTimeMs: Long, sel
                 )
             }
         }
-        Text(look.label, style = PetruType.Tiny, color = if (selected) PetruColors.Accent else PetruColors.OnBackground)
+        Text(
+            enumLabel("filter", look),
+            style = PetruType.Tiny,
+            color = if (selected) PetruColors.Accent else PetruColors.OnBackground,
+        )
     }
 }
 
@@ -187,30 +200,96 @@ fun AdjustControls(
         onEvent(EditorEvent.FilterPreview(next))
     }
     Column(modifier.fillMaxWidth()) {
-        SegmentedControl(listOf("Light", "Tone", "Colour", "Detail"), group, { group = it })
+        SegmentedControl(
+            listOf(
+                stringResource(R.string.editor_light),
+                stringResource(R.string.editor_tone),
+                stringResource(R.string.editor_colour),
+                stringResource(R.string.editor_detail),
+            ),
+            group,
+            { group = it },
+        )
         when (group) {
             0 -> {
-                AdjustSlider("Brightness", shown.brightness, { change(shown.copy(brightness = it)) }, finish)
-                AdjustSlider("Contrast", shown.contrast, { change(shown.copy(contrast = it)) }, finish)
-                AdjustSlider("Exposure", shown.exposure, { change(shown.copy(exposure = it)) }, finish)
+                AdjustSlider(
+                    stringResource(R.string.editor_brightness),
+                    shown.brightness,
+                    { change(shown.copy(brightness = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_contrast),
+                    shown.contrast,
+                    { change(shown.copy(contrast = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_exposure),
+                    shown.exposure,
+                    { change(shown.copy(exposure = it)) },
+                    finish,
+                )
             }
             1 -> {
-                AdjustSlider("Gamma", shown.gamma, { change(shown.copy(gamma = it)) }, finish)
-                AdjustSlider("Highlights", shown.highlights, { change(shown.copy(highlights = it)) }, finish)
-                AdjustSlider("Shadows", shown.shadows, { change(shown.copy(shadows = it)) }, finish)
+                AdjustSlider(
+                    stringResource(R.string.editor_gamma),
+                    shown.gamma,
+                    { change(shown.copy(gamma = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_highlights),
+                    shown.highlights,
+                    { change(shown.copy(highlights = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_shadows),
+                    shown.shadows,
+                    { change(shown.copy(shadows = it)) },
+                    finish,
+                )
             }
             2 -> {
-                AdjustSlider("Saturation", shown.saturation, { change(shown.copy(saturation = it)) }, finish)
-                AdjustSlider("Warmth", shown.warmth, { change(shown.copy(warmth = it)) }, finish)
-                AdjustSlider("Tint", shown.tint, { change(shown.copy(tint = it)) }, finish)
+                AdjustSlider(
+                    stringResource(R.string.editor_saturation),
+                    shown.saturation,
+                    { change(shown.copy(saturation = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_warmth),
+                    shown.warmth,
+                    { change(shown.copy(warmth = it)) },
+                    finish,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_tint),
+                    shown.tint,
+                    { change(shown.copy(tint = it)) },
+                    finish,
+                )
             }
             else -> {
-                AdjustSlider("Hue", shown.hue, { change(shown.copy(hue = it)) }, finish)
-                AdjustSlider("Sharpen", shown.sharpen, { change(shown.copy(sharpen = it)) }, finish, signed = false)
-                AdjustSlider("Vignette", shown.vignette, { change(shown.copy(vignette = it)) }, finish, signed = false)
+                AdjustSlider(stringResource(R.string.editor_hue), shown.hue, { change(shown.copy(hue = it)) }, finish)
+                AdjustSlider(
+                    stringResource(R.string.editor_sharpen),
+                    shown.sharpen,
+                    { change(shown.copy(sharpen = it)) },
+                    finish,
+                    signed = false,
+                )
+                AdjustSlider(
+                    stringResource(R.string.editor_vignette),
+                    shown.vignette,
+                    { change(shown.copy(vignette = it)) },
+                    finish,
+                    signed = false,
+                )
             }
         }
-        TextAction("Reset") { onEvent(EditorEvent.FilterResetAdjustments) }
+        TextAction(stringResource(R.string.editor_reset)) { onEvent(EditorEvent.FilterResetAdjustments) }
     }
 }
 

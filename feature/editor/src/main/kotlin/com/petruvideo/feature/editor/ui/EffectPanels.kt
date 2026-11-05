@@ -47,6 +47,9 @@ import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EffectPanelState
 import com.petruvideo.feature.editor.EffectToolKind
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val MAX_BODY = 260.dp
 private val MAX_BODY_TABLETOP = 120.dp
@@ -66,12 +69,12 @@ fun EffectPanel(panel: EffectPanelState?, onEvent: (EditorEvent) -> Unit, modifi
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    panel.kind.label,
+                    stringResource(panel.kind.labelRes),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Done", onClick = { onEvent(EditorEvent.EffectDismiss) })
+                PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.EffectDismiss) })
             }
             val tabletop = LocalArrangement.current is WindowArrangement.Tabletop
             Column(
@@ -96,19 +99,23 @@ fun TransitionControls(panel: EffectPanelState, onEvent: (EditorEvent) -> Unit, 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TransitionKind.entries.forEach { kind ->
-                KindTile("Transition ${kind.label}", kind.label, current?.kind == kind) {
+                KindTile(
+                    stringResource(R.string.editor_transition_named, enumLabel("transition", kind)),
+                    enumLabel("transition", kind),
+                    current?.kind == kind,
+                ) {
                     onEvent(EditorEvent.TransitionSet(kind, length))
                 }
             }
         }
         if (current != null) {
             SettingSlider(
-                "Length", "%.1f s".format(length / MILLIS), length.toFloat(),
+                stringResource(R.string.editor_length), "%.1f s".format(length / MILLIS), length.toFloat(),
                 TRANSITION_MIN_MS.toFloat()..panel.limitMs.toFloat().coerceAtLeast(TRANSITION_MIN_MS + 1f),
                 { length = (it / TRANSITION_STEP_MS).roundToInt() * TRANSITION_STEP_MS },
                 { onEvent(EditorEvent.TransitionSet(current.kind, length)) },
             )
-            TextAction("Remove transition") { onEvent(EditorEvent.TransitionRemove) }
+            TextAction(stringResource(R.string.editor_remove_transition)) { onEvent(EditorEvent.TransitionRemove) }
         }
     }
 }
@@ -121,7 +128,11 @@ fun EffectControls(effects: List<ClipEffect>, onEvent: (EditorEvent) -> Unit, mo
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EffectKind.entries.forEach { kind ->
-                KindTile("Effect ${kind.label}", kind.label, effects.any { it.kind == kind }) {
+                KindTile(
+                    stringResource(R.string.editor_effect_named, enumLabel("effect", kind)),
+                    enumLabel("effect", kind),
+                    effects.any { it.kind == kind },
+                ) {
                     selected = kind
                     if (effects.none { it.kind == kind }) {
                         onEvent(EditorEvent.EffectCommit(ClipEffect(kind, EFFECT_STRENGTH_DEFAULT)))
@@ -130,20 +141,25 @@ fun EffectControls(effects: List<ClipEffect>, onEvent: (EditorEvent) -> Unit, mo
             }
         }
         Text(
-            "Up to $EFFECT_MAX effects per clip, drawn in the order they were added.",
+            stringResource(R.string.editor_effect_limit_hint, EFFECT_MAX),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
         if (effect != null) {
             SettingSlider(
-                "${effect.kind.label} strength", "${shown.strength}%", shown.strength.toFloat(), 0f..PERCENT_MAX,
+                stringResource(R.string.editor_effect_strength, enumLabel("effect", effect.kind)),
+                "${shown.strength}%",
+                shown.strength.toFloat(),
+                0f..PERCENT_MAX,
                 {
                     shown = shown.copy(strength = it.roundToInt())
                     onEvent(EditorEvent.EffectPreview(shown))
                 },
                 { onEvent(EditorEvent.EffectCommit(shown)) },
             )
-            TextAction("Remove ${effect.kind.label}") { onEvent(EditorEvent.EffectRemove(effect.kind)) }
+            TextAction(
+                stringResource(R.string.editor_remove_named, enumLabel("effect", effect.kind)),
+            ) { onEvent(EditorEvent.EffectRemove(effect.kind)) }
         }
     }
 }

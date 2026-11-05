@@ -66,6 +66,7 @@
     <string name="template_slow_fade_name">Fundido lento</string>
     <string name="template_slow_fade_summary">Escenas largas de estilo vintage</string>
     <string name="template_slow_fade_title">Fundido lento</string>
+    <string name="projects_no_projects_match">Ningún proyecto coincide</string>
     <plurals name="projects_clip_count">
         <item quantity="one">%1$d clip</item>
         <item quantity="other">%1$d clips</item>

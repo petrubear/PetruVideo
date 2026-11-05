@@ -37,6 +37,8 @@ import com.petruvideo.core.model.TEXT_MIN_MS
 import com.petruvideo.core.model.TextClip
 import com.petruvideo.core.model.engine.TextRows
 import com.petruvideo.feature.editor.TimelineGeometry
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private val ROW_HEIGHT = 36.dp
 private val ROW_GAP = 4.dp
@@ -85,9 +87,9 @@ private fun TextClipBox(
     val startDp = geometry.timeToPx(clip.startMs) + (moveDx + trimStartDx) / density
     val widthDp = (geometry.timeToPx(clip.durationMs) - trimStartDx / density + trimEndDx / density)
         .coerceAtLeast(geometry.timeToPx(TEXT_MIN_MS))
-    val first = clip.text.lineSequence().firstOrNull().orEmpty().ifBlank { "Empty text" }
+    val first = clip.text.lineSequence().firstOrNull().orEmpty().ifBlank { stringResource(R.string.editor_empty_text) }
     val edge = if (selected) PetruColors.Accent else PetruColors.SurfaceHighest
-    val description = "Text, $first, starts at ${clip.startMs / MS} seconds, lasts ${clip.durationMs / MS} seconds"
+    val description = stringResource(R.string.editor_text_description, first, clip.startMs / MS, clip.durationMs / MS)
     Box(
         Modifier
             .offset(x = startDp.dp, y = (ROW_HEIGHT + ROW_GAP) * row)
@@ -124,12 +126,12 @@ private fun TextClipBox(
         )
         if (selected) {
             KeyframeDiamonds(clip.id, clip.startMs, clip.durationMs, clip.keyframes, geometry, keyframes)
-            Handle(Alignment.CenterStart, "Trim text start", { trimStartDx += it }) {
+            Handle(Alignment.CenterStart, stringResource(R.string.editor_trim_text_start), { trimStartDx += it }) {
                 val start = (clip.startMs + geometry.pxToTime(trimStartDx / density)).coerceAtLeast(0)
                 trimStartDx = 0f
                 onTrim(clip.id, start.coerceAtMost(clip.endMs - TEXT_MIN_MS), clip.endMs)
             }
-            Handle(Alignment.CenterEnd, "Trim text end", { trimEndDx += it }) {
+            Handle(Alignment.CenterEnd, stringResource(R.string.editor_trim_text_end), { trimEndDx += it }) {
                 val end = (clip.endMs + geometry.pxToTime(trimEndDx / density)).coerceAtMost(clip.startMs + TEXT_MAX_MS)
                 trimEndDx = 0f
                 onTrim(clip.id, clip.startMs, end.coerceAtLeast(clip.startMs + TEXT_MIN_MS))

@@ -12,11 +12,11 @@ skip='^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*|import |package )'
 
 screens=$(find "$root" -path '*/src/main/*' -name '*.kt' -not -path '*/build/*' -not -path '*/core/model/*' \
   -not -path '*/benchmark/*' -not -path '*/build-logic/*' -print0 \
-  | xargs -0 grep -nE '"[A-Z][a-z]{2,}[^"]*"' 2>/dev/null || true)
+  | xargs -0 grep -nE '"([A-Z][a-z]+|[A-Z] [a-z]+)[^"]*"' 2>/dev/null || true)
 # The engine's command labels (undo history names) are never shown, so only its voice split reasons are checked.
 model=$(find "$root" -path '*/core/model/src/main/*' -name '*.kt' -not -path '*/build/*' \
   \( -not -path '*/core/model/src/main/*/engine/*' -o -name 'VoiceSplitCommands.kt' \) -print0 \
-  | xargs -0 grep -nE '"[A-Z][a-z]+ [a-z]+[^"]*"' 2>/dev/null || true)
+  | xargs -0 grep -nE '"[A-Z][a-z]+ [a-z]+[^"]*"|"[A-Z] [a-z]+[^"]*"' 2>/dev/null || true)
 
 # Stored names (database), log lines, and annotations are not user text.
 noise='(Log\.[a-z]\(|@Suppress|@ColumnInfo|const val TAG|/core/data/src/main/kotlin/[^:]*/db/)'

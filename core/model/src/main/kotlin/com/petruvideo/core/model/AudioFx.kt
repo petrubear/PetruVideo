@@ -20,18 +20,18 @@ data class Fade(val inMs: Long = 0, val outMs: Long = 0) {
     val isNeutral: Boolean get() = inMs == 0L && outMs == 0L
 }
 
-enum class NoiseStrength(val label: String) { Low("Low"), Medium("Medium"), High("High") }
+enum class NoiseStrength { Low, Medium, High }
 
 data class NoiseReduction(val enabled: Boolean = false, val strength: NoiseStrength = NoiseStrength.Medium)
 
-enum class EqPreset(val label: String) {
-    Flat("Flat"),
-    VoiceBoost("Voice boost"),
-    BassBoost("Bass boost"),
-    TrebleBoost("Treble boost"),
-    Warm("Warm"),
-    Telephone("Telephone"),
-    Custom("Custom"),
+enum class EqPreset {
+    Flat,
+    VoiceBoost,
+    BassBoost,
+    TrebleBoost,
+    Warm,
+    Telephone,
+    Custom,
 }
 
 /** Three band gains in dB; [preset] says which preset the numbers match (or Custom). Flat means no processing. */

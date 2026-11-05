@@ -61,7 +61,11 @@ fun ContinueEditingCard(
             modifier = Modifier.size(96.dp).clip(RoundedCornerShape(14.dp)),
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.projects_continue_editing), style = PetruType.Overline, color = PetruColors.Accent)
+            Text(
+                stringResource(R.string.projects_continue_editing),
+                style = PetruType.Overline,
+                color = PetruColors.Accent,
+            )
             Text(
                 summary.project.name,
                 style = PetruType.TitleSmall,

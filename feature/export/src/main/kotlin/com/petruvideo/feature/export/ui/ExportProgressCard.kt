@@ -37,12 +37,24 @@ fun ExportProgressCard(state: ExportUiState, onEvent: (ExportEvent) -> Unit) {
             ExportState.Waiting -> Progress(0, onEvent)
             is ExportState.Rendering -> Progress(s.progress, onEvent)
             is ExportState.Finished -> Card {
-                Text(stringResource(R.string.export_saved_to_gallery), style = PetruType.Label, color = PetruColors.Accent)
+                Text(
+                    stringResource(R.string.export_saved_to_gallery),
+                    style = PetruType.Label,
+                    color = PetruColors.Accent,
+                )
                 val where = "${formatBytes(s.bytes)} · Movies/PetruVideo"
                 Text(where, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PetruChip(stringResource(R.string.export_open), selected = false, onClick = { onEvent(ExportEvent.Open) })
-                    PetruChip(stringResource(R.string.export_share), selected = false, onClick = { onEvent(ExportEvent.Share) })
+                    PetruChip(
+                        stringResource(R.string.export_open),
+                        selected = false,
+                        onClick = { onEvent(ExportEvent.Open) },
+                    )
+                    PetruChip(
+                        stringResource(R.string.export_share),
+                        selected = false,
+                        onClick = { onEvent(ExportEvent.Share) },
+                    )
                 }
             }
             is ExportState.Failed -> Card {
@@ -50,7 +62,11 @@ fun ExportProgressCard(state: ExportUiState, onEvent: (ExportEvent) -> Unit) {
                 Text(s.reason.message(), style = PetruType.Body, color = PetruColors.OnBackground)
             }
             ExportState.Cancelled -> Card {
-                Text(stringResource(R.string.export_export_cancelled), style = PetruType.Label, color = PetruColors.OnBackground)
+                Text(
+                    stringResource(R.string.export_export_cancelled),
+                    style = PetruType.Label,
+                    color = PetruColors.OnBackground,
+                )
             }
             null -> Unit
         }
@@ -76,7 +92,11 @@ private fun Progress(percent: Int, onEvent: (ExportEvent) -> Unit) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.export_rendering_in_background), style = PetruType.Label, color = PetruColors.OnBackground)
+                    Text(
+                        stringResource(R.string.export_rendering_in_background),
+                        style = PetruType.Label,
+                        color = PetruColors.OnBackground,
+                    )
                     Text("$percent%", style = PetruType.Mono, color = PetruColors.Accent)
                 }
                 val progressDescription = stringResource(R.string.export_export_progress)

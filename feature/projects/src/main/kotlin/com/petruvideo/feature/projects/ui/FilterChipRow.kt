@@ -19,7 +19,12 @@ fun FilterChipRow(
     modifier: Modifier = Modifier,
 ) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        PetruChip(stringResource(R.string.projects_filter_all, counts.all), selected == ProjectFilter.All, { onSelect(ProjectFilter.All) }, filled = true)
+        PetruChip(
+            stringResource(R.string.projects_filter_all, counts.all),
+            selected == ProjectFilter.All,
+            { onSelect(ProjectFilter.All) },
+            filled = true,
+        )
         PetruChip(
             stringResource(R.string.projects_filter_drafts, counts.drafts),
             selected == ProjectFilter.Drafts,

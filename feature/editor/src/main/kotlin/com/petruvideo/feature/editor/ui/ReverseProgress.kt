@@ -18,6 +18,8 @@ import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.components.PillButton
 import com.petruvideo.core.designsystem.components.SheetSurface
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /** The progress of making a backwards copy, with Cancel, above the clip tool bar. */
 @Composable
@@ -25,7 +27,7 @@ fun ReverseProgress(
     percent: Int?,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Reversing",
+    label: String = stringResource(R.string.editor_reversing),
     note: String? = null,
 ) {
     if (percent == null) return
@@ -42,7 +44,11 @@ fun ReverseProgress(
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Cancel", onClick = onCancel, modifier = Modifier.defaultMinSize(minHeight = 56.dp))
+                PillButton(
+                    stringResource(R.string.editor_cancel),
+                    onClick = onCancel,
+                    modifier = Modifier.defaultMinSize(minHeight = 56.dp),
+                )
             }
             if (note != null) Text(note, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
             LinearProgressIndicator(

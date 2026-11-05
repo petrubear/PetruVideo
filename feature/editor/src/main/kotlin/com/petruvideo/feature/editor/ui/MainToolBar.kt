@@ -29,6 +29,8 @@ import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.ToolbarTab
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private fun iconFor(tab: ToolbarTab): ImageVector = when (tab) {
     ToolbarTab.Edit -> PetruIcons.ToolEdit
@@ -58,11 +60,12 @@ fun MainToolBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ToolbarTab.entries.forEach { tab ->
+            val tabLabel = stringResource(tab.labelRes)
             ToolButton(
-                label = tab.label,
+                label = tabLabel,
                 icon = iconFor(tab),
                 active = tab.active,
-                onClick = { if (tab.active) onTab(tab) else onInactiveTap(tab.label) },
+                onClick = { if (tab.active) onTab(tab) else onInactiveTap(tabLabel) },
             )
         }
     }
@@ -109,8 +112,18 @@ fun OverlayTabBar(onBack: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Mo
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
-        ToolButton(label = "Add overlay", icon = PetruIcons.Add, active = true, onClick = onAdd)
+        ToolButton(
+            label = stringResource(R.string.editor_edit),
+            icon = PetruIcons.ToolEdit,
+            active = true,
+            onClick = onBack,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_add_overlay),
+            icon = PetruIcons.Add,
+            active = true,
+            onClick = onAdd,
+        )
     }
 }
 
@@ -128,8 +141,17 @@ fun FiltersTabBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
-        Text("Select a clip to add a filter", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+        ToolButton(
+            label = stringResource(R.string.editor_edit),
+            icon = PetruIcons.ToolEdit,
+            active = true,
+            onClick = onBack,
+        )
+        Text(
+            stringResource(R.string.editor_select_a_clip_to_add),
+            style = PetruType.Body,
+            color = PetruColors.OnSurfaceMuted,
+        )
     }
 }
 
@@ -153,10 +175,30 @@ fun TextTabBar(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
-        ToolButton(label = "Add text", icon = PetruIcons.Add, active = true, onClick = onAdd)
-        ToolButton(label = "Stickers", icon = PetruIcons.ToolOverlay, active = true, onClick = onStickers)
-        ToolButton(label = "Auto captions", icon = PetruIcons.ToolText, active = true, onClick = onCaptions)
+        ToolButton(
+            label = stringResource(R.string.editor_edit),
+            icon = PetruIcons.ToolEdit,
+            active = true,
+            onClick = onBack,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_add_text),
+            icon = PetruIcons.Add,
+            active = true,
+            onClick = onAdd,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_stickers),
+            icon = PetruIcons.ToolOverlay,
+            active = true,
+            onClick = onStickers,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_auto_captions),
+            icon = PetruIcons.ToolText,
+            active = true,
+            onClick = onCaptions,
+        )
     }
 }
 
@@ -174,9 +216,23 @@ fun EffectsTabBar(onBack: () -> Unit, modifier: Modifier = Modifier, onBackgroun
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
-        ToolButton(label = "Background", icon = PetruIcons.ToolFilters, active = true, onClick = onBackground)
-        Text("Select a clip to add a transition or effect", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+        ToolButton(
+            label = stringResource(R.string.editor_edit),
+            icon = PetruIcons.ToolEdit,
+            active = true,
+            onClick = onBack,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_background),
+            icon = PetruIcons.ToolFilters,
+            active = true,
+            onClick = onBackground,
+        )
+        Text(
+            stringResource(R.string.editor_select_a_clip_to_add_2),
+            style = PetruType.Body,
+            color = PetruColors.OnSurfaceMuted,
+        )
     }
 }
 
@@ -194,8 +250,23 @@ fun AudioTabBar(onBack: () -> Unit, onAdd: () -> Unit, onRecord: () -> Unit, mod
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ToolButton(label = "Edit", icon = PetruIcons.ToolEdit, active = true, onClick = onBack)
-        ToolButton(label = "Add music", icon = PetruIcons.Add, active = true, onClick = onAdd)
-        ToolButton(label = "Record voice-over", icon = PetruIcons.Mic, active = true, onClick = onRecord)
+        ToolButton(
+            label = stringResource(R.string.editor_edit),
+            icon = PetruIcons.ToolEdit,
+            active = true,
+            onClick = onBack,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_add_music),
+            icon = PetruIcons.Add,
+            active = true,
+            onClick = onAdd,
+        )
+        ToolButton(
+            label = stringResource(R.string.editor_record_voiceover),
+            icon = PetruIcons.Mic,
+            active = true,
+            onClick = onRecord,
+        )
     }
 }

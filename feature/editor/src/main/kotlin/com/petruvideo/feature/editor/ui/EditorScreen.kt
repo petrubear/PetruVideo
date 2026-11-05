@@ -30,6 +30,8 @@ import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.EditorState
 import com.petruvideo.feature.editor.ToolbarTab
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private const val MESSAGE_MS = 2_500L
 
@@ -126,7 +128,8 @@ private fun MissingBar(state: EditorState, onEvent: (EditorEvent) -> Unit) {
 /** A short non-blocking message: "Coming soon" for inactive tools, or a notice such as lowered preview quality. */
 @Composable
 private fun Banner(state: EditorState, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
-    val text = state.comingSoon?.let { "$it: coming soon" } ?: state.message ?: return
+    val soon = state.comingSoon?.let { stringResource(R.string.editor_label_coming_soon_colon, it) }
+    val text = soon ?: state.message?.asString() ?: return
     LaunchedEffect(text) {
         delay(MESSAGE_MS)
         onEvent(EditorEvent.DismissMessage)

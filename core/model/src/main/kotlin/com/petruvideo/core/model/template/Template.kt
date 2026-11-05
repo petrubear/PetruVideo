@@ -79,8 +79,8 @@ object TemplateFiller {
         template: Template,
         items: List<MediaItem>,
         projectId: String,
-        newId: () -> String,
         titleText: String = "",
+        newId: () -> String,
     ): TemplateFill? {
         val usable = items.filter { it.kind != MediaKind.Audio && it.availability == Availability.Available }
         val chosen = usable.take(template.slotCount)

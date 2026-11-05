@@ -1,0 +1,5 @@
+<resources>
+    <string name="media_voice_over_name">Locución</string>
+    <string name="media_voice_stem">Voz - %1$s</string>
+    <string name="media_backing_stem">Acompañamiento - %1$s</string>
+</resources>

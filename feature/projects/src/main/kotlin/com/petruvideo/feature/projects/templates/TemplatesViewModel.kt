@@ -65,7 +65,13 @@ class TemplatesViewModel @Inject constructor(
         ui.update { it.copy(busy = true, message = null) }
         viewModelScope.launch {
             val items = uris.mapNotNull { prober.probe(Uri.parse(it), UUID.randomUUID().toString()).getOrNull() }
-            val fill = TemplateFiller.fill(template, items, projectId = "", newId = { UUID.randomUUID().toString() }, titleText = titleText)
+            val fill = TemplateFiller.fill(
+                template,
+                items,
+                projectId = "",
+                titleText = titleText,
+                newId = { UUID.randomUUID().toString() },
+            )
             if (fill == null) {
                 ui.update { it.copy(busy = false, message = UiText.Res(R.string.projects_none_of_those_files_can)) }
                 return@launch

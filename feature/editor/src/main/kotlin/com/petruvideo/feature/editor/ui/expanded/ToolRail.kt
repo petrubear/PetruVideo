@@ -26,21 +26,24 @@ import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.editor.ToolbarTab
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 private data class RailEntry(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
     val active: Boolean,
     val tab: ToolbarTab? = null,
 )
 
 private val ENTRIES = listOf(
-    RailEntry("Media", PetruIcons.ToolEdit, true, ToolbarTab.Edit),
-    RailEntry("Audio", PetruIcons.ToolAudio, true, ToolbarTab.Audio),
-    RailEntry("Text", PetruIcons.ToolText, true, ToolbarTab.Text),
-    RailEntry("Overlay", PetruIcons.ToolOverlay, true, ToolbarTab.Overlay),
-    RailEntry("Effects", PetruIcons.ToolEffects, true, ToolbarTab.Effects),
-    RailEntry("Filters", PetruIcons.ToolFilters, true, ToolbarTab.Filters),
+    RailEntry(R.string.editor_media, PetruIcons.ToolEdit, true, ToolbarTab.Edit),
+    RailEntry(R.string.editor_audio, PetruIcons.ToolAudio, true, ToolbarTab.Audio),
+    RailEntry(R.string.editor_text, PetruIcons.ToolText, true, ToolbarTab.Text),
+    RailEntry(R.string.editor_overlay, PetruIcons.ToolOverlay, true, ToolbarTab.Overlay),
+    RailEntry(R.string.editor_effects, PetruIcons.ToolEffects, true, ToolbarTab.Effects),
+    RailEntry(R.string.editor_filters, PetruIcons.ToolFilters, true, ToolbarTab.Filters),
 )
 
 /** The left rail of the unfolded editor. Media is the only active entry; the rest say "coming soon". */
@@ -62,6 +65,8 @@ fun ToolRail(
     ) {
         ENTRIES.forEach { entry ->
             val color = if (entry.active) PetruColors.Accent else PetruColors.OnBackground
+            val entryLabel = stringResource(entry.labelRes)
+            val comingSoon = stringResource(R.string.editor_label_coming_soon, entryLabel)
             Column(
                 Modifier
                     .size(width = 56.dp, height = 56.dp)
@@ -69,16 +74,16 @@ fun ToolRail(
                     .alpha(if (entry.active) 1f else 0.4f)
                     .clickable(role = Role.Button) {
                         val tab = entry.tab
-                        if (tab != null) onTab(tab) else onInactiveTap(entry.label)
+                        if (tab != null) onTab(tab) else onInactiveTap(entryLabel)
                     }
                     .semantics {
-                        contentDescription = if (entry.active) entry.label else "${entry.label}, coming soon"
+                        contentDescription = if (entry.active) entryLabel else comingSoon
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
             ) {
                 Icon(entry.icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
-                Text(entry.label, style = PetruType.Tiny, color = color)
+                Text(entryLabel, style = PetruType.Tiny, color = color)
             }
         }
     }

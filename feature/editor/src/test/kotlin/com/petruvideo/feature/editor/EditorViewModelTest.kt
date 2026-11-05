@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelTest {
@@ -213,16 +214,16 @@ class EditorViewModelTest {
         val e = env()
         e.state.missingMedia shouldBe emptySet()
         e.availability.missing = setOf("m2")
-        e.engine.fail("Playback stopped: ERROR_CODE_IO_FILE_NOT_FOUND")
+        e.engine.fail("ERROR_CODE_IO_FILE_NOT_FOUND")
         e.state.missingMedia shouldBe setOf("m2")
-        e.state.message?.endsWith("is missing from your phone. Relink it to keep editing.") shouldBe true
+        (e.state.message as UiText.Res).id shouldBe R.string.editor_media_missing_relink
     }
 
     @Test
     fun `a playback error with every source present says playback stopped`() = runTest {
         val e = env()
-        e.engine.fail("Playback stopped: ERROR_CODE_DECODING_FAILED")
-        e.state.message shouldBe "Playback stopped: ERROR_CODE_DECODING_FAILED"
+        e.engine.fail("ERROR_CODE_DECODING_FAILED")
+        e.state.message shouldBe UiText.Res(R.string.editor_playback_stopped_code, "ERROR_CODE_DECODING_FAILED")
     }
 
     @Test
@@ -278,13 +279,13 @@ class EditorViewModelTest {
         e.vm.onEvent(EditorEvent.Play)
         e.pressure.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
         advanceUntilIdle()
-        e.state.message shouldBe "Preview quality lowered to keep playing"
+        e.state.message shouldBe UiText.Res(R.string.editor_preview_quality_lowered_to_keep)
         e.engine.loads.last().second shouldBe PreviewQuality.Reduced
 
         e.pressure.onThermalStatus(android.os.PowerManager.THERMAL_STATUS_SEVERE)
         advanceUntilIdle()
         e.engine.calls.last() shouldBe "pause"
-        e.state.message shouldBe "Playback paused to cool down"
+        e.state.message shouldBe UiText.Res(R.string.editor_playback_paused_to_cool_down)
     }
 
     @Test
@@ -374,7 +375,7 @@ class EditorViewModelTest {
         e.state.disabledTools.keys shouldBe setOf(ClipTool.Volume, ClipTool.Mute, ClipTool.Reverb, ClipTool.Audio)
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Volume))
         e.state.sheet shouldBe null
-        e.state.message shouldBe "This clip has no sound"
+        e.state.message shouldBe UiText.Res(R.string.editor_this_clip_has_no_sound)
     }
 
     @Test
@@ -409,7 +410,7 @@ class EditorViewModelTest {
         }
         e.vm.onEvent(EditorEvent.ReplaceAudio("a1", media("r", MediaKind.Audio).copy(durationMs = 1_000)))
         e.state.timeline?.audioLane?.first()?.lengthMs shouldBe 1_000
-        e.state.message shouldBe "Clip shortened to fit the new file"
+        e.state.message shouldBe UiText.Res(R.string.editor_clip_shortened_to_fit_the)
     }
 
     @Test

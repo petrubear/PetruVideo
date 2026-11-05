@@ -37,6 +37,8 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.core.model.Timeline
 import com.petruvideo.feature.editor.ClipSelection
 import com.petruvideo.feature.editor.TimelineGeometry
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
 
 /**
  * The timeline: ruler, video lane, the attached-sound waveforms, the audio clips lane, a fixed center playhead,
@@ -156,7 +158,7 @@ fun TimelineView(
         Playhead(Modifier.align(Alignment.TopCenter).padding(top = 8.dp))
         if (timeline.hasNoClips()) {
             Text(
-                "Add your first clip",
+                stringResource(R.string.editor_add_your_first_clip),
                 style = PetruType.Body,
                 color = PetruColors.OnSurfaceMuted,
                 modifier = Modifier.align(Alignment.Center).padding(top = 24.dp),
@@ -164,7 +166,7 @@ fun TimelineView(
         }
         IconAction(
             icon = PetruIcons.Add,
-            contentDescription = "Add clip",
+            contentDescription = stringResource(R.string.editor_add_clip),
             onClick = onAddClip,
             modifier = Modifier
                 .align(Alignment.TopEnd)

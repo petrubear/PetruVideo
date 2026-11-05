@@ -16,23 +16,23 @@ const val TEXT_PLACEHOLDER = "Your text"
 const val ARGB_WHITE = 0xFFFFFFFF.toInt()
 const val ARGB_BLACK = 0xFF000000.toInt()
 
-enum class TextFont(val label: String) {
-    Sans("Sans"),
-    Serif("Serif"),
-    Mono("Mono"),
-    Display("Display"),
-    Handwritten("Handwritten"),
-    Bold("Bold"),
+enum class TextFont {
+    Sans,
+    Serif,
+    Mono,
+    Display,
+    Handwritten,
+    Bold,
 }
 
-enum class TextAlign(val label: String) { Left("Left"), Center("Center"), Right("Right") }
+enum class TextAlign { Left, Center, Right }
 
-enum class AnimKind(val label: String) {
-    None("None"),
-    Fade("Fade"),
-    SlideUp("Slide up"),
-    SlideDown("Slide down"),
-    Pop("Pop"),
+enum class AnimKind {
+    None,
+    Fade,
+    SlideUp,
+    SlideDown,
+    Pop,
 }
 
 val ANIM_IN_KINDS = listOf(AnimKind.None, AnimKind.Fade, AnimKind.SlideUp, AnimKind.Pop)

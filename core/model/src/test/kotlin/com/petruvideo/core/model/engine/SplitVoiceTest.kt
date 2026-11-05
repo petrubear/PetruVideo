@@ -81,7 +81,7 @@ class SplitVoiceTest {
         SplitVoice("b", voice.copy(kind = MediaKind.Video), backing).apply(timeline) shouldBe
             CommandResult.Rejected(RejectReason.MissingMedia)
         val long = timeline.copy(videoLane = listOf(VideoClip("a", "m", 0, VOICE_SPLIT_MAX_MS + 1, true)))
-        VoiceSplitRules.reasonNot(long, "a") shouldBe "Works on clips up to 5 minutes"
+        VoiceSplitRules.reasonNot(long, "a") shouldBe VoiceSplitBlock.TooLong
         VoiceSplitRules.reasonNot(timeline, "a") shouldBe null
     }
 

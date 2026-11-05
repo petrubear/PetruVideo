@@ -39,6 +39,11 @@ import com.petruvideo.core.model.Sticker
 import com.petruvideo.core.model.StickerCatalog
 import com.petruvideo.core.model.StickerCategory
 import com.petruvideo.feature.editor.EditorEvent
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
+import com.petruvideo.core.designsystem.keyedText
 
 /** The stickers the phone can draw; a symbol its fonts lack is left out. */
 private fun playableStickers(): List<Sticker> {
@@ -62,16 +67,16 @@ fun StickersPanel(open: Boolean, onEvent: (EditorEvent) -> Unit, modifier: Modif
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Stickers",
+                    stringResource(R.string.editor_stickers),
                     style = PetruType.Title,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("Close", onClick = { onEvent(EditorEvent.StickersDismiss) })
+                PillButton(stringResource(R.string.editor_close), onClick = { onEvent(EditorEvent.StickersDismiss) })
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StickerCategory.entries.forEach {
-                    PetruChip(it.label, selected = it == category, onClick = { category = it })
+                    PetruChip(enumLabel("stickercat", it), selected = it == category, onClick = { category = it })
                 }
             }
             LazyVerticalGrid(
@@ -83,7 +88,10 @@ fun StickersPanel(open: Boolean, onEvent: (EditorEvent) -> Unit, modifier: Modif
                         Modifier
                             .size(CELL)
                             .clickable(role = Role.Button) { onEvent(EditorEvent.AddStickerLayer(sticker)) }
-                            .semantics { contentDescription = sticker.label },
+                            .described(
+                                R.string.editor_sticker_named,
+                                keyedText("sticker_" + sticker.label.lowercase().replace(' ', '_')),
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(

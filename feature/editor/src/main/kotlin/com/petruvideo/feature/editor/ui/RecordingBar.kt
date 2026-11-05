@@ -32,6 +32,9 @@ import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.feature.editor.EditorEvent
 import com.petruvideo.feature.editor.VoiceOverUi
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val STOP_SIZE = 56.dp
 private val METER_HEIGHT = 10.dp
@@ -67,7 +70,7 @@ fun RecordingBar(take: VoiceOverUi, onEvent: (EditorEvent) -> Unit, modifier: Mo
 
 @Composable
 private fun RowScope.CountIn(take: VoiceOverUi.CountIn, onEvent: (EditorEvent) -> Unit) {
-    val spoken = "Recording starts in ${take.secondsLeft}"
+    val spoken = stringResource(R.string.editor_recording_starts_in, take.secondsLeft)
     Text(
         "${take.secondsLeft}",
         style = PetruType.Display,
@@ -78,10 +81,14 @@ private fun RowScope.CountIn(take: VoiceOverUi.CountIn, onEvent: (EditorEvent) -
         },
     )
     Column(Modifier.weight(1f)) {
-        Text("Get ready", style = PetruType.Label, color = PetruColors.OnBackground)
-        Text("Use headphones for a clean voice", style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
+        Text(stringResource(R.string.editor_get_ready), style = PetruType.Label, color = PetruColors.OnBackground)
+        Text(
+            stringResource(R.string.editor_use_headphones_for_a_clean),
+            style = PetruType.Caption,
+            color = PetruColors.OnSurfaceMuted,
+        )
     }
-    TextAction("Cancel") { onEvent(EditorEvent.CancelVoiceOver) }
+    TextAction(stringResource(R.string.editor_cancel)) { onEvent(EditorEvent.CancelVoiceOver) }
 }
 
 @Composable
@@ -90,10 +97,11 @@ private fun RowScope.Running(
     onEvent: (EditorEvent) -> Unit,
 ) {
     val time = timerText(take.elapsedMs)
+    val recordingDescription = stringResource(R.string.editor_recording_time, time)
     Column(
         Modifier.weight(1f).semantics {
             liveRegion = LiveRegionMode.Polite
-            contentDescription = "Recording, $time"
+            contentDescription = recordingDescription
         },
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -106,7 +114,7 @@ private fun RowScope.Running(
             .clip(CircleShape)
             .background(PetruColors.Danger)
             .clickable(role = Role.Button) { onEvent(EditorEvent.StopVoiceOver) }
-            .semantics { contentDescription = "Stop recording" },
+            .described(R.string.editor_stop_recording),
         contentAlignment = Alignment.Center,
     ) {
         Box(Modifier.size(20.dp).background(PetruColors.OnBackground, RoundedCornerShape(4.dp)))
@@ -121,7 +129,7 @@ private fun LevelMeter(level: Float) {
             .height(METER_HEIGHT)
             .clip(RoundedCornerShape(5.dp))
             .background(PetruColors.SurfaceHigh)
-            .semantics { contentDescription = "Voice level" },
+            .described(R.string.editor_voice_level),
     ) {
         Box(
             Modifier

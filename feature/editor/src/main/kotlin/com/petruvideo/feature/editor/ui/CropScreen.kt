@@ -60,6 +60,10 @@ import com.petruvideo.core.model.CropShape
 import com.petruvideo.feature.editor.CropSessionState
 import com.petruvideo.feature.editor.EditorEvent
 import kotlin.math.roundToInt
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val HANDLE = 48.dp
 private const val STILL_HEIGHT_PX = 1080
@@ -79,14 +83,14 @@ fun CropScreen(session: CropSessionState?, onEvent: (EditorEvent) -> Unit, modif
             .padding(16.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            PillButton("Cancel", onClick = { onEvent(EditorEvent.CropCancel) })
+            PillButton(stringResource(R.string.editor_cancel), onClick = { onEvent(EditorEvent.CropCancel) })
             Text(
-                "Crop",
+                stringResource(R.string.editor_crop),
                 style = PetruType.Title,
                 color = PetruColors.OnBackground,
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
             )
-            PillButton("Done", onClick = { onEvent(EditorEvent.CropDone) })
+            PillButton(stringResource(R.string.editor_done), onClick = { onEvent(EditorEvent.CropDone) })
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp).padding(HANDLE / 2)) {
             CropPicture(session, still, maxWidth, maxHeight, onEvent)
@@ -94,11 +98,15 @@ fun CropScreen(session: CropSessionState?, onEvent: (EditorEvent) -> Unit, modif
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CropShape.entries.forEach { shape ->
                 PetruChip(
-                    shape.label, selected = session.shape == shape,
+                    enumLabel("cropshape", shape), selected = session.shape == shape,
                     onClick = { onEvent(EditorEvent.CropShapePick(shape)) },
                 )
             }
-            PetruChip("Full", selected = session.box.isFull, onClick = { onEvent(EditorEvent.CropFullPicture) })
+            PetruChip(
+                stringResource(R.string.editor_full),
+                selected = session.box.isFull,
+                onClick = { onEvent(EditorEvent.CropFullPicture) },
+            )
         }
     }
 }
@@ -136,6 +144,8 @@ private fun CropPicture(
 
 @Composable
 private fun CropOverlay(box: CropBox, shape: CropShape, width: Dp, height: Dp, onEvent: (EditorEvent) -> Unit) {
+    val textEditormoveinward = stringResource(R.string.editor_move_inward)
+    val textEditormoveoutward = stringResource(R.string.editor_move_outward)
     val density = LocalDensity.current
     val widthPx = with(density) { width.toPx() }
     val heightPx = with(density) { height.toPx() }
@@ -160,9 +170,10 @@ private fun CropOverlay(box: CropBox, shape: CropShape, width: Dp, height: Dp, o
         Modifier
             .offset(left, top).size(boxWidth, boxHeight)
             .dragging(widthPx, heightPx, null, onEvent)
-            .semantics { contentDescription = "Crop box, drag to move" },
+            .described(R.string.editor_crop_box_drag_to_move),
     )
     CropHandle.entries.forEach { handle ->
+        val handleDescription = stringResource(R.string.editor_crop_handle, handleName(handle))
         val x = left + boxWidth * handleX(handle) - HANDLE / 2
         val y = top + boxHeight * handleY(handle) - HANDLE / 2
         Box(
@@ -170,10 +181,14 @@ private fun CropOverlay(box: CropBox, shape: CropShape, width: Dp, height: Dp, o
                 .offset(x, y).size(HANDLE)
                 .dragging(widthPx, heightPx, handle, onEvent)
                 .semantics {
-                    contentDescription = "Crop ${handleName(handle)}"
+                    contentDescription = handleDescription
                     customActions = listOf(
-                        CustomAccessibilityAction("Move outward") { nudge(handle, outward = true, shape, onEvent) },
-                        CustomAccessibilityAction("Move inward") { nudge(handle, outward = false, shape, onEvent) },
+                        CustomAccessibilityAction(
+                            textEditormoveoutward,
+                        ) { nudge(handle, outward = true, shape, onEvent) },
+                        CustomAccessibilityAction(
+                            textEditormoveinward,
+                        ) { nudge(handle, outward = false, shape, onEvent) },
                     )
                 },
             contentAlignment = Alignment.Center,
@@ -217,15 +232,16 @@ private fun handleY(handle: CropHandle): Float = when {
     else -> HALF
 }
 
+@Composable
 private fun handleName(handle: CropHandle): String = when (handle) {
-    CropHandle.TopLeft -> "top left corner"
-    CropHandle.Top -> "top edge"
-    CropHandle.TopRight -> "top right corner"
-    CropHandle.Right -> "right edge"
-    CropHandle.BottomRight -> "bottom right corner"
-    CropHandle.Bottom -> "bottom edge"
-    CropHandle.BottomLeft -> "bottom left corner"
-    CropHandle.Left -> "left edge"
+    CropHandle.TopLeft -> stringResource(R.string.editor_crop_top_left_corner)
+    CropHandle.Top -> stringResource(R.string.editor_crop_top_edge)
+    CropHandle.TopRight -> stringResource(R.string.editor_crop_top_right_corner)
+    CropHandle.Right -> stringResource(R.string.editor_crop_right_edge)
+    CropHandle.BottomRight -> stringResource(R.string.editor_crop_bottom_right_corner)
+    CropHandle.Bottom -> stringResource(R.string.editor_crop_bottom_edge)
+    CropHandle.BottomLeft -> stringResource(R.string.editor_crop_bottom_left_corner)
+    CropHandle.Left -> stringResource(R.string.editor_crop_left_edge)
 }
 
 private const val HALF = 0.5f

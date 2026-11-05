@@ -22,7 +22,11 @@ class CoverWidthToolBarTest {
             PetruTheme { ClipToolBar(tools, muted = false, onTool = {}, modifier = Modifier.width(360.dp)) }
         }
         tools.forEach {
-            compose.onNodeWithContentDescription(it.label).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription(
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                    it.labelRes,
+                ),
+            ).performScrollTo().assertIsDisplayed()
         }
     }
 

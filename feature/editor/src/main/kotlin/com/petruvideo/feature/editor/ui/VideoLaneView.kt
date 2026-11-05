@@ -46,6 +46,10 @@ import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.transitionLengthAfter
 import com.petruvideo.feature.editor.TimelineGeometry
 import com.petruvideo.feature.editor.TrimLimits
+import com.petruvideo.core.designsystem.enumLabel
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.editor.R
+import com.petruvideo.core.designsystem.described
 
 private val LANE_HEIGHT = 56.dp
 private val TILE_WIDTH = 40.dp
@@ -83,6 +87,7 @@ fun VideoLaneView(
             val widthDp = geometry.timeToPx(clip.lengthMs).dp
             val startDp = geometry.videoRects(lane)[index].startPx
             val dragging = draggingId == clip.id
+            val clipDescription = stringResource(R.string.editor_clip_named, index + 1, item?.displayName.orEmpty())
             Box(
                 Modifier
                     .offset(x = startDp.dp)
@@ -110,7 +115,7 @@ fun VideoLaneView(
                     .semantics {
                         role = Role.Button
                         selected = clip.id == selectedClipId
-                        contentDescription = "Clip ${index + 1}, ${item?.displayName.orEmpty()}"
+                        contentDescription = clipDescription
                     },
             ) {
                 if (item == null || item.availability == Availability.Missing) {
@@ -157,7 +162,7 @@ private fun BoxScope.TransitionMarkers(lane: List<VideoClip>, geometry: Timeline
         if (overlap > 0) {
             val center = geometry.videoRects(lane)[index + 1].startPx + geometry.timeToPx(overlap) / 2
             TransitionMarker(
-                lane[index].transitionOut?.kind?.label.orEmpty(),
+                lane[index].transitionOut?.kind?.let { enumLabel("transition", it) }.orEmpty(),
                 Modifier.offset(x = center.dp - MARKER_SIZE / 2).align(Alignment.CenterStart),
             ) { onTap(lane[index].id) }
         }
@@ -177,7 +182,7 @@ private fun TransitionMarker(label: String, modifier: Modifier = Modifier, onCli
             .clip(RoundedCornerShape(4.dp))
             .background(PetruColors.Accent)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = "Transition $label" },
+            .described(R.string.editor_transition_named, label),
     )
 }
 

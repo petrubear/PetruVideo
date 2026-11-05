@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelEffectsTest {
@@ -68,7 +69,7 @@ class EditorViewModelEffectsTest {
         e.vm.onEvent(EditorEvent.Undo)
         e.lane[0].transitionOut shouldBe null
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c3")))
-        e.state.disabledTools[ClipTool.EffectTransition] shouldBe "No clip follows this one"
+        e.state.disabledTools[ClipTool.EffectTransition] shouldBe UiText.Res(R.string.editor_no_clip_follows_this_one)
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.EffectTransition))
         e.state.effectPanel shouldBe null
     }
@@ -99,7 +100,7 @@ class EditorViewModelEffectsTest {
         e.session.timeline.value!!.audioLane.count { it.mediaItemId == "song" } shouldBe 1
         val video = song.copy(id = "v", kind = MediaKind.Video, width = 100, height = 100)
         e.vm.onEvent(EditorEvent.AddMusicMedia(video))
-        e.state.message shouldBe "That file can't be used as audio"
+        e.state.message shouldBe UiText.Res(R.string.editor_that_file_cant_be_used)
     }
 
     @Test
@@ -113,7 +114,7 @@ class EditorViewModelEffectsTest {
         e.lane[1].effects.map { it.kind } shouldBe listOf(EffectKind.Blur, EffectKind.Glow, EffectKind.Grain)
         e.vm.onEvent(EditorEvent.EffectCommit(ClipEffect(EffectKind.Vhs, 40)))
         e.lane[1].effects.size shouldBe 3
-        e.state.message shouldBe "Up to 3 effects per clip"
+        e.state.message shouldBe UiText.Res(R.string.editor_effect_limit, 3)
         e.vm.onEvent(EditorEvent.EffectRemove(EffectKind.Glow))
         e.lane[1].effects.map { it.kind } shouldBe listOf(EffectKind.Blur, EffectKind.Grain)
     }

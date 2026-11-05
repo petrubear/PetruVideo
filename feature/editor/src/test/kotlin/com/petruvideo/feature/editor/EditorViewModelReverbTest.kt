@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorViewModelReverbTest {
@@ -116,7 +117,7 @@ class EditorViewModelReverbTest {
         e.vm.onEvent(EditorEvent.Select(ClipSelection.Video("c2")))
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Reverb))
         e.state.reverbPanel shouldBe null
-        e.state.message shouldBe "This clip has no sound"
+        e.state.message shouldBe UiText.Res(R.string.editor_this_clip_has_no_sound)
         e.vm.onEvent(EditorEvent.UseTool(ClipTool.Mute))
         e.state.canUndo shouldBe false
     }
@@ -140,7 +141,7 @@ class EditorViewModelReverbTest {
         e.vm.onEvent(EditorEvent.ReverbToggle(true))
         e.pressure.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
         advanceUntilIdle()
-        e.state.message shouldBe "Preview quality lowered and reverb paused to keep playing"
+        e.state.message shouldBe UiText.Res(R.string.editor_preview_quality_lowered_and_reverb)
         e.engine.loads.last().second.reverb shouldBe false
         e.reverbOf("c1").enabled shouldBe true
     }
