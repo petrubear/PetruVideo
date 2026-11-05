@@ -121,6 +121,7 @@ private fun ExportRowItem(row: ExportRow, onEvent: (ExportsEvent) -> Unit) {
         DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH,
     )
     val summary = "${record.projectName}, $whenText, ${formatDuration(record.durationMs)}, ${formatBytes(record.bytes)}"
+    val described = if (row.missing) stringResource(R.string.export_file_not_found_summary, summary) else summary
     Row(
         Modifier
             .fillMaxWidth()
@@ -128,7 +129,7 @@ private fun ExportRowItem(row: ExportRow, onEvent: (ExportsEvent) -> Unit) {
             .background(PetruColors.Surface)
             .clickable(enabled = !row.missing) { onEvent(ExportsEvent.Open(record.id)) }
             .padding(12.dp)
-            .semantics { contentDescription = if (row.missing) "$summary, file not found" else summary },
+            .semantics { contentDescription = described },
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

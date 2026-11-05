@@ -107,7 +107,7 @@ private fun ErrorBanner(state: AddMediaState, onDismiss: () -> Unit) {
         Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
             state.errors.forEach {
                 Text(
-                    "${it.name} can't be used. The file is unsupported or damaged.",
+                    stringResource(R.string.import_file_cant_be_used, it.name),
                     style = PetruType.BodySmall,
                     color = PetruColors.Danger,
                 )

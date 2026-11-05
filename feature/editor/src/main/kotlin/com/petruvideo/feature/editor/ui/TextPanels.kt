@@ -280,7 +280,8 @@ private fun AnimationRow(
     }
     if (value.kind != AnimKind.None) {
         SettingSlider(
-            "$name length", "%.1f s".format(java.util.Locale.US, value.lengthMs / 1000f), value.lengthMs.toFloat(),
+            stringResource(R.string.editor_anim_length, name),
+            "%.1f s".format(java.util.Locale.US, value.lengthMs / 1000f), value.lengthMs.toFloat(),
             ANIM_MIN_MS.toFloat()..ANIM_MAX_MS.toFloat(),
             { onLength(value.copy(lengthMs = it.roundToInt())) }, onFinished,
         )

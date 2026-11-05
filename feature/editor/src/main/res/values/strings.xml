@@ -390,4 +390,12 @@
     <string name="editor_save_storage_full">storage full: free space to keep saving</string>
     <string name="editor_unavailable">unavailable</string>
     <string name="editor_coming_soon">coming soon</string>
+    <string name="editor_percent_value">%1$d percent</string>
+    <string name="editor_language_not_installed">%1$s is not installed for speech recognition on this phone.</string>
+    <string name="editor_anim_length">%1$s length</string>
+    <string name="editor_color_hue">%1$s hue</string>
+    <string name="editor_color_brightness">%1$s brightness</string>
+    <string name="editor_label_percent">%1$s, %2$d percent</string>
+    <string name="editor_name_missing">%1$s is missing</string>
+    <string name="editor_name_and_more_missing">%1$s and %2$d more are missing</string>
 </resources>

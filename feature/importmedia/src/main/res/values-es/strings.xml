@@ -16,4 +16,5 @@
     <string name="album_Camera">Cámara</string>
     <string name="album_ScreenRecordings">Grabaciones de pantalla</string>
     <string name="album_Downloads">Descargas</string>
+    <string name="import_file_cant_be_used">%1$s no se puede usar. El archivo no es compatible o está dañado.</string>
 </resources>

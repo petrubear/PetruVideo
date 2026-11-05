@@ -390,4 +390,12 @@
         <item quantity="one">%1$d fotograma clave</item>
         <item quantity="other">%1$d fotogramas clave</item>
     </plurals>
+    <string name="editor_percent_value">%1$d por ciento</string>
+    <string name="editor_language_not_installed">%1$s no está instalado para el reconocimiento de voz en este teléfono.</string>
+    <string name="editor_anim_length">Duración de %1$s</string>
+    <string name="editor_color_hue">Tono de %1$s</string>
+    <string name="editor_color_brightness">Brillo de %1$s</string>
+    <string name="editor_label_percent">%1$s, %2$d por ciento</string>
+    <string name="editor_name_missing">Falta %1$s</string>
+    <string name="editor_name_and_more_missing">Faltan %1$s y %2$d más</string>
 </resources>

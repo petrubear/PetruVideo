@@ -42,4 +42,5 @@
     <string name="export_unavailable_NotSupported">No compatible con este teléfono</string>
     <string name="export_unavailable_NotForFootage">No disponible para este material</string>
     <string name="export_format_label">%1$s, %2$d fps, %3$s</string>
+    <string name="export_file_not_found_summary">%1$s, archivo no encontrado</string>
 </resources>

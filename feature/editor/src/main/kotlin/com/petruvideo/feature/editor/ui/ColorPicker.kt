@@ -106,11 +106,11 @@ private fun CustomColor(label: String, colorArgb: Int, onPreview: (Int) -> Unit,
     var hue by remember(colorArgb) { mutableStateOf(hsv[0]) }
     var value by remember(colorArgb) { mutableStateOf(hsv[2]) }
     val current = { android.graphics.Color.HSVToColor(floatArrayOf(hue, if (hsv[1] < 0.05f) 0.9f else hsv[1], value)) }
-    SettingSlider("$label hue", "${hue.toInt()}", hue, 0f..HUE_MAX, {
+    SettingSlider(stringResource(R.string.editor_color_hue, label), "${hue.toInt()}", hue, 0f..HUE_MAX, {
         hue = it
         onPreview(current())
     }, { onCommit(current()) })
-    SettingSlider("$label brightness", "${(value * 100).toInt()}%", value, 0f..1f, {
+    SettingSlider(stringResource(R.string.editor_color_brightness, label), "${(value * 100).toInt()}%", value, 0f..1f, {
         value = it
         onPreview(current())
     }, { onCommit(current()) })

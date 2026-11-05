@@ -31,7 +31,7 @@ fun ReverseProgress(
     note: String? = null,
 ) {
     if (percent == null) return
-    val description = "$label, $percent percent"
+    val description = stringResource(R.string.editor_label_percent, label, percent)
     SheetSurface(modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

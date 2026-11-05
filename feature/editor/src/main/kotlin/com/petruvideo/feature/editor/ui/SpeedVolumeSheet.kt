@@ -206,6 +206,7 @@ private fun SpeedSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) ->
 @Composable
 private fun VolumeSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) -> Unit) {
     val textEditorvolume = stringResource(R.string.editor_volume)
+    val percentText = stringResource(R.string.editor_percent_value, value)
     var dragging by remember { mutableStateOf(false) }
     Slider(
         value = value.toFloat(),
@@ -222,7 +223,7 @@ private fun VolumeSlider(value: Int, onPreview: (Int) -> Unit, onCommit: (Int) -
         colors = sliderColors(if (value > VOLUME_DEFAULT_PERCENT) PetruColors.Boost else PetruColors.Accent),
         modifier = Modifier.fillMaxWidth().semantics {
             contentDescription = textEditorvolume
-            stateDescription = "$value percent"
+            stateDescription = percentText
         },
     )
 }

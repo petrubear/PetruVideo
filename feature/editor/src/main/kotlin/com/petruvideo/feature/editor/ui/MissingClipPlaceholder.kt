@@ -30,12 +30,13 @@ import com.petruvideo.feature.editor.R
 @Composable
 fun MissingClipPlaceholder(name: String, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(8.dp)
+    val missingText = stringResource(R.string.editor_name_missing, name)
     Box(
         modifier
             .clip(shape)
             .background(PetruColors.SurfaceHigh)
             .border(1.5.dp, PetruColors.Danger, shape)
-            .semantics { contentDescription = "$name is missing" },
+            .semantics { contentDescription = missingText },
         contentAlignment = Alignment.Center,
     ) {
         Text(stringResource(R.string.editor_missing), style = PetruType.Tiny, color = PetruColors.Danger)
@@ -57,7 +58,11 @@ fun MissingMediaBar(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            if (count > 1) "$name and ${count - 1} more are missing" else "$name is missing",
+            if (count > 1) {
+                stringResource(R.string.editor_name_and_more_missing, name, count - 1)
+            } else {
+                stringResource(R.string.editor_name_missing, name)
+            },
             style = PetruType.BodySmall,
             color = PetruColors.OnBackground,
             maxLines = 2,

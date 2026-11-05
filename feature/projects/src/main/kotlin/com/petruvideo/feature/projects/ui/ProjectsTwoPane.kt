@@ -54,7 +54,7 @@ fun ProjectsTwoPane(
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),
                 )
-                PillButton("+ New project", { onEvent(ProjectsEvent.NewProject) })
+                PillButton(stringResource(R.string.projects_plus_new_project), { onEvent(ProjectsEvent.NewProject) })
             }
             FilterChipRow(
                 state.filter,

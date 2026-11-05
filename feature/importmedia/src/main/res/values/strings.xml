@@ -16,4 +16,5 @@
     <string name="album_Camera">Camera</string>
     <string name="album_ScreenRecordings">Screen recordings</string>
     <string name="album_Downloads">Downloads</string>
+    <string name="import_file_cant_be_used">%1$s can\'t be used. The file is unsupported or damaged.</string>
 </resources>

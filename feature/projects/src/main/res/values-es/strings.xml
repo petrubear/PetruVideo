@@ -71,4 +71,5 @@
         <item quantity="one">%1$d clip</item>
         <item quantity="other">%1$d clips</item>
     </plurals>
+    <string name="projects_plus_new_project">+ Nuevo proyecto</string>
 </resources>

@@ -122,7 +122,7 @@ private fun Unavailable(panel: CaptionsPanelState, onEvent: (EditorEvent) -> Uni
         RecognitionAvailability.NeedsNewerAndroid -> stringResource(R.string.editor_auto_captions_need_android_13)
         RecognitionAvailability.NotOnThisPhone -> stringResource(R.string.editor_this_phone_has_no_speech)
         is RecognitionAvailability.LanguageMissing ->
-            "${languageName(availability.wanted)} is not installed for speech recognition on this phone."
+            stringResource(R.string.editor_language_not_installed, languageName(availability.wanted))
         else -> ""
     }
     Text(reason, style = PetruType.Body, color = PetruColors.OnBackground)

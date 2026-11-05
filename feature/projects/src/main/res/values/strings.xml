@@ -71,4 +71,5 @@
     <string name="template_slow_fade_summary">Long vintage scenes</string>
     <string name="template_slow_fade_title">Slow Fade</string>
     <string name="projects_no_projects_match">No projects match</string>
+    <string name="projects_plus_new_project">+ New project</string>
 </resources>
