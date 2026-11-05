@@ -33,6 +33,10 @@ android {
     }
 
     buildTypes {
+        // A debug build installs beside the signed release instead of replacing it (and its data).
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
