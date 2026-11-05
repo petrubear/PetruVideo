@@ -104,7 +104,7 @@ jobs:
           fi
           apk=app/build/outputs/apk/release/app-release.apk
           "$apksigner" verify --print-certs "$apk" > signature.txt || { cat signature.txt; echo "::error::the APK signature did not verify"; exit 1; }
-          grep -iE 'certificate (DN|SHA-256)' signature.txt || true
+          cat signature.txt
           mkdir -p dist
           cp "$apk" "dist/PetruVideo-$VERSION.apk"
           (cd dist && sha256sum "PetruVideo-$VERSION.apk" > "PetruVideo-$VERSION.apk.sha256")
