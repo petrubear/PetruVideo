@@ -81,10 +81,7 @@ fun ExpandedEditorLayout(
                 Column(Modifier.fillMaxSize()) {
                     EditorTopBar(state.header, onBack, { onEvent(EditorEvent.OpenExport) })
                     Row(Modifier.weight(1f)) {
-                        ToolRail(
-                            { onEvent(EditorEvent.TapInactiveTool(it)) },
-                            onTab = { onEvent(EditorEvent.SelectTab(it)) },
-                        )
+                        ToolRail(onTab = { onEvent(EditorEvent.SelectTab(it)) })
                         MediaColumn(state, onEvent, Modifier.weight(1f))
                     }
                     PreviewColumn(state, player, onEvent, Modifier.height(PREVIEW_HEIGHT))
@@ -118,10 +115,7 @@ fun ExpandedEditorLayout(
             BoxWithConstraints(Modifier.weight(1f)) {
                 val showInspector = maxWidth.value >= ArrangementResolver.INSPECTOR_MIN_DP
                 Row(Modifier.fillMaxSize()) {
-                    ToolRail(
-                        { onEvent(EditorEvent.TapInactiveTool(it)) },
-                        onTab = { onEvent(EditorEvent.SelectTab(it)) },
-                    )
+                    ToolRail(onTab = { onEvent(EditorEvent.SelectTab(it)) })
                     MediaColumn(state, onEvent, Modifier.width(MEDIA_WIDTH))
                     PreviewColumn(state, player, onEvent, Modifier.weight(1f).fillMaxHeight())
                     if (showInspector) {

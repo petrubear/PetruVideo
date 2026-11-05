@@ -84,10 +84,7 @@ fun ClipToolBar(
             ToolButton(
                 label = label,
                 icon = iconFor(tool, muted),
-                active = tool.active && tool !in disabled,
-                unavailableNote = stringResource(
-                    if (tool.active) R.string.editor_unavailable else R.string.editor_coming_soon,
-                ),
+                active = tool !in disabled,
                 onClick = { onTool(tool) },
                 tint = if (tool == ClipTool.Delete) PetruColors.Danger else null,
             )

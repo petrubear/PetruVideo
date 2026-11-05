@@ -80,12 +80,6 @@ class ProjectsScreenTest {
         compose.onNodeWithText("Templates").performClick()
         assertEquals(listOf<ProjectsEvent>(ProjectsEvent.OpenTemplates), events)
     }
-
-    @Test
-    fun comingSoonMessageIsShown() {
-        show(populated.copy(comingSoon = "Exports"))
-        compose.onNodeWithText("Coming soon").assertIsDisplayed()
-    }
 }
 
 

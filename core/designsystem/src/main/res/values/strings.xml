@@ -3,7 +3,6 @@
     <string name="error_missing_media">Some media files can no longer be found.</string>
     <string name="error_unsupported_file">%1$s can\'t be used. The file is unsupported or damaged.</string>
     <string name="error_permission_denied">Media access is off. Allow access, or choose files with the system picker.</string>
-    <string name="coming_soon">Coming soon</string>
     <string name="quality_Smaller">Smaller</string>
     <string name="quality_Recommended">Recommended</string>
     <string name="quality_Higher">Higher</string>

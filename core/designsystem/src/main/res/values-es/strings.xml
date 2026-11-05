@@ -3,7 +3,6 @@
     <string name="error_missing_media">Ya no se encuentran algunos archivos de medios.</string>
     <string name="error_unsupported_file">No se puede usar %1$s. El archivo no es compatible o está dañado.</string>
     <string name="error_permission_denied">El acceso a los medios está desactivado. Permite el acceso o elige archivos con el selector del sistema.</string>
-    <string name="coming_soon">Próximamente</string>
     <string name="quality_Smaller">Menor tamaño</string>
     <string name="quality_Recommended">Recomendada</string>
     <string name="quality_Higher">Mayor calidad</string>

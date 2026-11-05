@@ -70,10 +70,7 @@ fun EditorBottomBars(state: EditorState, onEvent: (EditorEvent) -> Unit, showPan
                     onStickers = { onEvent(EditorEvent.OpenStickers) },
                 )
             }
-            else -> MainToolBar(
-                onInactiveTap = { onEvent(EditorEvent.TapInactiveTool(it)) },
-                onTab = { onEvent(EditorEvent.SelectTab(it)) },
-            )
+            else -> MainToolBar(onTab = { onEvent(EditorEvent.SelectTab(it)) })
         }
     }
 }

@@ -50,7 +50,6 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.petruvideo.feature.projects.R
 
-private const val COMING_SOON_MS = 2_000L
 private const val COMPACT_COLUMNS = 2
 private const val WIDE_COLUMNS = 3
 
@@ -87,7 +86,6 @@ fun ProjectsScreen(
             }
             BottomNavigation(onEvent, Modifier.align(Alignment.BottomCenter))
         }
-        state.comingSoon?.let { ComingSoonMessage(it, onEvent, Modifier.align(Alignment.BottomCenter)) }
     }
 
     renamingId?.let { id ->
@@ -199,16 +197,14 @@ private fun BottomNavigation(onEvent: (ProjectsEvent) -> Unit, modifier: Modifie
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavEntry(stringResource(R.string.projects_projects), PetruIcons.NavProjects, active = true) {}
+        NavEntry(stringResource(R.string.projects_projects), PetruIcons.NavProjects) {}
         NavEntry(
             stringResource(R.string.projects_templates),
             PetruIcons.NavTemplates,
-            active = true,
         ) { onEvent(ProjectsEvent.OpenTemplates) }
         NavEntry(
             stringResource(R.string.projects_exports),
             PetruIcons.NavExports,
-            active = true,
         ) { onEvent(ProjectsEvent.OpenExports) }
     }
 }
@@ -216,13 +212,12 @@ private fun BottomNavigation(onEvent: (ProjectsEvent) -> Unit, modifier: Modifie
 private val NavShape = RoundedCornerShape(26.dp)
 
 @Composable
-private fun NavEntry(label: String, icon: ImageVector, active: Boolean, onClick: () -> Unit) {
-    val tint = if (active) PetruColors.Accent else PetruColors.OnSurfaceMuted
+private fun NavEntry(label: String, icon: ImageVector, onClick: () -> Unit) {
+    val tint = PetruColors.Accent
     Column(
         Modifier
             .height(Spacing.MinTouchTarget + 8.dp)
             .clip(PetruShapes.Button)
-            .alpha(if (active) 1f else 0.85f)
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -231,25 +226,6 @@ private fun NavEntry(label: String, icon: ImageVector, active: Boolean, onClick:
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.height(22.dp))
         Text(label, style = PetruType.Tiny, color = tint)
     }
-}
-
-@Composable
-private fun ComingSoonMessage(name: String, onEvent: (ProjectsEvent) -> Unit, modifier: Modifier = Modifier) {
-    LaunchedEffect(name) {
-        delay(COMING_SOON_MS)
-        onEvent(ProjectsEvent.DismissComingSoon)
-    }
-    Text(
-        stringResource(R.string.projects_coming_soon),
-        style = PetruType.Body,
-        color = PetruColors.OnBackground,
-        modifier = modifier
-            .navigationBarsPadding()
-            .padding(bottom = 104.dp)
-            .clip(PetruShapes.Chip)
-            .background(PetruColors.SurfaceHighest)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-    )
 }
 
 @Composable

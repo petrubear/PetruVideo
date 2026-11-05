@@ -28,43 +28,43 @@ sealed interface ClipSelection {
     data class Overlay(override val clipId: String) : ClipSelection
 }
 
-/** Main tool bar tabs as designed. Only Edit is active in this feature; the rest show "coming soon". */
-enum class ToolbarTab(@StringRes val labelRes: Int, val active: Boolean) {
-    Edit(R.string.editor_edit, true),
-    Audio(R.string.editor_audio, true),
-    Text(R.string.editor_text, true),
-    Overlay(R.string.editor_overlay, true),
-    Effects(R.string.editor_effects, true),
-    Filters(R.string.editor_filters, true),
+/** Main tool bar tabs as designed. */
+enum class ToolbarTab(@StringRes val labelRes: Int) {
+    Edit(R.string.editor_edit),
+    Audio(R.string.editor_audio),
+    Text(R.string.editor_text),
+    Overlay(R.string.editor_overlay),
+    Effects(R.string.editor_effects),
+    Filters(R.string.editor_filters),
 }
 
 /** Clip tool bar actions. */
-enum class ClipTool(@StringRes val labelRes: Int, val active: Boolean) {
-    Split(R.string.editor_split, true),
-    Speed(R.string.editor_speed, true),
-    Volume(R.string.editor_volume, true),
-    Audio(R.string.editor_audio, true),
-    Detach(R.string.editor_detach, true),
-    SplitVoice(R.string.editor_split_voice, true),
-    Duplicate(R.string.editor_duplicate, true),
-    Delete(R.string.editor_delete, true),
-    Mute(R.string.editor_mute, true),
-    SoundOn(R.string.editor_sound_on, true),
-    Reverb(R.string.editor_reverb, true),
-    Replace(R.string.editor_replace, true),
-    TextEdit(R.string.editor_edit, true),
-    TextStyle(R.string.editor_style, true),
-    TextAnim(R.string.editor_animation, true),
-    FilterLooks(R.string.editor_looks, true),
-    FilterAdjust(R.string.editor_adjust, true),
-    EffectTransition(R.string.editor_transition, true),
-    EffectFx(R.string.editor_effect, true),
-    OverlayOpacity(R.string.editor_opacity, true),
-    Keyframes(R.string.editor_keyframes, true),
-    Transform(R.string.editor_transform, true),
-    Freeze(R.string.editor_freeze, true),
-    Reverse(R.string.editor_reverse, true),
-    Curve(R.string.editor_speed_curve, true),
+enum class ClipTool(@StringRes val labelRes: Int) {
+    Split(R.string.editor_split),
+    Speed(R.string.editor_speed),
+    Volume(R.string.editor_volume),
+    Audio(R.string.editor_audio),
+    Detach(R.string.editor_detach),
+    SplitVoice(R.string.editor_split_voice),
+    Duplicate(R.string.editor_duplicate),
+    Delete(R.string.editor_delete),
+    Mute(R.string.editor_mute),
+    SoundOn(R.string.editor_sound_on),
+    Reverb(R.string.editor_reverb),
+    Replace(R.string.editor_replace),
+    TextEdit(R.string.editor_edit),
+    TextStyle(R.string.editor_style),
+    TextAnim(R.string.editor_animation),
+    FilterLooks(R.string.editor_looks),
+    FilterAdjust(R.string.editor_adjust),
+    EffectTransition(R.string.editor_transition),
+    EffectFx(R.string.editor_effect),
+    OverlayOpacity(R.string.editor_opacity),
+    Keyframes(R.string.editor_keyframes),
+    Transform(R.string.editor_transform),
+    Freeze(R.string.editor_freeze),
+    Reverse(R.string.editor_reverse),
+    Curve(R.string.editor_speed_curve),
 }
 
 /**
@@ -302,8 +302,6 @@ data class EditorState(
     /** Whether the selected clip (audio, or video with sound) is muted; the Mute tool then shows Unmute. */
     val selectedAudioMuted: Boolean = false,
     val fullscreen: Boolean = false,
-    /** Name of the inactive tool that was tapped, shown as "coming soon". */
-    val comingSoon: String? = null,
     /** A short non-blocking message, e.g. an audio clip that snapped to the next free spot. */
     val message: UiText? = null,
 ) {
@@ -337,7 +335,6 @@ sealed interface EditorEvent {
     data class SetFullscreen(val on: Boolean) : EditorEvent
     data class Relink(val mediaItemId: String, val replacement: MediaItem) : EditorEvent
     data class RemoveMissing(val mediaItemId: String) : EditorEvent
-    data class TapInactiveTool(val name: String) : EditorEvent
     /** The Export button: opens the export screen for this project. */
     data object OpenExport : EditorEvent
     data object DismissMessage : EditorEvent

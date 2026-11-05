@@ -263,7 +263,6 @@
     <string name="editor_on">On</string>
     <string name="editor_turned">Turned %1$d°</string>
     <string name="editor_clip_number">Clip %1$d</string>
-    <string name="editor_label_coming_soon">%1$s, coming soon</string>
     <string name="editor_crop_handle">Crop %1$s</string>
     <string name="editor_crop_top_left_corner">top left corner</string>
     <string name="editor_crop_top_edge">top edge</string>
@@ -304,7 +303,6 @@
     <string name="editor_only_the_first_were_made">Only the first %1$d were made</string>
     <string name="editor_media_missing_relink">%1$s is missing from your phone. Relink it to keep editing.</string>
     <string name="editor_playback_stopped_code">Playback stopped: %1$s</string>
-    <string name="editor_label_coming_soon_colon">%1$s: coming soon</string>
     <string name="editor_no_keyframes">No keyframes</string>
     <string name="editor_keyframe_n_of">Keyframe %1$d of %2$d</string>
     <plurals name="editor_keyframe_count">
@@ -389,7 +387,6 @@
     <string name="editor_save_failed">not saved</string>
     <string name="editor_save_storage_full">storage full: free space to keep saving</string>
     <string name="editor_unavailable">unavailable</string>
-    <string name="editor_coming_soon">coming soon</string>
     <string name="editor_percent_value">%1$d percent</string>
     <string name="editor_language_not_installed">%1$s is not installed for speech recognition on this phone.</string>
     <string name="editor_anim_length">%1$s length</string>

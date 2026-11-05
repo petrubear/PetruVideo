@@ -158,15 +158,6 @@ class ProjectsViewModelTest {
     }
 
     @Test
-    fun `tapping an inactive entry shows coming soon until dismissed`() {
-        val vm = viewModel()
-        vm.onEvent(ProjectsEvent.TapInactive("Templates"))
-        vm.state.value.comingSoon shouldBe "Templates"
-        vm.onEvent(ProjectsEvent.DismissComingSoon)
-        vm.state.value.comingSoon shouldBe null
-    }
-
-    @Test
     fun `search can be opened and closing it clears the query`() {
         val vm = viewModel()
         vm.onEvent(ProjectsEvent.OpenSearch)

@@ -45,7 +45,6 @@ class ProjectsViewModel @Inject constructor(
         val searchOpen: Boolean = false,
         val selectedProjectId: String? = null,
         val pendingDeleteId: String? = null,
-        val comingSoon: String? = null,
     )
 
     private val ui = MutableStateFlow(Ui())
@@ -112,8 +111,6 @@ class ProjectsViewModel @Inject constructor(
             ProjectsEvent.ConfirmDelete -> confirmDelete()
             ProjectsEvent.OpenSearch -> ui.update { it.copy(searchOpen = true) }
             ProjectsEvent.CloseSearch -> ui.update { it.copy(searchOpen = false, query = "") }
-            is ProjectsEvent.TapInactive -> ui.update { it.copy(comingSoon = event.name) }
-            ProjectsEvent.DismissComingSoon -> ui.update { it.copy(comingSoon = null) }
         }
     }
 
@@ -158,7 +155,6 @@ class ProjectsViewModel @Inject constructor(
             selectedMedia = media,
             pendingDeleteId = ui.pendingDeleteId,
             noResults = all.isNotEmpty() && visible.isEmpty(),
-            comingSoon = ui.comingSoon,
         )
     }
 }

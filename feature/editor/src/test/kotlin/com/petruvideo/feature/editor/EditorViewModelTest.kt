@@ -183,15 +183,6 @@ class EditorViewModelTest {
     }
 
     @Test
-    fun `tapping an inactive tool shows coming soon until dismissed`() = runTest {
-        val e = env()
-        e.vm.onEvent(EditorEvent.TapInactiveTool("Effects"))
-        e.state.comingSoon shouldBe "Effects"
-        e.vm.onEvent(EditorEvent.DismissMessage)
-        e.state.comingSoon shouldBe null
-    }
-
-    @Test
     fun `fullscreen can be turned on and off and playback is untouched`() = runTest {
         val e = env()
         e.vm.onEvent(EditorEvent.Play)

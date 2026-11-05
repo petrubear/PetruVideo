@@ -30,7 +30,6 @@
     <string name="projects_search_projects">Buscar proyectos</string>
     <string name="projects_close_search">Cerrar búsqueda</string>
     <string name="projects_exports">Exportaciones</string>
-    <string name="projects_coming_soon">Próximamente</string>
     <string name="projects_minutes_ago">hace %1$d min</string>
     <string name="projects_hours_ago">hace %1$d h</string>
     <string name="projects_card_meta">%1$s · %2$s · %3$s</string>

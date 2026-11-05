@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -33,23 +32,21 @@ import com.petruvideo.feature.editor.R
 private data class RailEntry(
     @StringRes val labelRes: Int,
     val icon: ImageVector,
-    val active: Boolean,
-    val tab: ToolbarTab? = null,
+    val tab: ToolbarTab,
 )
 
 private val ENTRIES = listOf(
-    RailEntry(R.string.editor_media, PetruIcons.ToolEdit, true, ToolbarTab.Edit),
-    RailEntry(R.string.editor_audio, PetruIcons.ToolAudio, true, ToolbarTab.Audio),
-    RailEntry(R.string.editor_text, PetruIcons.ToolText, true, ToolbarTab.Text),
-    RailEntry(R.string.editor_overlay, PetruIcons.ToolOverlay, true, ToolbarTab.Overlay),
-    RailEntry(R.string.editor_effects, PetruIcons.ToolEffects, true, ToolbarTab.Effects),
-    RailEntry(R.string.editor_filters, PetruIcons.ToolFilters, true, ToolbarTab.Filters),
+    RailEntry(R.string.editor_media, PetruIcons.ToolEdit, ToolbarTab.Edit),
+    RailEntry(R.string.editor_audio, PetruIcons.ToolAudio, ToolbarTab.Audio),
+    RailEntry(R.string.editor_text, PetruIcons.ToolText, ToolbarTab.Text),
+    RailEntry(R.string.editor_overlay, PetruIcons.ToolOverlay, ToolbarTab.Overlay),
+    RailEntry(R.string.editor_effects, PetruIcons.ToolEffects, ToolbarTab.Effects),
+    RailEntry(R.string.editor_filters, PetruIcons.ToolFilters, ToolbarTab.Filters),
 )
 
-/** The left rail of the unfolded editor. Media is the only active entry; the rest say "coming soon". */
+/** The left rail of the unfolded editor, one entry per tab. */
 @Composable
 fun ToolRail(
-    onInactiveTap: (String) -> Unit,
     modifier: Modifier = Modifier,
     onTab: (ToolbarTab) -> Unit = {},
 ) {
@@ -64,21 +61,14 @@ fun ToolRail(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         ENTRIES.forEach { entry ->
-            val color = if (entry.active) PetruColors.Accent else PetruColors.OnBackground
+            val color = PetruColors.Accent
             val entryLabel = stringResource(entry.labelRes)
-            val comingSoon = stringResource(R.string.editor_label_coming_soon, entryLabel)
             Column(
                 Modifier
                     .size(width = 56.dp, height = 56.dp)
                     .clip(PetruShapes.Button)
-                    .alpha(if (entry.active) 1f else 0.4f)
-                    .clickable(role = Role.Button) {
-                        val tab = entry.tab
-                        if (tab != null) onTab(tab) else onInactiveTap(entryLabel)
-                    }
-                    .semantics {
-                        contentDescription = if (entry.active) entryLabel else comingSoon
-                    },
+                    .clickable(role = Role.Button) { onTab(entry.tab) }
+                    .semantics { contentDescription = entryLabel },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
             ) {

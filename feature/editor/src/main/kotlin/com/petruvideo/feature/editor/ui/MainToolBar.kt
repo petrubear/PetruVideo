@@ -41,10 +41,9 @@ private fun iconFor(tab: ToolbarTab): ImageVector = when (tab) {
     ToolbarTab.Filters -> PetruIcons.ToolFilters
 }
 
-/** The main tool bar: Edit is active, every other entry is dimmed and shows "coming soon" when tapped. */
+/** The main tool bar with one entry per tab. */
 @Composable
 fun MainToolBar(
-    onInactiveTap: (String) -> Unit,
     modifier: Modifier = Modifier,
     onTab: (ToolbarTab) -> Unit = {},
 ) {
@@ -60,12 +59,11 @@ fun MainToolBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ToolbarTab.entries.forEach { tab ->
-            val tabLabel = stringResource(tab.labelRes)
             ToolButton(
-                label = tabLabel,
+                label = stringResource(tab.labelRes),
                 icon = iconFor(tab),
-                active = tab.active,
-                onClick = { if (tab.active) onTab(tab) else onInactiveTap(tabLabel) },
+                active = true,
+                onClick = { onTab(tab) },
             )
         }
     }
@@ -78,7 +76,7 @@ internal fun ToolButton(
     active: Boolean,
     onClick: () -> Unit,
     tint: androidx.compose.ui.graphics.Color? = null,
-    unavailableNote: String = stringResource(R.string.editor_coming_soon),
+    unavailableNote: String = stringResource(R.string.editor_unavailable),
 ) {
     val color = tint ?: if (active) PetruColors.Accent else PetruColors.OnBackground
     Column(

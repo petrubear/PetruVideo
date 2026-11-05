@@ -21,8 +21,6 @@ data class ProjectsState(
     val pendingDeleteId: String? = null,
     /** True when a query or filter hides every project that exists. */
     val noResults: Boolean = false,
-    /** Name of the inactive entry that was tapped, shown as a "coming soon" message. */
-    val comingSoon: String? = null,
 )
 
 sealed interface ProjectsEvent {
@@ -42,8 +40,6 @@ sealed interface ProjectsEvent {
     data object CancelDelete : ProjectsEvent
     data object OpenSearch : ProjectsEvent
     data object CloseSearch : ProjectsEvent
-    data class TapInactive(val name: String) : ProjectsEvent
-    data object DismissComingSoon : ProjectsEvent
 }
 
 sealed interface ProjectsEffect {

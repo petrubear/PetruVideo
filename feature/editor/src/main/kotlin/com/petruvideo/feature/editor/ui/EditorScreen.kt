@@ -125,11 +125,10 @@ private fun MissingBar(state: EditorState, onEvent: (EditorEvent) -> Unit) {
     )
 }
 
-/** A short non-blocking message: "Coming soon" for inactive tools, or a notice such as lowered preview quality. */
+/** A short non-blocking message, such as a notice that the preview quality was lowered. */
 @Composable
 private fun Banner(state: EditorState, onEvent: (EditorEvent) -> Unit, modifier: Modifier = Modifier) {
-    val soon = state.comingSoon?.let { stringResource(R.string.editor_label_coming_soon_colon, it) }
-    val text = soon ?: state.message?.asString() ?: return
+    val text = state.message?.asString() ?: return
     LaunchedEffect(text) {
         delay(MESSAGE_MS)
         onEvent(EditorEvent.DismissMessage)

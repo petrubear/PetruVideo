@@ -181,7 +181,6 @@ class EditorViewModel @Inject constructor(
     private data class Local(
         val selection: ClipSelection? = null,
         val fullscreen: Boolean = false,
-        val comingSoon: String? = null,
         val message: UiText? = null,
         /** The open Speed or Volume sheet: which tool and which clip. */
         val sheet: OpenSheet? = null,
@@ -397,8 +396,7 @@ class EditorViewModel @Inject constructor(
             is EditorEvent.Relink -> relink(event.mediaItemId, event.replacement)
             is EditorEvent.RemoveMissing -> session.apply(RemoveMissingMedia(event.mediaItemId))
             EditorEvent.OpenExport -> openExport()
-            is EditorEvent.TapInactiveTool -> local.update { it.copy(comingSoon = event.name) }
-            EditorEvent.DismissMessage -> local.update { it.copy(comingSoon = null, message = null) }
+            EditorEvent.DismissMessage -> local.update { it.copy(message = null) }
             is EditorEvent.SheetPreview -> previewValue(event.tool, event.value)
             is EditorEvent.SheetCommit -> commitValue(event.tool, event.value)
             is EditorEvent.SheetReset ->
@@ -1296,7 +1294,6 @@ class EditorViewModel @Inject constructor(
     private var pendingText: TextClip? = null
 
     private fun selectTab(tab: ToolbarTab) {
-        if (!tab.active) return
         local.update { it.copy(tab = tab) }
     }
 
@@ -1706,7 +1703,6 @@ class EditorViewModel @Inject constructor(
             selectedFx = sound?.first,
             selectedClipLengthMs = sound?.second ?: 0,
             fullscreen = local.fullscreen,
-            comingSoon = local.comingSoon,
             message = local.message,
         )
     }

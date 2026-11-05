@@ -263,7 +263,6 @@
     <string name="editor_on">Activado</string>
     <string name="editor_turned">Girado %1$d°</string>
     <string name="editor_clip_number">Clip %1$d</string>
-    <string name="editor_label_coming_soon">%1$s, próximamente</string>
     <string name="editor_crop_handle">Recorte %1$s</string>
     <string name="editor_crop_top_left_corner">esquina superior izquierda</string>
     <string name="editor_crop_top_edge">borde superior</string>
@@ -292,7 +291,6 @@
     <string name="editor_only_the_first_were_made">Solo se crearon los primeros %1$d</string>
     <string name="editor_media_missing_relink">Falta %1$s en tu teléfono. Vincúlalo de nuevo para seguir editando.</string>
     <string name="editor_playback_stopped_code">La reproducción se detuvo: %1$s</string>
-    <string name="editor_label_coming_soon_colon">%1$s: próximamente</string>
     <string name="editor_no_keyframes">Sin fotogramas clave</string>
     <string name="editor_keyframe_n_of">Fotograma clave %1$d de %2$d</string>
     <string name="editor_clip_settings">Ajustes del clip: %1$s</string>
@@ -373,7 +371,6 @@
     <string name="editor_save_failed">sin guardar</string>
     <string name="editor_save_storage_full">almacenamiento lleno: libera espacio para seguir guardando</string>
     <string name="editor_unavailable">no disponible</string>
-    <string name="editor_coming_soon">próximamente</string>
     <plurals name="editor_captions_added">
         <item quantity="one">Se agregó %1$d subtítulo</item>
         <item quantity="other">Se agregaron %1$d subtítulos</item>

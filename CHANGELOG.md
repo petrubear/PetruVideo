@@ -12,6 +12,9 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+### Removed
+- The unused "coming soon" message and dimmed entries in the Projects navigation, the editor tool bar and the unfolded editor rail. Every entry has been active for a long time, so nothing changes on screen.
+
 ## [0.7.0] - 2026-11-05
 
 ### Added
