@@ -18,12 +18,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
+import com.petruvideo.core.designsystem.UiText
 
 data class TemplatesState(
     val templates: List<Template> = TemplateCatalog.all,
     /** True while the chosen files are read and the project is made. */
     val busy: Boolean = false,
-    val message: String? = null,
+    val message: UiText? = null,
 )
 
 sealed interface TemplatesEffect {
@@ -53,20 +56,23 @@ class TemplatesViewModel @Inject constructor(
     }
 
     /** The picker returned [uris]; an empty list (cancelled) changes nothing. */
-    fun picked(uris: List<String>) {
+    /** The id of the template whose files are being picked. */
+    val chosenId: String? get() = chosen?.id
+
+    fun picked(uris: List<String>, projectName: String, titleText: String) {
         val template = chosen ?: return
         if (uris.isEmpty()) return
         ui.update { it.copy(busy = true, message = null) }
         viewModelScope.launch {
             val items = uris.mapNotNull { prober.probe(Uri.parse(it), UUID.randomUUID().toString()).getOrNull() }
-            val fill = TemplateFiller.fill(template, items, projectId = "", newId = { UUID.randomUUID().toString() })
+            val fill = TemplateFiller.fill(template, items, projectId = "", newId = { UUID.randomUUID().toString() }, titleText = titleText)
             if (fill == null) {
-                ui.update { it.copy(busy = false, message = "None of those files can be used") }
+                ui.update { it.copy(busy = false, message = UiText.Res(R.string.projects_none_of_those_files_can)) }
                 return@launch
             }
             val project = repository.createProject()
             repository.saveTimeline(project.id, fill.timeline.copy(projectId = project.id))
-            repository.rename(project.id, template.name)
+            repository.rename(project.id, projectName)
             ui.update { it.copy(busy = false, message = unusedMessage(fill.unusedItems, template.slotCount)) }
             effectChannel.send(TemplatesEffect.OpenEditor(project.id))
         }
@@ -74,6 +80,6 @@ class TemplatesViewModel @Inject constructor(
 
     fun dismissMessage() = ui.update { it.copy(message = null) }
 
-    private fun unusedMessage(unused: Int, slots: Int): String? =
-        if (unused > 0) "Only the first $slots files were used" else null
+    private fun unusedMessage(unused: Int, slots: Int): UiText? =
+        if (unused > 0) UiText.Res(R.string.projects_only_first_files_used, slots) else null
 }

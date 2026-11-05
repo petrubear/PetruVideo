@@ -33,6 +33,8 @@ import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.formatDuration
 import kotlin.math.min
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 /**
  * The right pane of the two-pane Projects view: thumbnail, clip count, length, format, the project actions, and the
@@ -50,7 +52,7 @@ fun ProjectDetailPane(
 ) {
     if (summary == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Select a project", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+            Text(stringResource(R.string.projects_select_a_project), style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
         }
         return
     }
@@ -77,12 +79,12 @@ fun ProjectDetailPane(
                 }
             }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ActionChip("Duplicate", onDuplicate)
-            ActionChip("Export", onExport)
-            ActionChip("Delete", onDelete, color = PetruColors.Danger)
+            ActionChip(stringResource(R.string.projects_duplicate), onDuplicate)
+            ActionChip(stringResource(R.string.projects_export), onExport)
+            ActionChip(stringResource(R.string.projects_delete), onDelete, color = PetruColors.Danger)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Media in this project", style = PetruType.Label, color = PetruColors.OnBackground)
+            Text(stringResource(R.string.projects_media_in_this_project), style = PetruType.Label, color = PetruColors.OnBackground)
             Text("${media.size} items", style = PetruType.Mono, color = PetruColors.OnSurfaceMuted)
         }
         LazyVerticalGrid(
@@ -103,11 +105,11 @@ private fun ProjectFacts(summary: ProjectSummary, onOpen: () -> Unit, modifier: 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(project.name, style = PetruType.Display, color = PetruColors.OnBackground, maxLines = 2)
         Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            Stat("CLIPS", summary.clipCount.toString())
-            Stat("LENGTH", formatDuration(summary.durationMs))
-            Stat("FORMAT", project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-")
+            Stat(stringResource(R.string.projects_stat_clips), summary.clipCount.toString())
+            Stat(stringResource(R.string.projects_stat_length), formatDuration(summary.durationMs))
+            Stat(stringResource(R.string.projects_stat_format), project.format?.let { "${min(it.width, it.height)}p, ${it.fps}" } ?: "-")
         }
-        PillButton("Open editor", onOpen, Modifier.fillMaxWidth())
+        PillButton(stringResource(R.string.projects_open_editor), onOpen, Modifier.fillMaxWidth())
     }
 }
 
@@ -150,7 +152,7 @@ private fun MediaTile(item: MediaItem) {
         if (item.kind != MediaKind.Audio) GridThumbnail(item.uri, Modifier.fillMaxSize())
         item.durationMs?.let {
             Text(
-                if (item.kind == MediaKind.Audio) "Audio · ${formatDuration(it)}" else formatDuration(it),
+                if (item.kind == MediaKind.Audio) stringResource(R.string.projects_audio_duration, formatDuration(it)) else formatDuration(it),
                 style = PetruType.MonoSmall,
                 color = PetruColors.OnBackground,
                 modifier = Modifier

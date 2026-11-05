@@ -1,0 +1,19 @@
+<resources>
+    <string name="import_videos">Videos</string>
+    <string name="import_photos">Fotos</string>
+    <string name="import_audio">Audio</string>
+    <string name="import_close">Cerrar</string>
+    <string name="import_add_media">Agregar medios</string>
+    <string name="import_dismiss_message">Descartar mensaje</string>
+    <string name="import_media_access_is_off_allow">El acceso a los medios está desactivado. Permite el acceso o elige archivos con el selector del sistema.</string>
+    <string name="import_access_rationale">PetruVideo necesita acceso a tus videos, fotos y audio para mostrarlos aquí. Tus archivos se quedan en tu dispositivo.</string>
+    <string name="import_allow_access">Permitir acceso</string>
+    <string name="import_choose_files_instead">Elegir archivos</string>
+    <string name="import_add_to_timeline_in_order">Agregar a la línea de tiempo en orden</string>
+    <string name="import_cancel">Cancelar</string>
+    <string name="import_adding_progress">Agregando %1$d de %2$d</string>
+    <string name="album_Recent">Recientes</string>
+    <string name="album_Camera">Cámara</string>
+    <string name="album_ScreenRecordings">Grabaciones de pantalla</string>
+    <string name="album_Downloads">Descargas</string>
+</resources>

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.petruvideo.feature.export.ui.ExportScreen
+import androidx.compose.ui.res.stringResource
 
 /** Opens the project, shows the export screen, asks for the permissions an export needs, and opens results. */
 @Composable
@@ -52,7 +53,7 @@ fun ExportRoute(
                         Intent(Intent.ACTION_SEND).setType("video/mp4")
                             .putExtra(Intent.EXTRA_STREAM, Uri.parse(effect.uri))
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
-                        "Share video",
+                        context.getString(R.string.export_share_video),
                     ),
                 )
             }

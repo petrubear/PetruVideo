@@ -18,6 +18,7 @@ import com.petruvideo.core.designsystem.adaptive.AdaptiveScaffold
 import com.petruvideo.core.designsystem.adaptive.ArrangementResolver
 import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.feature.projects.ui.ProjectsScreen
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ProjectsRoute(
@@ -68,6 +69,6 @@ fun ProjectsRoute(
 @Composable
 private fun TabletopTitle() {
     Box(Modifier.fillMaxSize().background(PetruColors.Background), contentAlignment = Alignment.Center) {
-        Text("Projects", style = PetruType.Display, color = PetruColors.OnBackground)
+        Text(stringResource(R.string.projects_projects), style = PetruType.Display, color = PetruColors.OnBackground)
     }
 }

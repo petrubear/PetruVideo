@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import com.petruvideo.core.designsystem.UiText
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TemplatesViewModelTest {
@@ -52,9 +53,9 @@ class TemplatesViewModelTest {
         vm.effects.test {
             vm.use("memories")
             awaitItem() shouldBe TemplatesEffect.PickMedia(4)
-            vm.picked(emptyList())
+            vm.picked(emptyList(), "Memories", "Memories")
             repo.created shouldBe 0
-            vm.picked(listOf("a", "b", "c"))
+            vm.picked(listOf("a", "b", "c"), "Memories", "Memories")
             awaitItem() shouldBe TemplatesEffect.OpenEditor("new-1")
         }
         repo.saved shouldHaveSize 1
@@ -67,9 +68,9 @@ class TemplatesViewModelTest {
         val repo = FakeProjectsRepository()
         val vm = TemplatesViewModel(repo, prober)
         vm.use("travel")
-        vm.picked(listOf("bad1"))
+        vm.picked(listOf("bad1"), "Travel", "Travel")
         repo.created shouldBe 0
-        vm.state.value.message shouldBe "None of those files can be used"
+        vm.state.value.message shouldBe UiText.Res(R.string.projects_none_of_those_files_can)
         vm.state.value.busy shouldBe false
     }
 }

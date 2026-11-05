@@ -28,6 +28,8 @@ import com.petruvideo.feature.importmedia.AddMediaEvent
 import com.petruvideo.feature.importmedia.AddMediaState
 import com.petruvideo.feature.importmedia.AddMediaTab
 import com.petruvideo.feature.importmedia.MediaAccess
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.importmedia.R
 
 /**
  * The Add media screen as designed: close button and title, Videos / Photos / Audio selector, album chips, the
@@ -44,7 +46,7 @@ fun AddMediaScreen(
     Column(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
         Header(onClose = { onEvent(AddMediaEvent.Close) })
         SegmentedControl(
-            options = AddMediaTab.entries.map { it.label },
+            options = AddMediaTab.entries.map { stringResource(it.labelRes) },
             selectedIndex = state.tab.ordinal,
             onSelect = { onEvent(AddMediaEvent.SwitchTab(AddMediaTab.entries[it])) },
             modifier = Modifier.padding(horizontal = Spacing.ScreenGutter).padding(top = 4.dp),
@@ -81,8 +83,8 @@ fun AddMediaScreen(
 @Composable
 private fun Header(onClose: () -> Unit) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-        IconAction(PetruIcons.Close, "Close", onClose, Modifier.align(Alignment.CenterStart))
-        Text("Add media", style = PetruType.Title, color = PetruColors.OnBackground)
+        IconAction(PetruIcons.Close, stringResource(R.string.import_close), onClose, Modifier.align(Alignment.CenterStart))
+        Text(stringResource(R.string.import_add_media), style = PetruType.Title, color = PetruColors.OnBackground)
     }
 }
 
@@ -106,7 +108,7 @@ private fun ErrorBanner(state: AddMediaState, onDismiss: () -> Unit) {
                 )
             }
         }
-        IconAction(PetruIcons.Close, "Dismiss message", onDismiss)
+        IconAction(PetruIcons.Close, stringResource(R.string.import_dismiss_message), onDismiss)
     }
 }
 
@@ -119,15 +121,14 @@ private fun AccessPrompt(access: MediaAccess, onEvent: (AddMediaEvent) -> Unit) 
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val message = if (access == MediaAccess.Denied) {
-            "Media access is off. Allow access, or choose files with the system picker."
+            stringResource(R.string.import_media_access_is_off_allow)
         } else {
-            "PetruVideo needs access to your videos, photos and audio to show them here. " +
-                "Your files stay on your device."
+            stringResource(R.string.import_access_rationale)
         }
         Text(message, style = PetruType.Body, color = PetruColors.OnSurfaceMuted, textAlign = TextAlign.Center)
-        PillButton("Allow access", onClick = { onEvent(AddMediaEvent.RequestAccess) })
+        PillButton(stringResource(R.string.import_allow_access), onClick = { onEvent(AddMediaEvent.RequestAccess) })
         Text(
-            "Choose files instead",
+            stringResource(R.string.import_choose_files_instead),
             style = PetruType.Label,
             color = PetruColors.Accent,
             modifier = Modifier

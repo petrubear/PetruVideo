@@ -1,0 +1,5 @@
+<resources>
+    <string name="quality_Smaller">Menor tamaño</string>
+    <string name="quality_Recommended">Recomendada</string>
+    <string name="quality_Higher">Mayor calidad</string>
+</resources>

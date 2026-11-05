@@ -23,6 +23,8 @@ class RoomProjectRepository @Inject constructor(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     /** Told which files are still used after a project is deleted, so recordings nobody uses can go (FR-010). */
     private val onDeleted: suspend (stillUsedUris: Set<String>) -> Unit = {},
+    /** The default name of a new project, from its number, in the language of the moment. */
+    private val defaultName: (Int) -> String = { "Untitled $it" },
 ) : ProjectRepository {
     private val projects get() = db.projectDao()
     private val timelines get() = db.timelineDao()
@@ -59,7 +61,7 @@ class RoomProjectRepository @Inject constructor(
         val now = clock()
         val project = Project(
             id = newId(),
-            name = "Untitled ${projects.countUntitled() + 1}",
+            name = defaultName(projects.countUntitled() + 1),
             createdAt = now,
             modifiedAt = now,
         )

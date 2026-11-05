@@ -28,12 +28,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
+import com.petruvideo.core.designsystem.enumLabel
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.model.export.ExportSettings
 import com.petruvideo.core.model.export.Option
 import com.petruvideo.core.model.export.Quality
 import com.petruvideo.feature.export.ExportEvent
 import com.petruvideo.feature.export.ExportUiState
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.export.R
 
 /** Resolution, frame rate, and quality, with the file facts. Unavailable options are dimmed and explain themselves. */
 @Composable
@@ -47,7 +50,7 @@ fun ExportSettingsPanel(state: ExportUiState, settings: ExportSettings, onEvent:
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Group("RESOLUTION") {
+        Group(stringResource(R.string.export_group_resolution)) {
             Segments(
                 state.resolutions.map { Option(it.value.label, it.unavailable) },
                 selected = settings.resolution.label,
@@ -58,7 +61,7 @@ fun ExportSettingsPanel(state: ExportUiState, settings: ExportSettings, onEvent:
                 onBlocked = { hint = it },
             )
         }
-        Group("FRAME RATE") {
+        Group(stringResource(R.string.export_group_frame_rate)) {
             Segments(
                 state.frameRates.map { Option(it.value.fps.toString(), it.unavailable) },
                 selected = settings.frameRate.fps.toString(),
@@ -69,18 +72,21 @@ fun ExportSettingsPanel(state: ExportUiState, settings: ExportSettings, onEvent:
                 onBlocked = { hint = it },
             )
         }
-        Group("QUALITY") {
+        val qualityLabels = Quality.entries.associateWith { enumLabel("quality", it) }
+        Group(stringResource(R.string.export_group_quality)) {
             Segments(
-                state.qualities.map { Option(it.label) },
-                selected = settings.quality.label,
-                onSelect = { label -> onEvent(ExportEvent.SelectQuality(Quality.entries.first { it.label == label })) },
+                state.qualities.map { Option(qualityLabels.getValue(it)) },
+                selected = qualityLabels.getValue(settings.quality),
+                onSelect = { label ->
+                    onEvent(ExportEvent.SelectQuality(qualityLabels.entries.first { it.value == label }.key))
+                },
                 onBlocked = { hint = it },
             )
         }
         hint?.let { Text(it, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted) }
-        Row("Format", "MP4 · H.264", PetruColors.OnBackground)
-        Row("Bitrate", formatBitrate(state.videoBitrate), PetruColors.OnBackground)
-        Row("Estimated size", "~ ${formatBytes(state.estimatedBytes)}", PetruColors.Accent)
+        Row(stringResource(R.string.export_format), "MP4 · H.264", PetruColors.OnBackground)
+        Row(stringResource(R.string.export_bitrate), formatBitrate(state.videoBitrate), PetruColors.OnBackground)
+        Row(stringResource(R.string.export_estimated_size), "~ ${formatBytes(state.estimatedBytes)}", PetruColors.Accent)
     }
 }
 
@@ -116,7 +122,7 @@ private fun Segments(
     ) {
         options.forEach { option ->
             val isSelected = option.value == selected
-            val reason = option.unavailable?.message
+            val reason = option.unavailable?.let { enumLabel("export_unavailable", it) }
             Box(
                 Modifier
                     .weight(if (option.value.length > LONG_LABEL) LONG_WEIGHT else 1f)

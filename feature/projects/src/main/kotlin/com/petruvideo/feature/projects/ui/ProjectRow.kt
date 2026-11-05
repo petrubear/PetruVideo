@@ -24,6 +24,9 @@ import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.projects.RelativeTime
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 /** A project in the two-pane list: thumbnail left, name and details right. Selecting it fills the detail pane. */
 @Composable
@@ -56,8 +59,12 @@ fun ProjectRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                "${RelativeTime.format(project.modifiedAt, nowMs)} · ${summary.clipCount} clips · " +
+                stringResource(
+                    R.string.projects_card_meta,
+                    RelativeTime.format(project.modifiedAt, nowMs),
+                    pluralStringResource(R.plurals.projects_clip_count, summary.clipCount, summary.clipCount),
                     formatDuration(summary.durationMs),
+                ),
                 style = PetruType.Caption,
                 color = PetruColors.OnSurfaceMuted,
             )

@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">PetruVideo</string>
+    <string name="app_name" translatable="false">PetruVideo</string>
+    <string name="app_default_project_name">Untitled %1$d</string>
 </resources>

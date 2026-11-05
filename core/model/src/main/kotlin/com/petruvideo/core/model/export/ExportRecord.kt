@@ -9,8 +9,4 @@ data class ExportRecord(
     val bytes: Long,
     val settings: ExportSettings,
     val finishedAt: Long,
-) {
-    /** "1080p, 30 fps, Recommended". */
-    val formatLabel: String
-        get() = "${settings.resolution.label}, ${settings.frameRate.fps} fps, ${settings.quality.label}"
-}
+)

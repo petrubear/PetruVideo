@@ -31,6 +31,8 @@ import com.petruvideo.core.media.thumbs.GridThumbnail
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.importmedia.SelectedItem
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.importmedia.R
 
 /**
  * The selection tray: thumbnails in selection order, count, total duration, and the single action
@@ -71,7 +73,7 @@ fun SelectionTray(
             ImportingRow(progress, onCancel)
         } else {
             PillButton(
-                "Add to timeline in order",
+                stringResource(R.string.import_add_to_timeline_in_order),
                 onClick = onAdd,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = selection.isNotEmpty(),
@@ -108,12 +110,12 @@ private fun ImportingRow(progress: ImportProgress, onCancel: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "Adding ${progress.completed} of ${progress.total}",
+                stringResource(R.string.import_adding_progress, progress.completed, progress.total),
                 style = PetruType.Body,
                 color = PetruColors.OnBackground,
             )
             Text(
-                "Cancel",
+                stringResource(R.string.import_cancel),
                 style = PetruType.Label,
                 color = PetruColors.Accent,
                 modifier = Modifier

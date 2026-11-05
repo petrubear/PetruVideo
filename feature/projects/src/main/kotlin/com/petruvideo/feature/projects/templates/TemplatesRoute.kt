@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.petruvideo.core.designsystem.keyedText
 
 /** The Templates screen: pick a template, choose files, and land in the editor with the filled project. */
 @Composable
@@ -22,13 +23,16 @@ fun TemplatesRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val names = state.templates.associate { it.id to keyedText("template_${it.id}_name") }
+    val titles = state.templates.associate { it.id to keyedText("template_${it.id}_title") }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         uris.forEach {
             runCatching {
                 context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-        viewModel.picked(uris.map { it.toString() })
+        val id = viewModel.chosenId
+        viewModel.picked(uris.map { it.toString() }, names[id].orEmpty(), titles[id].orEmpty())
     }
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->

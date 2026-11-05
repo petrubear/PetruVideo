@@ -26,6 +26,8 @@ import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.model.ProjectStatus
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.projects.RelativeTime
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 private val ThumbShape = RoundedCornerShape(16.dp)
 
@@ -82,7 +84,7 @@ fun ProjectCard(
 private fun BoxScope.ThumbnailBadges(exported: Boolean, durationMs: Long) {
     if (exported) {
         Text(
-            "Exported",
+            stringResource(R.string.projects_exported),
             style = PetruType.Tiny.copy(fontWeight = FontWeight.Bold),
             color = PetruColors.OnAccent,
             modifier = Modifier

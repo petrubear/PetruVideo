@@ -33,6 +33,8 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.export.ExportEvent
 import com.petruvideo.feature.export.ExportUiState
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.export.R
 
 /**
  * The export screen, per the designer's Export artboard: preview, resolution, frame rate and quality, the file facts,
@@ -90,9 +92,9 @@ private fun Expanded(state: ExportUiState, onEvent: (ExportEvent) -> Unit, hinge
 @Composable
 private fun TopBar(onBack: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconAction(PetruIcons.Back, "Back", onBack)
+        IconAction(PetruIcons.Back, stringResource(R.string.export_back), onBack)
         Text(
-            "Export",
+            stringResource(R.string.export_export),
             style = PetruType.TitleSmall,
             color = PetruColors.OnBackground,
             modifier = Modifier.weight(1f).padding(end = 48.dp),
@@ -149,7 +151,7 @@ private fun InterruptedNotice(onEvent: (ExportEvent) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            "The last export did not finish because the app was closed. Save to gallery starts it again.",
+            stringResource(R.string.export_the_last_export_did_not),
             style = PetruType.Body,
             color = PetruColors.OnBackground,
             modifier = Modifier.weight(1f),

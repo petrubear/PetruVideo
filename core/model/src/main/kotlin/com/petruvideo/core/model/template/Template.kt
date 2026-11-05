@@ -17,14 +17,12 @@ import com.petruvideo.core.model.VideoClip
 import com.petruvideo.core.model.engine.deriveFormat
 import com.petruvideo.core.model.transitionLimitMs
 
-/** A title shown over the start of a template project. */
-data class TemplateTitle(val text: String, val durationMs: Long = 2_000)
+/** A title shown over the start of a template project; its text comes from the screen, in the user's language. */
+data class TemplateTitle(val durationMs: Long = 2_000)
 
 /** A built-in ready-made start: ordered slot lengths, one filter look, a title, and the transition between slots. */
 data class Template(
     val id: String,
-    val name: String,
-    val summary: String,
     val slotsMs: List<Long>,
     val look: FilterLook = FilterLook.None,
     val lookIntensity: Int = 100,
@@ -40,28 +38,28 @@ data class Template(
 object TemplateCatalog {
     val all: List<Template> = listOf(
         Template(
-            "quick-cuts", "Quick Cuts", "Fast cuts with a vivid look", List(6) { 1_500L },
-            FilterLook.Vivid, 80, TemplateTitle("Quick Cuts"),
+            "quick-cuts", List(6) { 1_500L },
+            FilterLook.Vivid, 80, TemplateTitle(),
         ),
         Template(
-            "memories", "Memories", "Soft dissolves and a faded look", List(4) { 3_000L },
-            FilterLook.Faded, 70, TemplateTitle("Memories", 2_500), Transition(TransitionKind.Dissolve, 800),
+            "memories", List(4) { 3_000L },
+            FilterLook.Faded, 70, TemplateTitle(2_500), Transition(TransitionKind.Dissolve, 800),
         ),
         Template(
-            "travel", "Travel", "Warm color and sliding cuts", List(5) { 2_500L },
-            FilterLook.Warm, 80, TemplateTitle("Travel"), Transition(TransitionKind.Slide, 500),
+            "travel", List(5) { 2_500L },
+            FilterLook.Warm, 80, TemplateTitle(), Transition(TransitionKind.Slide, 500),
         ),
         Template(
-            "story", "Black and White Story", "Fades through black", List(4) { 3_000L },
-            FilterLook.BlackAndWhite, 100, TemplateTitle("Our Story"), Transition(TransitionKind.FadeBlack, 800),
+            "story", List(4) { 3_000L },
+            FilterLook.BlackAndWhite, 100, TemplateTitle(), Transition(TransitionKind.FadeBlack, 800),
         ),
         Template(
-            "pop", "Pop", "Short bright clips with zooms", List(6) { 1_000L },
-            FilterLook.Vivid, 100, TemplateTitle("Pop"), Transition(TransitionKind.Zoom, 300),
+            "pop", List(6) { 1_000L },
+            FilterLook.Vivid, 100, TemplateTitle(), Transition(TransitionKind.Zoom, 300),
         ),
         Template(
-            "slow-fade", "Slow Fade", "Long vintage scenes", List(3) { 4_000L },
-            FilterLook.Vintage, 80, TemplateTitle("Slow Fade", 3_000), Transition(TransitionKind.Dissolve, 1_200),
+            "slow-fade", List(3) { 4_000L },
+            FilterLook.Vintage, 80, TemplateTitle(3_000), Transition(TransitionKind.Dissolve, 1_200),
         ),
     )
 }
@@ -77,7 +75,13 @@ object TemplateFiller {
      * after another, so a single long video fills the whole template; slots with nothing left are dropped. Returns
      * null when there is nothing usable (no items, audio only, or missing files).
      */
-    fun fill(template: Template, items: List<MediaItem>, projectId: String, newId: () -> String): TemplateFill? {
+    fun fill(
+        template: Template,
+        items: List<MediaItem>,
+        projectId: String,
+        newId: () -> String,
+        titleText: String = "",
+    ): TemplateFill? {
         val usable = items.filter { it.kind != MediaKind.Audio && it.availability == Availability.Available }
         val chosen = usable.take(template.slotCount)
         val cursors = mutableMapOf<String, Long>()
@@ -98,7 +102,7 @@ object TemplateFiller {
         }
         val used = placed.map { it.first }.associateBy { it.id }
         val base = Timeline(projectId, deriveFormat(placed.first().first), used, withEffects)
-        val title = template.title?.let { titleClip(it, base.videoLengthMs, newId) }
+        val title = template.title?.let { titleClip(it, titleText, base.videoLengthMs, newId) }
         return TemplateFill(base.copy(textLane = listOfNotNull(title)), usable.size - chosen.size)
     }
 
@@ -137,8 +141,8 @@ object TemplateFiller {
         return if (length < TRANSITION_MIN_MS) null else wanted.copy(lengthMs = length / 100 * 100)
     }
 
-    private fun titleClip(title: TemplateTitle, projectMs: Long, newId: () -> String) = TextClip(
-        newId(), title.text, 0, minOf(title.durationMs, projectMs).coerceAtLeast(MIN_CLIP_MS),
+    private fun titleClip(title: TemplateTitle, text: String, projectMs: Long, newId: () -> String) = TextClip(
+        newId(), text, 0, minOf(title.durationMs, projectMs).coerceAtLeast(MIN_CLIP_MS),
         animIn = TextAnimation(AnimKind.Fade), animOut = TextAnimation(AnimKind.Fade),
     )
 }

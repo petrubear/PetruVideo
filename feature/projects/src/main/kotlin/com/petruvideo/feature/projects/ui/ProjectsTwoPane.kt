@@ -22,6 +22,8 @@ import com.petruvideo.core.designsystem.adaptive.HingeSplit
 import com.petruvideo.core.designsystem.components.PillButton
 import com.petruvideo.feature.projects.ProjectsEvent
 import com.petruvideo.feature.projects.ProjectsState
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 private const val LIST_WEIGHT = 0.72f
 
@@ -47,7 +49,7 @@ fun ProjectsTwoPane(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Projects",
+                    stringResource(R.string.projects_projects),
                     style = PetruType.Display,
                     color = PetruColors.OnBackground,
                     modifier = Modifier.weight(1f),

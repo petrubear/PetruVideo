@@ -28,6 +28,9 @@ import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.model.formatDuration
 import com.petruvideo.feature.projects.RelativeTime
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 /** The "Continue editing" card for the most recently edited project. */
 @Composable
@@ -58,7 +61,7 @@ fun ContinueEditingCard(
             modifier = Modifier.size(96.dp).clip(RoundedCornerShape(14.dp)),
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("CONTINUE EDITING", style = PetruType.Overline, color = PetruColors.Accent)
+            Text(stringResource(R.string.projects_continue_editing), style = PetruType.Overline, color = PetruColors.Accent)
             Text(
                 summary.project.name,
                 style = PetruType.TitleSmall,
@@ -67,8 +70,12 @@ fun ContinueEditingCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                "${RelativeTime.format(summary.project.modifiedAt, nowMs)} · " +
-                    "${summary.clipCount} clips · ${formatDuration(summary.durationMs)}",
+                stringResource(
+                    R.string.projects_card_meta,
+                    RelativeTime.format(summary.project.modifiedAt, nowMs),
+                    pluralStringResource(R.plurals.projects_clip_count, summary.clipCount, summary.clipCount),
+                    formatDuration(summary.durationMs),
+                ),
                 style = PetruType.BodySmall,
                 color = PetruColors.OnSurfaceMuted,
             )
@@ -82,7 +89,11 @@ fun ContinueEditingCard(
                 Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(PetruColors.Accent))
             }
             Text(
-                "Stopped at ${formatDuration(summary.playheadMs)} of ${formatDuration(summary.durationMs)}",
+                stringResource(
+                    R.string.projects_stopped_at,
+                    formatDuration(summary.playheadMs),
+                    formatDuration(summary.durationMs),
+                ),
                 style = PetruType.MonoSmall.copy(fontSize = 11.sp),
                 color = PetruColors.OnSurfaceMuted,
             )

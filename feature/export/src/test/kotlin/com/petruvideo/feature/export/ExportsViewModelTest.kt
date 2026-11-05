@@ -58,7 +58,7 @@ class ExportsViewModelTest {
         empty.state.value.rows shouldBe emptyList()
         val v = vm(Repo(listOf(record("b", 2_000), record("a", 1_000))))
         v.state.value.rows.map { it.record.id } shouldBe listOf("b", "a")
-        v.state.value.rows.first().record.formatLabel shouldBe "1080p, 30 fps, Recommended"
+        v.state.value.rows.first().record.settings.quality shouldBe Quality.Recommended
     }
 
     @Test

@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.components.IconAction
 import com.petruvideo.core.designsystem.icons.PetruIcons
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 @Composable
 fun ProjectOptionsMenu(
@@ -24,16 +26,16 @@ fun ProjectOptionsMenu(
     var expanded by remember { mutableStateOf(false) }
     IconAction(
         icon = PetruIcons.More,
-        contentDescription = "Project options, $projectName",
+        contentDescription = stringResource(R.string.projects_options_named, projectName),
         onClick = { expanded = true },
         modifier = modifier,
         tint = PetruColors.OnSurfaceMuted,
     )
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(text = { Text("Rename") }, onClick = { expanded = false; onRename() })
-        DropdownMenuItem(text = { Text("Duplicate") }, onClick = { expanded = false; onDuplicate() })
+        DropdownMenuItem(text = { Text(stringResource(R.string.projects_rename)) }, onClick = { expanded = false; onRename() })
+        DropdownMenuItem(text = { Text(stringResource(R.string.projects_duplicate)) }, onClick = { expanded = false; onDuplicate() })
         DropdownMenuItem(
-            text = { Text("Delete", color = PetruColors.Danger) },
+            text = { Text(stringResource(R.string.projects_delete), color = PetruColors.Danger) },
             onClick = { expanded = false; onDelete() },
         )
     }

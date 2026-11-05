@@ -3,6 +3,9 @@ package com.petruvideo.feature.export.ui
 import com.petruvideo.core.export.Blocker
 import com.petruvideo.core.model.export.ExportFailure
 import java.util.Locale
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.export.R
 
 internal fun formatBitrate(bitsPerSecond: Int): String =
     if (bitsPerSecond >= MBIT) String.format(Locale.US, "%.1f Mbps", bitsPerSecond / MBIT.toDouble())
@@ -14,21 +17,24 @@ internal fun formatBytes(bytes: Long): String = when {
     else -> String.format(Locale.US, "%d KB", bytes / KB)
 }
 
+@Composable
 internal fun Blocker.message(): String = when (this) {
-    Blocker.NoClips -> "Add a clip to export."
-    is Blocker.MissingMedia -> "$name is missing. Relink or remove it in the editor first."
+    Blocker.NoClips -> stringResource(R.string.export_add_a_clip_to_export)
+    is Blocker.MissingMedia -> stringResource(R.string.export_blocker_missing_media, name)
     is Blocker.NotEnoughStorage ->
-        "Not enough free space (about ${formatBytes(neededBytes)} needed). Free some space or choose Smaller."
-    Blocker.Busy -> "Another export is running."
+        stringResource(R.string.export_blocker_not_enough_storage, formatBytes(neededBytes))
+    Blocker.Busy -> stringResource(R.string.export_another_export_is_running)
 }
 
+@Composable
 internal fun ExportFailure.message(): String = when (this) {
-    is ExportFailure.MissingMedia -> "$name is missing."
-    is ExportFailure.NotEnoughStorage -> "Not enough free space (about ${formatBytes(neededBytes)} needed)."
-    is ExportFailure.EncoderError -> "The phone could not encode this video ($detail). Try 1080p or Smaller."
-    ExportFailure.Interrupted -> "The export did not finish because the app was closed."
-    ExportFailure.Pressure -> "The phone is too hot or low on memory. Try again in a moment."
-    ExportFailure.SaveFailed -> "The video could not be saved to the gallery."
+    is ExportFailure.MissingMedia -> stringResource(R.string.export_failure_missing_media, name)
+    is ExportFailure.NotEnoughStorage ->
+        stringResource(R.string.export_failure_not_enough_storage, formatBytes(neededBytes))
+    is ExportFailure.EncoderError -> stringResource(R.string.export_failure_encoder_error, detail)
+    ExportFailure.Interrupted -> stringResource(R.string.export_the_export_did_not_finish)
+    ExportFailure.Pressure -> stringResource(R.string.export_the_phone_is_too_hot)
+    ExportFailure.SaveFailed -> stringResource(R.string.export_the_video_could_not_be)
 }
 
 private const val KBIT = 1_000

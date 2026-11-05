@@ -25,6 +25,8 @@ import com.petruvideo.core.designsystem.components.PillButton
 import com.petruvideo.core.model.export.ExportState
 import com.petruvideo.feature.export.ExportEvent
 import com.petruvideo.feature.export.ExportUiState
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.export.R
 
 /** Progress with Cancel while rendering, the saved result with Open and Share, or the failure; then the save button. */
 @Composable
@@ -35,20 +37,20 @@ fun ExportProgressCard(state: ExportUiState, onEvent: (ExportEvent) -> Unit) {
             ExportState.Waiting -> Progress(0, onEvent)
             is ExportState.Rendering -> Progress(s.progress, onEvent)
             is ExportState.Finished -> Card {
-                Text("Saved to gallery", style = PetruType.Label, color = PetruColors.Accent)
+                Text(stringResource(R.string.export_saved_to_gallery), style = PetruType.Label, color = PetruColors.Accent)
                 val where = "${formatBytes(s.bytes)} · Movies/PetruVideo"
                 Text(where, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PetruChip("Open", selected = false, onClick = { onEvent(ExportEvent.Open) })
-                    PetruChip("Share", selected = false, onClick = { onEvent(ExportEvent.Share) })
+                    PetruChip(stringResource(R.string.export_open), selected = false, onClick = { onEvent(ExportEvent.Open) })
+                    PetruChip(stringResource(R.string.export_share), selected = false, onClick = { onEvent(ExportEvent.Share) })
                 }
             }
             is ExportState.Failed -> Card {
-                Text("Export failed", style = PetruType.Label, color = PetruColors.Danger)
+                Text(stringResource(R.string.export_export_failed), style = PetruType.Label, color = PetruColors.Danger)
                 Text(s.reason.message(), style = PetruType.Body, color = PetruColors.OnBackground)
             }
             ExportState.Cancelled -> Card {
-                Text("Export cancelled", style = PetruType.Label, color = PetruColors.OnBackground)
+                Text(stringResource(R.string.export_export_cancelled), style = PetruType.Label, color = PetruColors.OnBackground)
             }
             null -> Unit
         }
@@ -57,9 +59,9 @@ fun ExportProgressCard(state: ExportUiState, onEvent: (ExportEvent) -> Unit) {
         }
         PillButton(
             text = if (job?.state is ExportState.Failed || job?.state == ExportState.Cancelled) {
-                "Try again"
+                stringResource(R.string.export_try_again)
             } else {
-                "Save to gallery"
+                stringResource(R.string.export_save_to_gallery)
             },
             onClick = { onEvent(ExportEvent.Start) },
             enabled = state.blocker == null && !state.rendering,
@@ -74,24 +76,26 @@ private fun Progress(percent: Int, onEvent: (ExportEvent) -> Unit) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Rendering in background", style = PetruType.Label, color = PetruColors.OnBackground)
+                    Text(stringResource(R.string.export_rendering_in_background), style = PetruType.Label, color = PetruColors.OnBackground)
                     Text("$percent%", style = PetruType.Mono, color = PetruColors.Accent)
                 }
+                val progressDescription = stringResource(R.string.export_export_progress)
+                val progressState = stringResource(R.string.export_percent_state, percent)
                 LinearProgressIndicator(
                     progress = { percent / PERCENT },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
                         .semantics {
-                            contentDescription = "Export progress"
-                            stateDescription = "$percent percent"
+                            contentDescription = progressDescription
+                            stateDescription = progressState
                         },
                     color = PetruColors.Accent,
                     trackColor = PetruColors.SurfaceHighest,
                 )
             }
             PetruChip(
-                "Cancel",
+                stringResource(R.string.export_cancel),
                 selected = false,
                 onClick = { onEvent(ExportEvent.Cancel) },
                 modifier = Modifier.padding(start = 12.dp),

@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.petruvideo.core.designsystem.PetruColors
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 @Composable
 fun RenameDialog(
@@ -20,12 +22,12 @@ fun RenameDialog(
     var name by remember { mutableStateOf(currentName) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rename project") },
+        title = { Text(stringResource(R.string.projects_rename_project)) },
         text = { OutlinedTextField(value = name, onValueChange = { name = it.take(MAX_NAME) }, singleLine = true) },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) { Text("Rename") }
+            TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) { Text(stringResource(R.string.projects_rename)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.projects_cancel)) } },
     )
 }
 
@@ -34,10 +36,10 @@ fun RenameDialog(
 fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete this project?") },
-        text = { Text("The project and its edits are removed. Your original photos and videos are not deleted.") },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Delete", color = PetruColors.Danger) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        title = { Text(stringResource(R.string.projects_delete_this_project)) },
+        text = { Text(stringResource(R.string.projects_the_project_and_its_edits)) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.projects_delete), color = PetruColors.Danger) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.projects_cancel)) } },
     )
 }
 

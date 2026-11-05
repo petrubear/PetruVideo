@@ -1,0 +1,19 @@
+<resources>
+    <string name="import_videos">Videos</string>
+    <string name="import_photos">Photos</string>
+    <string name="import_audio">Audio</string>
+    <string name="import_close">Close</string>
+    <string name="import_add_media">Add media</string>
+    <string name="import_dismiss_message">Dismiss message</string>
+    <string name="import_media_access_is_off_allow">Media access is off. Allow access, or choose files with the system picker.</string>
+    <string name="import_access_rationale">PetruVideo needs access to your videos, photos and audio to show them here. Your files stay on your device.</string>
+    <string name="import_allow_access">Allow access</string>
+    <string name="import_choose_files_instead">Choose files instead</string>
+    <string name="import_add_to_timeline_in_order">Add to timeline in order</string>
+    <string name="import_cancel">Cancel</string>
+    <string name="import_adding_progress">Adding %1$d of %2$d</string>
+    <string name="album_Recent">Recent</string>
+    <string name="album_Camera">Camera</string>
+    <string name="album_ScreenRecordings">Screen recordings</string>
+    <string name="album_Downloads">Downloads</string>
+</resources>

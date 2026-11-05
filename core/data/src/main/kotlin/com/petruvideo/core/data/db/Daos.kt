@@ -50,7 +50,8 @@ interface ProjectDao {
     @Query("UPDATE project SET thumbnailRef = :ref WHERE id = :id")
     suspend fun setThumbnail(id: String, ref: String?)
 
-    @Query("SELECT COUNT(*) FROM project WHERE name LIKE 'Untitled %'")
+    // The default name is made in the language of the moment, so both languages count toward the number.
+    @Query("SELECT COUNT(*) FROM project WHERE name LIKE 'Untitled %' OR name LIKE 'Sin título %'")
     suspend fun countUntitled(): Int
 }
 

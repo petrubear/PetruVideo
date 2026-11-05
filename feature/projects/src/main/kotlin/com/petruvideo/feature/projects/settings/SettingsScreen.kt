@@ -30,6 +30,9 @@ import com.petruvideo.core.designsystem.components.SegmentedControl
 import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.core.model.AppSettings
 import com.petruvideo.core.model.export.Quality
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
+import com.petruvideo.core.designsystem.enumLabel
 
 private val MAX_WIDTH = 560.dp
 
@@ -45,8 +48,8 @@ fun SettingsScreen(
 ) {
     Column(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconAction(PetruIcons.Back, "Back", onBack)
-            Text("Settings", style = PetruType.Title, color = PetruColors.OnBackground)
+            IconAction(PetruIcons.Back, stringResource(R.string.projects_back), onBack)
+            Text(stringResource(R.string.projects_settings), style = PetruType.Title, color = PetruColors.OnBackground)
         }
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.TopCenter) {
             Column(
@@ -65,14 +68,14 @@ fun SettingsScreen(
 @Composable
 private fun QualitySection(selected: Quality, onQuality: (Quality) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Default export quality", style = PetruType.Label, color = PetruColors.OnBackground)
+        Text(stringResource(R.string.projects_default_export_quality), style = PetruType.Label, color = PetruColors.OnBackground)
         SegmentedControl(
-            options = Quality.entries.map { it.label },
+            options = Quality.entries.map { enumLabel("quality", it) },
             selectedIndex = Quality.entries.indexOf(selected),
             onSelect = { onQuality(Quality.entries[it]) },
         )
         Text(
-            "Used for projects you have not exported yet. A project keeps the choice you made for it.",
+            stringResource(R.string.projects_used_for_projects_you_have),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
@@ -81,13 +84,16 @@ private fun QualitySection(selected: Quality, onQuality: (Quality) -> Unit) {
 
 @Composable
 private fun PreviewSection(on: Boolean, onChange: (Boolean) -> Unit) {
+    val lowerQualityDescription = stringResource(R.string.projects_lower_preview_quality)
+    val onText = stringResource(R.string.projects_on)
+    val offText = stringResource(R.string.projects_off)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Lower preview quality", style = PetruType.Label, color = PetruColors.OnBackground)
+            Text(stringResource(R.string.projects_lower_preview_quality), style = PetruType.Label, color = PetruColors.OnBackground)
             Switch(
                 checked = on,
                 onCheckedChange = onChange,
@@ -98,13 +104,13 @@ private fun PreviewSection(on: Boolean, onChange: (Boolean) -> Unit) {
                     uncheckedTrackColor = PetruColors.SurfaceHighest,
                 ),
                 modifier = Modifier.semantics {
-                    contentDescription = "Lower preview quality"
-                    stateDescription = if (on) "On" else "Off"
+                    contentDescription = lowerQualityDescription
+                    stateDescription = if (on) onText else offText
                 },
             )
         }
         Text(
-            "Plays the editor preview smaller and pauses heavy audio effects. Exported videos stay full quality.",
+            stringResource(R.string.projects_plays_the_editor_preview_smaller),
             style = PetruType.Caption,
             color = PetruColors.OnSurfaceMuted,
         )
@@ -113,13 +119,14 @@ private fun PreviewSection(on: Boolean, onChange: (Boolean) -> Unit) {
 
 @Composable
 private fun AboutSection(version: String) {
+    val versionDescription = stringResource(R.string.projects_version_description, version)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("About", style = PetruType.Label, color = PetruColors.OnBackground)
+        Text(stringResource(R.string.projects_about), style = PetruType.Label, color = PetruColors.OnBackground)
         Text(
-            "PetruVideo $version",
+            stringResource(R.string.projects_version_named, version),
             style = PetruType.Body,
             color = PetruColors.OnSurfaceMuted,
-            modifier = Modifier.semantics { contentDescription = "PetruVideo version $version" },
+            modifier = Modifier.semantics { contentDescription = versionDescription },
         )
     }
 }

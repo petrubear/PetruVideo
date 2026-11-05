@@ -32,6 +32,9 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.core.model.FilterLook
 import com.petruvideo.core.model.template.Template
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
+import com.petruvideo.core.designsystem.keyedText
 
 private val CARD_MIN_WIDTH = 360.dp
 private const val MESSAGE_MS = 3_000L
@@ -49,8 +52,8 @@ fun TemplatesScreen(
     Box(modifier.fillMaxSize().background(PetruColors.Background).statusBarsPadding()) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconAction(PetruIcons.Back, "Back", onBack)
-                Text("Templates", style = PetruType.Title, color = PetruColors.OnBackground)
+                IconAction(PetruIcons.Back, stringResource(R.string.projects_back), onBack)
+                Text(stringResource(R.string.projects_templates), style = PetruType.Title, color = PetruColors.OnBackground)
             }
             LazyVerticalGrid(
                 GridCells.Adaptive(CARD_MIN_WIDTH),
@@ -65,7 +68,7 @@ fun TemplatesScreen(
         state.message?.let {
             LaunchedEffect(it) { delay(MESSAGE_MS); onDismissMessage() }
             Text(
-                it,
+                it.asString(),
                 style = PetruType.Body,
                 color = PetruColors.OnBackground,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp)
@@ -83,8 +86,8 @@ private fun TemplateCard(template: Template, enabled: Boolean, onUse: (String) -
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SlotSample(template)
-        Text(template.name, style = PetruType.Title, color = PetruColors.OnBackground)
-        Text(template.summary, style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
+        Text(keyedText("template_${template.id}_name"), style = PetruType.Title, color = PetruColors.OnBackground)
+        Text(keyedText("template_${template.id}_summary"), style = PetruType.Caption, color = PetruColors.OnSurfaceMuted)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "${template.slotCount} clips · $seconds",
@@ -92,7 +95,7 @@ private fun TemplateCard(template: Template, enabled: Boolean, onUse: (String) -
                 color = PetruColors.OnSurfaceMuted,
                 modifier = Modifier.weight(1f),
             )
-            PillButton("Use", onClick = { if (enabled) onUse(template.id) })
+            PillButton(stringResource(R.string.projects_use), onClick = { if (enabled) onUse(template.id) })
         }
     }
 }

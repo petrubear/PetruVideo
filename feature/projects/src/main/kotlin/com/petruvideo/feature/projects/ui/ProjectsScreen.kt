@@ -47,6 +47,8 @@ import com.petruvideo.core.designsystem.icons.PetruIcons
 import com.petruvideo.feature.projects.ProjectsEvent
 import com.petruvideo.feature.projects.ProjectsState
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 private const val COMING_SOON_MS = 2_000L
 private const val COMPACT_COLUMNS = 2
@@ -110,11 +112,11 @@ private fun Header(state: ProjectsState, onEvent: (ProjectsEvent) -> Unit) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("PETRUVIDEO", style = PetruType.BodySmall, color = PetruColors.OnSurfaceMuted)
-                Text("Projects", style = PetruType.Display, color = PetruColors.OnBackground)
+                Text(stringResource(R.string.projects_projects), style = PetruType.Display, color = PetruColors.OnBackground)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HeaderButton(PetruIcons.Search, "Search") { onEvent(ProjectsEvent.OpenSearch) }
-                HeaderButton(PetruIcons.Settings, "Settings") { onEvent(ProjectsEvent.OpenSettings) }
+                HeaderButton(PetruIcons.Search, stringResource(R.string.projects_search)) { onEvent(ProjectsEvent.OpenSearch) }
+                HeaderButton(PetruIcons.Settings, stringResource(R.string.projects_settings)) { onEvent(ProjectsEvent.OpenSettings) }
             }
         }
         if (state.searchOpen) {
@@ -147,11 +149,11 @@ private fun SearchField(query: String, onEvent: (ProjectsEvent) -> Unit, modifie
             cursorBrush = SolidColor(PetruColors.Accent),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
-                if (query.isEmpty()) Text("Search projects", style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
+                if (query.isEmpty()) Text(stringResource(R.string.projects_search_projects), style = PetruType.Body, color = PetruColors.OnSurfaceMuted)
                 inner()
             },
         )
-        IconAction(PetruIcons.Close, "Close search", { onEvent(ProjectsEvent.CloseSearch) })
+        IconAction(PetruIcons.Close, stringResource(R.string.projects_close_search), { onEvent(ProjectsEvent.CloseSearch) })
     }
 }
 
@@ -179,9 +181,9 @@ private fun BottomNavigation(onEvent: (ProjectsEvent) -> Unit, modifier: Modifie
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavEntry("Projects", PetruIcons.NavProjects, active = true) {}
-        NavEntry("Templates", PetruIcons.NavTemplates, active = true) { onEvent(ProjectsEvent.OpenTemplates) }
-        NavEntry("Exports", PetruIcons.NavExports, active = true) { onEvent(ProjectsEvent.OpenExports) }
+        NavEntry(stringResource(R.string.projects_projects), PetruIcons.NavProjects, active = true) {}
+        NavEntry(stringResource(R.string.projects_templates), PetruIcons.NavTemplates, active = true) { onEvent(ProjectsEvent.OpenTemplates) }
+        NavEntry(stringResource(R.string.projects_exports), PetruIcons.NavExports, active = true) { onEvent(ProjectsEvent.OpenExports) }
     }
 }
 
@@ -212,7 +214,7 @@ private fun ComingSoonMessage(name: String, onEvent: (ProjectsEvent) -> Unit, mo
         onEvent(ProjectsEvent.DismissComingSoon)
     }
     Text(
-        "Coming soon",
+        stringResource(R.string.projects_coming_soon),
         style = PetruType.Body,
         color = PetruColors.OnBackground,
         modifier = modifier

@@ -5,11 +5,12 @@ import com.petruvideo.core.media.library.LibraryAlbum
 import com.petruvideo.core.model.MediaItem
 import com.petruvideo.core.model.MediaKind
 import com.petruvideo.core.model.error.AppError
+import androidx.annotation.StringRes
 
-enum class AddMediaTab(val label: String, val kind: MediaKind) {
-    Videos("Videos", MediaKind.Video),
-    Photos("Photos", MediaKind.Photo),
-    Audio("Audio", MediaKind.Audio),
+enum class AddMediaTab(@StringRes val labelRes: Int, val kind: MediaKind) {
+    Videos(R.string.import_videos, MediaKind.Video),
+    Photos(R.string.import_photos, MediaKind.Photo),
+    Audio(R.string.import_audio, MediaKind.Audio),
 }
 
 /** A thumbnail in the grid. [selectionIndex] is the 1-based badge number, or null when not selected. */

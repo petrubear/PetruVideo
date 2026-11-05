@@ -28,6 +28,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.petruvideo.app.R
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -53,8 +54,10 @@ object DataModule {
         recordings: VoiceOverStore,
         reverse: ReversePreparer,
         voiceSplits: VoiceSplitStore,
+        @ApplicationContext context: Context,
     ): ProjectRepository = RoomProjectRepository(
         db,
+        defaultName = { number -> context.getString(R.string.app_default_project_name, number) },
         onDeleted = { used ->
             recordings.sweep(used)
             voiceSplits.sweep(used)

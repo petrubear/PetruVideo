@@ -15,10 +15,10 @@ enum class FrameRate(val fps: Int) {
     F60(60),
 }
 
-enum class Quality(val label: String, val bitrateFactor: Double) {
-    Smaller("Smaller", 0.6),
-    Recommended("Recommended", 1.0),
-    Higher("Higher", 1.5),
+enum class Quality(val bitrateFactor: Double) {
+    Smaller(0.6),
+    Recommended(1.0),
+    Higher(1.5),
 }
 
 data class ExportSettings(
@@ -31,10 +31,10 @@ data class ExportSettings(
 data class DeviceLimits(val maxShortSide: Int, val maxFps: Int)
 
 /** Why an option cannot be chosen. */
-enum class Unavailable(val message: String) {
-    AboveFootage("Above your footage"),
-    NotSupported("Not supported by this phone"),
-    NotForFootage("Not available for this footage"),
+enum class Unavailable {
+    AboveFootage,
+    NotSupported,
+    NotForFootage,
 }
 
 data class Option<T>(val value: T, val unavailable: Unavailable? = null) {

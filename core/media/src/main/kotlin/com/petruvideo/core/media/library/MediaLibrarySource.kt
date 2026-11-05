@@ -14,11 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** The album chips of the Add media screen. */
-enum class LibraryAlbum(val label: String, internal val pathHints: List<String>) {
-    Recent("Recent", emptyList()),
-    Camera("Camera", listOf("DCIM/Camera")),
-    ScreenRecordings("Screen recordings", listOf("Screen recordings", "Screenrecorder", "Screenshots")),
-    Downloads("Downloads", listOf("Download")),
+enum class LibraryAlbum(internal val pathHints: List<String>) {
+    Recent(emptyList()),
+    Camera(listOf("DCIM/Camera")),
+    ScreenRecordings(listOf("Screen recordings", "Screenrecorder", "Screenshots")),
+    Downloads(listOf("Download")),
 }
 
 data class LibraryItem(

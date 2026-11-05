@@ -19,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.stringResource
 
 /** Shows the Exports list and opens or shares a video through the system. */
 @Composable
@@ -42,7 +43,7 @@ fun ExportsRoute(
                         Intent(Intent.ACTION_SEND).setType("video/mp4")
                             .putExtra(Intent.EXTRA_STREAM, Uri.parse(effect.uri))
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
-                        "Share video",
+                        context.getString(R.string.export_share_video),
                     ),
                 )
             }

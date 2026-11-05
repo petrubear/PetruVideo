@@ -117,7 +117,7 @@ class ExportCoordinatorTest {
         record.durationMs shouldBe 10_000
         record.settings shouldBe settings
         record.finishedAt shouldBe 1000L
-        record.formatLabel shouldBe "1080p, 30 fps, Recommended"
+        record.settings shouldBe ExportSettings(Resolution.R1080, FrameRate.F30, Quality.Recommended)
 
         val failing = env()
         failing.coordinator.start("p", "Trip", timeline(), settings)

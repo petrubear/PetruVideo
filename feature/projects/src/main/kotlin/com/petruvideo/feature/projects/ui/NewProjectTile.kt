@@ -27,11 +27,14 @@ import com.petruvideo.core.designsystem.PetruColors
 import com.petruvideo.core.designsystem.PetruShapes
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.icons.PetruIcons
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.projects.R
 
 /** The dashed "New project" tile that starts the grid. */
 @Composable
 fun NewProjectTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val dash = PetruColors.OutlineDashed
+    val description = stringResource(R.string.projects_new_project)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -45,7 +48,7 @@ fun NewProjectTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = "New project" },
+            .semantics { contentDescription = description },
         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -60,6 +63,6 @@ fun NewProjectTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 modifier = Modifier.size(24.dp),
             )
         }
-        Text("New project", style = PetruType.Label, color = PetruColors.OnBackground)
+        Text(stringResource(R.string.projects_new_project), style = PetruType.Label, color = PetruColors.OnBackground)
     }
 }

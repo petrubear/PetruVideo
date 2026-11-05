@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.petruvideo.core.designsystem.PetruColors
+import com.petruvideo.core.designsystem.enumLabel
 import com.petruvideo.core.designsystem.PetruType
 import com.petruvideo.core.designsystem.adaptive.LocalArrangement
 import com.petruvideo.core.designsystem.components.IconAction
@@ -52,6 +53,8 @@ import com.petruvideo.feature.export.ExportsUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.res.stringResource
+import com.petruvideo.feature.export.R
 
 private const val UNDO_MS = 5_000L
 private const val TWO_COLUMNS_DP = 840
@@ -67,8 +70,8 @@ fun ExportsScreen(
     Box(modifier.fillMaxSize().background(PetruColors.Background)) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconAction(PetruIcons.Back, "Back", onBack)
-                Text("Exports", style = PetruType.Title, color = PetruColors.OnBackground)
+                IconAction(PetruIcons.Back, stringResource(R.string.export_back), onBack)
+                Text(stringResource(R.string.export_exports), style = PetruType.Title, color = PetruColors.OnBackground)
             }
             when {
                 !state.loaded -> Unit
@@ -86,7 +89,7 @@ fun ExportsScreen(
 private fun EmptyMessage() {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
         Text(
-            "Videos you export appear here.",
+            stringResource(R.string.export_videos_you_export_appear_here),
             style = PetruType.Body,
             color = PetruColors.OnSurfaceMuted,
         )
@@ -139,18 +142,23 @@ private fun ExportRowItem(row: ExportRow, onEvent: (ExportsEvent) -> Unit) {
                 color = PetruColors.OnSurfaceMuted,
             )
             Text(
-                if (row.missing) "File not found" else record.formatLabel,
+                if (row.missing) stringResource(R.string.export_file_not_found) else stringResource(
+                    R.string.export_format_label,
+                    record.settings.resolution.label,
+                    record.settings.frameRate.fps,
+                    enumLabel("quality", record.settings.quality),
+                ),
                 style = PetruType.Caption,
                 color = if (row.missing) PetruColors.Danger else PetruColors.OnSurfaceMuted,
             )
         }
         Column(horizontalAlignment = Alignment.End) {
             if (!row.missing) {
-                IconAction(PetruIcons.Play, "Play ${record.projectName}", { onEvent(ExportsEvent.Open(record.id)) })
-                IconAction(PetruIcons.Export, "Share ${record.projectName}", { onEvent(ExportsEvent.Share(record.id)) })
+                IconAction(PetruIcons.Play, stringResource(R.string.export_play_named, record.projectName), { onEvent(ExportsEvent.Open(record.id)) })
+                IconAction(PetruIcons.Export, stringResource(R.string.export_share_named, record.projectName), { onEvent(ExportsEvent.Share(record.id)) })
             }
             IconAction(
-                PetruIcons.Delete, "Remove ${record.projectName} from the list",
+                PetruIcons.Delete, stringResource(R.string.export_remove_named, record.projectName),
                 { onEvent(ExportsEvent.Remove(record.id)) },
             )
         }
@@ -201,9 +209,9 @@ private fun UndoBar(name: String, onEvent: (ExportsEvent) -> Unit, modifier: Mod
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Removed $name", style = PetruType.Body, color = PetruColors.OnBackground)
+        Text(stringResource(R.string.export_removed_named, name), style = PetruType.Body, color = PetruColors.OnBackground)
         Text(
-            "Undo",
+            stringResource(R.string.export_undo),
             style = PetruType.Label,
             color = PetruColors.Accent,
             modifier = Modifier.clickable { onEvent(ExportsEvent.Undo) }.padding(horizontal = 16.dp, vertical = 12.dp),
