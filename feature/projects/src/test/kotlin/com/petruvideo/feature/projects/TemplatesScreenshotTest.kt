@@ -34,4 +34,15 @@ class TemplatesTabletScreenshotTest {
     fun lightTwoColumns() = tablet.snapshot {
         PetruTheme(darkTheme = false) { TemplatesScreen(TemplatesState(), {}, {}, {}) }
     }
+
+    @Test
+    fun spanishTwoColumns() = spanishTablet().snapshot {
+        PetruTheme { TemplatesScreen(TemplatesState(), {}, {}, {}) }
+    }
+
+    /** The same device with the phone set to Spanish. */
+    private fun spanishTablet(): Paparazzi {
+        tablet.unsafeUpdateConfig(deviceConfig = DeviceConfig.NEXUS_10.copy(locale = "es", nightMode = NightMode.NIGHT))
+        return tablet
+    }
 }

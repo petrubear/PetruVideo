@@ -12,6 +12,19 @@ setup and the checks are in the README under "Releasing".
 
 ## [Unreleased]
 
+## [0.6.0]
+
+### Added
+- The app is available in Spanish (neutral Latin American Spanish) and follows the phone's language: Spanish phones get Spanish, every other language keeps English. On Android 13 and newer PetruVideo also appears in the phone's per-app language settings, and a language change updates the open app without restarting it.
+- The continuous integration run checks that no screen holds a literal text, and Android lint fails the build when a Spanish text is missing.
+
+### Changed
+- Every text of the app now comes from string resources; the engine no longer returns English sentences (voice split reasons are codes the editor turns into text), and the notification of a running export, the default project name ("Untitled 1" / "Sin título 1"), and the voice-over and voice split names follow the language.
+- The text of a template title and the default text of a new text clip are made in the phone's language at the moment they are created.
+
+### Fixed
+- Counts read correctly: "1 clip" instead of "1 clips" on project cards, and likewise for keyframes and captions.
+
 ### Fixed
 - The Release workflow no longer ends when looking up `apksigner` on the runner; the lookup now tolerates unreadable folders and reports a clear error if the tool is missing.
 

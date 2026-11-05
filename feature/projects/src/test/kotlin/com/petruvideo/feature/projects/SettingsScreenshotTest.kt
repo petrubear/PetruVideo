@@ -29,4 +29,17 @@ class SettingsScreenshotTest {
     fun lightDefaults() = phone.snapshot {
         PetruTheme(darkTheme = false) { SettingsScreen(AppSettings(), "0.1.0", {}, {}, {}) }
     }
+
+    @Test
+    fun spanishDefaults() = spanishPhone().snapshot {
+        PetruTheme { SettingsScreen(AppSettings(), "0.1.0", {}, {}, {}) }
+    }
+
+    /** The same device with the phone set to Spanish. */
+    private fun spanishPhone(): Paparazzi {
+        phone.unsafeUpdateConfig(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(locale = "es", nightMode = NightMode.NIGHT, screenHeight = 1_400),
+        )
+        return phone
+    }
 }

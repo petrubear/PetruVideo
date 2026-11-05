@@ -384,4 +384,10 @@
     <string name="sticker_check_mark">Check mark</string>
     <string name="sticker_cross_mark">Cross mark</string>
     <string name="sticker_one_hundred">One hundred</string>
+    <string name="editor_save_saved">saved</string>
+    <string name="editor_save_saving">saving</string>
+    <string name="editor_save_failed">not saved</string>
+    <string name="editor_save_storage_full">storage full: free space to keep saving</string>
+    <string name="editor_unavailable">unavailable</string>
+    <string name="editor_coming_soon">coming soon</string>
 </resources>

@@ -26,6 +26,7 @@ To check the download, compare `sha256sum PetruVideo-X.Y.Z.apk` with the `.sha25
 - **Templates** for quick starts.
 - **Export**: 720p to 4K at 24 to 60 fps, saved to `Movies/PetruVideo`, with an exports list.
 - **Foldables**: portrait, unfolded, and tabletop layouts.
+- **Languages**: English and Spanish, following the phone's language (per-app language on Android 13 and newer). Translation rules are in [docs/glossary-es.md](docs/glossary-es.md); every text lives in string resources and the build checks it.
 
 ## Build
 

@@ -56,13 +56,14 @@ fun EditorTopBar(
     }
 }
 
+@Composable
 private fun statusLine(header: EditorHeader?): String {
     if (header == null) return ""
     val save = when (header.saveStatus) {
-        SaveStatus.Saved -> "saved"
-        SaveStatus.Saving -> "saving"
-        is SaveStatus.Failed -> "not saved"
-        is SaveStatus.LowStorage -> "storage full: free space to keep saving"
+        SaveStatus.Saved -> stringResource(R.string.editor_save_saved)
+        SaveStatus.Saving -> stringResource(R.string.editor_save_saving)
+        is SaveStatus.Failed -> stringResource(R.string.editor_save_failed)
+        is SaveStatus.LowStorage -> stringResource(R.string.editor_save_storage_full)
     }
     return listOfNotNull(header.formatLabel, save).joinToString(" · ")
 }

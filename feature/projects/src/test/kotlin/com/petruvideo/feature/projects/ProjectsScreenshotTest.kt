@@ -17,6 +17,7 @@ class ProjectsScreenshotTest {
         deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 1_900),
     )
 
+
     private val now = 10_000_000_000L
     private val latest = summary(
         "coast",
@@ -67,5 +68,27 @@ class ProjectsScreenshotTest {
                 ProjectsScreen(ProjectsState(isLoading = false), onEvent = {}, nowMs = now)
             }
         }
+    }
+
+    @Test
+    fun spanishCompactProjects() {
+        spanish().snapshot { PetruTheme { ProjectsScreen(state, onEvent = {}, nowMs = now) } }
+    }
+
+    @Test
+    fun spanishEmptyProjects() {
+        spanish().snapshot {
+            PetruTheme {
+                ProjectsScreen(ProjectsState(isLoading = false), onEvent = {}, nowMs = now)
+            }
+        }
+    }
+
+    /** The same device with the phone set to Spanish. */
+    private fun spanish(): Paparazzi {
+        paparazzi.unsafeUpdateConfig(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(locale = "es", nightMode = NightMode.NIGHT, screenHeight = 1_900),
+        )
+        return paparazzi
     }
 }

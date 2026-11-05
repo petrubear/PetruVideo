@@ -34,6 +34,7 @@ class EditorScreenshotTest {
         deviceConfig = DeviceConfig.PIXEL_5.copy(nightMode = NightMode.NIGHT, screenHeight = 2_000),
     )
 
+
     /** Gradient tiles and a synthetic waveform stand in for real footage, as in the designer's mock. */
     private val loaders = object : MediaLoaders {
         override suspend fun thumbnail(item: MediaItem, timeMs: Long, heightPx: Int): ImageBitmap {
@@ -910,5 +911,59 @@ class EditorScreenshotTest {
                 EditorScreen(state(tab = ToolbarTab.Overlay), player = null, onEvent = {}, onBack = {})
             }
         }
+    }
+
+    @Test
+    fun spanishCompactEditor() {
+        spanish().snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme { EditorScreen(state(), player = null, onEvent = {}, onBack = {}) }
+            }
+        }
+    }
+
+    @Test
+    fun spanishSelectedDetachedAudioShowsHandlesAndAudioTools() {
+        spanish().snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(state(selection = ClipSelection.Audio("a1")), player = null, onEvent = {}, onBack = {})
+                }
+            }
+        }
+    }
+
+    @Test
+    fun spanishVolumeSheetAndBadges() {
+        val sheet = SheetState(ClipTool.Volume, "c1", "m1.mp4", 40, 4_000)
+        spanish().snapshot {
+            CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+                PetruTheme {
+                    EditorScreen(
+                        state(selection = ClipSelection.Video("c1"), edited = true, sheet = sheet),
+                        player = null,
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun spanishOverlayTabOffersAddOverlay() = spanish().snapshot {
+        CompositionLocalProvider(LocalMediaLoaders provides loaders) {
+            PetruTheme {
+                EditorScreen(state(tab = ToolbarTab.Overlay), player = null, onEvent = {}, onBack = {})
+            }
+        }
+    }
+
+    /** The same device with the phone set to Spanish. */
+    private fun spanish(): Paparazzi {
+        paparazzi.unsafeUpdateConfig(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(locale = "es", nightMode = NightMode.NIGHT, screenHeight = 2_000),
+        )
+        return paparazzi
     }
 }

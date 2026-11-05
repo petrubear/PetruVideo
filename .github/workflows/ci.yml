@@ -20,3 +20,7 @@ jobs:
         run: ./gradlew verifyScreenshots
       - name: Static analysis and lint
         run: ./gradlew detekt lint
+      - name: Texts come from string resources
+        run: |
+          sh scripts/test-check-no-literals.sh
+          sh scripts/check-no-literals.sh

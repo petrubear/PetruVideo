@@ -78,7 +78,7 @@ internal fun ToolButton(
     active: Boolean,
     onClick: () -> Unit,
     tint: androidx.compose.ui.graphics.Color? = null,
-    unavailableNote: String = "coming soon",
+    unavailableNote: String = stringResource(R.string.editor_coming_soon),
 ) {
     val color = tint ?: if (active) PetruColors.Accent else PetruColors.OnBackground
     Column(

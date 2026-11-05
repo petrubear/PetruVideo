@@ -5,7 +5,7 @@ plugins {
 }
 
 // The one place the version is set (see CHANGELOG.md). The version code follows from it: 0.2.5 is 205, 1.3.4 is 10304.
-val appVersion = "0.5.1"
+val appVersion = "0.6.0"
 val appVersionCode = appVersion.split(".").map { it.toInt() }.also {
     require(it.size == 3 && it.all { part -> part in 0..99 }) { "appVersion must be MAJOR.MINOR.PATCH with each part 0 to 99" }
 }.let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }

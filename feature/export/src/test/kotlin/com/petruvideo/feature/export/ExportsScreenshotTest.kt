@@ -62,4 +62,18 @@ class ExportsScreenshotTest {
 
     @Test
     fun withUndoBar() = phone.snapshot { Show(ExportsUiState(rows.drop(1), loaded = true, undo = rows[0].record)) }
+
+    @Test
+    fun spanishWithExports() = spanishPhone().snapshot { Show(ExportsUiState(rows, loaded = true)) }
+
+    @Test
+    fun spanishEmpty() = spanishPhone().snapshot { Show(ExportsUiState(emptyList(), loaded = true)) }
+
+    /** The same device with the phone set to Spanish. */
+    private fun spanishPhone(): Paparazzi {
+        phone.unsafeUpdateConfig(
+            deviceConfig = DeviceConfig.PIXEL_5.copy(locale = "es", nightMode = NightMode.NIGHT, screenHeight = 1_800),
+        )
+        return phone
+    }
 }

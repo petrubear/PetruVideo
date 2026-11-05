@@ -368,6 +368,12 @@
     <string name="sticker_check_mark">Marca de verificación</string>
     <string name="sticker_cross_mark">Marca de cruz</string>
     <string name="sticker_one_hundred">Cien</string>
+    <string name="editor_save_saved">guardado</string>
+    <string name="editor_save_saving">guardando</string>
+    <string name="editor_save_failed">sin guardar</string>
+    <string name="editor_save_storage_full">almacenamiento lleno: libera espacio para seguir guardando</string>
+    <string name="editor_unavailable">no disponible</string>
+    <string name="editor_coming_soon">próximamente</string>
     <plurals name="editor_captions_added">
         <item quantity="one">Se agregó %1$d subtítulo</item>
         <item quantity="other">Se agregaron %1$d subtítulos</item>
